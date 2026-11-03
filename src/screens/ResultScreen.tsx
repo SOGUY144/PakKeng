@@ -1,0 +1,252 @@
+import { CollectibleIcon, StarShape } from "../components/Art";
+import { BarChart, type ChartBar } from "../components/BarChart";
+import { Disclaimer } from "../components/Chrome";
+import { Icon } from "../components/Icon";
+import { COLLECTIBLES, nextCollectible, totalStars } from "../data/analytics";
+import { fmtDayMonth, fmtPct, isSameDay } from "../data/format";
+import { getLastResultId } from "../data/rounds";
+import { GAME_LABEL, LEVEL_LABEL, type Session } from "../data/schema";
+import { findChild, useDB } from "../data/store";
+import { navigate } from "../lib/router";
+import { nextStarHint, roundStars } from "../logic/scoring";
+
+function rating(s: Session): { got: number; of: number } {
+  if (s.game === "balloon" && s.balloon) return { got: s.balloon.completed, of: s.balloon.target };
+  if (s.game === "runner" && s.attempts === 0 && s.gate) return { got: s.gate.opened ? 1 : 0, of: 1 };
+  return { got: s.passed, of: s.attempts };
+}
+
+/** Per-game metric for the "5 ครั้งล่าสุด" chart. */
+function metric(s: Session): number | null {
+  if (s.game === "balloon") return s.balloon ? s.balloon.inZoneSec / Math.max(1, s.rounds) : null;
+  return s.meanNasalOral === null ? null : 100 - s.meanNasalOral;
+}
+
+export function ResultScreen() {
+  const db = useDB();
+  const id = getLastResultId();
+  const session = db.sessions.find((x) => x.id === id);
+
+  if (!session) {
+    return (
+      <div className="kid-screen">
+        <div className="kid-frame kid-frame--page">
+          <section className="card empty">
+            <h1 className="empty__title">ยังไม่มีรอบที่เพิ่งเล่น</h1>
+            <p>เล่นเกมให้จบหนึ่งรอบ แล้วสรุปจะแสดงที่นี่</p>
+            <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => navigate("home")}>
+              กลับหน้าหลัก
+            </button>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  const child = findChild(db, session.childId);
+  const r = rating(session);
+  const stars = roundStars(r.got, r.of);
+  const hint = nextStarHint(r.got, r.of);
+  const now = new Date();
+  const same = db.sessions
+    .filter((x) => x.childId === child.id && x.game === session.game)
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  const upto = same.slice(0, same.findIndex((x) => x.id === session.id) + 1);
+  const recent = upto.slice(-5);
+  const roundToday = upto.filter((x) => x.source === "demo" && isSameDay(new Date(x.startedAt), now)).length;
+  const hasSample = recent.some((x) => x.source === "sample");
+
+  const isBalloon = session.game === "balloon";
+  const bars: ChartBar[] = recent.map((x) => {
+    const v = metric(x);
+    const current = x.id === session.id;
+    const label = current ? "รอบนี้" : fmtDayMonth(new Date(x.startedAt));
+    const valueText = v === null ? "ไม่มีข้อมูล" : isBalloon ? `${v.toFixed(1)} วินาที` : fmtPct(v);
+    return {
+      key: x.id,
+      label,
+      value: v,
+      tone: current ? "current" : x.source === "sample" ? "sample" : "past",
+      tip: `${label}: ${valueText}${x.source === "sample" ? " (ข้อมูลตัวอย่าง)" : " (เล่นในเดโม)"}`,
+    };
+  });
+  const prev = bars.slice(0, -1).filter((b) => b.value !== null).map((b) => b.value as number);
+  const cur = bars[bars.length - 1]?.value ?? null;
+  const trend =
+    cur === null || prev.length === 0
+      ? null
+      : cur - prev.reduce((a, b) => a + b, 0) / prev.length >= (isBalloon ? 0.5 : 2)
+        ? "กำลังดีขึ้น"
+        : "ฝึกต่อเรื่อย ๆ นะ";
+
+  const totalNow = totalStars(db, child);
+  const before = totalNow - session.stars;
+  const newly = COLLECTIBLES.find((c) => c.stars > before && c.stars <= totalNow) ?? null;
+  const next = nextCollectible(totalNow);
+
+  const praise =
+    session.game === "balloon"
+      ? `เก่งมาก! พูดค้างได้รวม ${session.balloon?.speakingSec.toFixed(1) ?? 0} วินาที`
+      : session.game === "frog"
+        ? `เก่งมาก! พูดไป ${session.attempts} ช่วงเสียง`
+        : `เก่งมาก! พูดไป ${session.attempts + (session.gate?.attempts ?? 0)} ครั้ง`;
+
+  return (
+    <div className="kid-screen">
+      <div className="kid-frame kid-frame--page result">
+        <header className="result__head">
+          <h1>จบรอบแล้ว</h1>
+          <p className="result__sub">
+            {GAME_LABEL[session.game]} · ด่านที่ {session.level} {LEVEL_LABEL[session.level]}
+            {roundToday > 0 ? ` · รอบที่ ${roundToday} วันนี้` : ""}
+          </p>
+        </header>
+
+        <div className="result__stars" role="img" aria-label={`ได้ ${stars} ดาวจาก 3`}>
+          {[1, 2, 3].map((i) => (
+            <span key={i} className={`result__star${i <= stars ? " is-on" : ""}`} style={{ animationDelay: `${i * 120}ms` }}>
+              <StarShape size={56} filled={i <= stars} />
+            </span>
+          ))}
+        </div>
+        <p className="result__praise">{praise}</p>
+        {hint ? <p className="result__hint">{hint}</p> : stars === 3 ? <p className="result__hint">ได้ครบ 3 ดาวแล้ว!</p> : null}
+
+        <div className="tiles">
+          {session.game === "runner" ? (
+            <>
+              <div className="tile">
+                <span className="tile__label">พูดคำด้านปาก</span>
+                <span className="tile__value">
+                  {session.attempts} <small>ครั้ง</small>
+                </span>
+              </div>
+              <div className="tile">
+                <span className="tile__label">ผ่านเกณฑ์เดโม ({session.oralThreshold}%)</span>
+                <span className="tile__value">
+                  {session.passed} <small>ครั้ง</small>
+                </span>
+              </div>
+              <div className="tile tile--wide tile--nasal">
+                <span className="tile__label">
+                  <Icon name="nose" size={16} /> ด่านประตูเสียงนาสิก
+                </span>
+                <span className="tile__text">
+                  {session.gate
+                    ? session.gate.opened
+                      ? `เปิดประตูได้! พูดถึงเกณฑ์ออกจมูก (≥ ${session.gateThreshold}%) ${session.gate.passed} จาก ${session.gate.attempts} ครั้ง`
+                      : session.gate.attempts > 0
+                        ? `ข้ามไว้ก่อน · ลองไป ${session.gate.attempts} ครั้ง ไว้รอบหน้าลองใหม่นะ`
+                        : "ข้ามไว้ก่อน"
+                    : "ไม่ได้เล่นในรอบนี้"}
+                </span>
+              </div>
+            </>
+          ) : null}
+          {session.game === "balloon" && session.balloon ? (
+            <>
+              <div className="tile">
+                <span className="tile__label">ค้างในโซนครบ</span>
+                <span className="tile__value">
+                  {session.balloon.completed}/{session.balloon.target} <small>ลูก</small>
+                </span>
+              </div>
+              <div className="tile">
+                <span className="tile__label">เวลาในโซนสะสม</span>
+                <span className="tile__value">
+                  {session.balloon.inZoneSec.toFixed(1)} <small>วินาที</small>
+                </span>
+              </div>
+            </>
+          ) : null}
+          {session.game === "frog" && session.frog ? (
+            <>
+              <div className="tile">
+                <span className="tile__label">กบกระโดดได้</span>
+                <span className="tile__value">
+                  {session.frog.steps}/{session.frog.target} <small>ก้าว</small>
+                </span>
+              </div>
+              <div className="tile">
+                <span className="tile__label">ช่วงเสียงทั้งหมด</span>
+                <span className="tile__value">
+                  {session.attempts} <small>ครั้ง</small>
+                </span>
+              </div>
+            </>
+          ) : null}
+        </div>
+
+        <section className="card result__chart" aria-labelledby="result-chart-title">
+          <div className="result__charthead">
+            <h2 id="result-chart-title" className="section-title section-title--card">
+              {isBalloon ? "เวลาในโซน (วินาที) · 5 ครั้งล่าสุด" : "ออกปากเฉลี่ย (%) · 5 ครั้งล่าสุด"}
+            </h2>
+            {trend ? <span className="result__trend">{trend}</span> : null}
+          </div>
+          <BarChart
+            bars={bars}
+            max={isBalloon ? Math.max(session.balloon ? session.balloon.holdSec * session.balloon.target : 9, ...bars.map((b) => b.value ?? 0)) : 100}
+            unit={isBalloon ? "วิ" : "%"}
+            color="oral"
+            refLine={isBalloon ? undefined : { value: session.oralThreshold, label: `เกณฑ์ ${session.oralThreshold}%` }}
+            ariaLabel={isBalloon ? "กราฟเวลาในโซนเฉลี่ยต่อรอบ 5 ครั้งล่าสุด" : "กราฟออกปากเฉลี่ยขณะพูด 5 ครั้งล่าสุด"}
+            formatValue={isBalloon ? (v) => `${v.toFixed(1)} วินาที` : undefined}
+            height={170}
+          />
+          <p className="legend">
+            <span className="legend__item">
+              <span className="legend__swatch legend__swatch--oral" /> เล่นจริงในเดโม
+            </span>
+            {hasSample ? (
+              <span className="legend__item">
+                <span className="legend__swatch legend__swatch--sample" /> ข้อมูลตัวอย่าง (ครั้งก่อน ๆ)
+              </span>
+            ) : null}
+          </p>
+        </section>
+
+        <section className={`unlock${newly ? " is-new" : ""}`} aria-live="polite">
+          {newly ? (
+            <>
+              <span className="unlock__icon">
+                <CollectibleIcon id={newly.id} size={40} />
+              </span>
+              <span>
+                <strong>ปลดล็อกของใหม่: {newly.name}!</strong>
+                <br />
+                ดาวรวมตอนนี้ {totalNow} ดวง
+              </span>
+            </>
+          ) : next ? (
+            <>
+              <span className="unlock__icon unlock__icon--locked">
+                <Icon name="lock" size={22} />
+              </span>
+              <span>
+                <strong>ของชิ้นต่อไป: {next.name}</strong>
+                <br />
+                สะสมดาวอีก {next.stars - totalNow} ดวง ({totalNow}/{next.stars}) · รอบนี้ได้ +{session.stars}
+              </span>
+            </>
+          ) : (
+            <span>ปลดล็อกของครบทุกชิ้นแล้ว</span>
+          )}
+        </section>
+
+        <div className="kid-actions">
+          <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => navigate(session.game)}>
+            <Icon name="refresh" size={20} /> เล่นอีกรอบ
+          </button>
+          <button type="button" className="btn btn--secondary btn--block" onClick={() => navigate("home")}>
+            กลับหน้าหลัก
+          </button>
+        </div>
+        <p className="result__saved">
+          <Icon name="check" size={16} /> บันทึกรอบนี้แล้ว · นักแก้ไขการพูดเห็นได้ในแดชบอร์ด (เดโม) · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
+        </p>
+        <Disclaimer compact />
+      </div>
+    </div>
+  );
+}

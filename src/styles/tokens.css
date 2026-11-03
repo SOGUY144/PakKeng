@@ -1,0 +1,120 @@
+/*
+ * Design tokens — ใช้ร่วมกันทั้ง 8 หน้าจอ
+ * ความหมายสีที่ห้ามสลับ: --oral* = ค่าด้านปาก (น้ำเงิน), --nasal* = ค่าด้านจมูก (ส้ม)
+ */
+:root {
+  /* Surfaces */
+  --paper: #f7f3ea;
+  --paper-deep: #efe8da;
+  --surface: #ffffff;
+  --surface-muted: #f4f0e8;
+  --surface-sunken: #ebe5d8;
+  --line: #e4ddd0;
+  --line-strong: #cbc2b2;
+
+  /* Ink (text) */
+  --ink: #1f2330;
+  --ink-2: #4b5263;
+  --ink-3: #626979;
+  --ink-inverse: #ffffff;
+
+  /* Semantic: oral = blue, nasal = orange */
+  --oral: #2563eb;
+  --oral-text: #1d4ed8;
+  --oral-soft: #e8efff;
+  --oral-tint: #c9d8fd;
+  --nasal: #e8692a;
+  --nasal-text: #b4470f;
+  --nasal-soft: #fff1e8;
+  --nasal-tint: #f9c9ab;
+
+  /* Status (always with icon + label) */
+  --ok: #1f9d74;
+  --ok-text: #11694c;
+  --ok-soft: #ddf3ea;
+  --warn: #e0a21b;
+  --warn-text: #8a5300;
+  --warn-soft: #fff3d6;
+  --info-soft: #efeaff;
+  --star: #f5b400;
+  --star-deep: #d99500;
+
+  /* Actions */
+  --primary: #22273a;
+  --primary-hover: #343b52;
+  --primary-ink: #ffffff;
+  --focus: #6d28d9;
+
+  /* Scene palette (kept away from blue/orange semantics) */
+  --grass: #cfe9b5;
+  --grass-deep: #a9d58a;
+  --path: #f3e4c4;
+  --path-edge: #e3cfa5;
+  --sky-top: #e9e1ff;
+  --sky-bottom: #fff3e3;
+  --pond: #a7dccf;
+  --pond-deep: #7fc7b6;
+  --pad: #5fb36b;
+  --pad-deep: #3f8f4d;
+  --cloud-pal: #dcd0fb;
+  --cloud-pal-line: #6e5bb8;
+  --stone: #ddd3c3;
+  --door: #4fa093;
+  --door-deep: #2f7c70;
+
+  /* Typography */
+  --font-sans: "Noto Sans Thai", "Leelawadee UI", "Thonburi", "Sarabun", "Tahoma", system-ui, sans-serif;
+  --fs-word: clamp(2.5rem, 9vw, 3.25rem);
+  --fs-h1: 1.5rem;
+  --fs-h2: 1.125rem;
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+  --fs-xs: 0.8125rem;
+  --lh-tight: 1.3;
+  --lh-body: 1.6;
+
+  /* Spacing (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* Radius */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* Borders & shadows */
+  --bw: 1px;
+  --bw-strong: 1.5px;
+  --shadow-1: 0 1px 2px rgba(31, 35, 48, 0.06), 0 1px 1px rgba(31, 35, 48, 0.04);
+  --shadow-2: 0 6px 18px rgba(31, 35, 48, 0.08), 0 2px 4px rgba(31, 35, 48, 0.05);
+  --shadow-3: 0 18px 40px rgba(31, 35, 48, 0.18);
+
+  /* Motion */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Layout */
+  --kid-col: 480px;
+  --tap: 48px;
+  --tap-lg: 56px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 1ms;
+    --dur-2: 1ms;
+    --dur-3: 1ms;
+    --ease-spring: linear;
+  }
+}
