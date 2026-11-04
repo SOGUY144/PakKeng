@@ -80,6 +80,9 @@ export function useGameRuntime<G extends Interruptible>(
   return {
     game: gameRef.current as G,
     frame: frameRef.current,
+    /** Stable refs for the 3D scene, which reads the live state every animation frame. */
+    gameRef,
+    frameRef,
     paused,
     ended,
     roundKey,

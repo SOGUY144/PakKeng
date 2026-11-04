@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bunny, CollectibleIcon, GameThumb } from "../components/Art";
 import { Disclaimer, ViewSwitch } from "../components/Chrome";
 import { Icon } from "../components/Icon";
+import { RenderImg } from "../components/RenderImg";
 import { COLLECTIBLES, nextCollectible, practiceSecToday, totalStars } from "../data/analytics";
 import { fmtDuration, isSameDay } from "../data/format";
 import { missionGame } from "../data/plan";
@@ -45,7 +46,7 @@ export function HomeScreen() {
         <header className="home-head">
           <div className="home-head__who">
             <span className="avatar" aria-hidden="true">
-              <Bunny size={40} cap />
+              <RenderImg name="avatar-bunny" fallback={<Bunny size={40} cap />} />
             </span>
             <div>
               <p className="home-head__hello">สวัสดี</p>
@@ -148,8 +149,8 @@ export function HomeScreen() {
                     aria-disabled={!open}
                     aria-describedby={`game-desc-${g}`}
                   >
-                    <span className="game-card__thumb">
-                      <GameThumb game={g} />
+                    <span className={`game-card__thumb game-card__thumb--${g}`}>
+                      <RenderImg name={`thumb-${g}`} fallback={<GameThumb game={g} />} />
                       {!open ? (
                         <span className="game-card__lock">
                           <Icon name="lock" size={18} />
@@ -179,7 +180,9 @@ export function HomeScreen() {
               const unlocked = stars >= c.stars;
               return (
                 <li key={c.id} className={`collect__item${unlocked ? "" : " is-locked"}`}>
-                  <span className="collect__icon">{unlocked ? <CollectibleIcon id={c.id} size={36} /> : <Icon name="lock" size={20} />}</span>
+                  <span className="collect__icon">
+                    {unlocked ? <RenderImg name={`item-${c.id}`} fallback={<CollectibleIcon id={c.id} size={36} />} /> : <Icon name="lock" size={20} />}
+                  </span>
                   <span className="collect__name">{unlocked ? c.name : `${c.stars} ดาว`}</span>
                 </li>
               );

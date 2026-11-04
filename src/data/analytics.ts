@@ -176,3 +176,10 @@ export const COLLECTIBLES: Collectible[] = [
 export function nextCollectible(stars: number): Collectible | null {
   return COLLECTIBLES.find((c) => c.stars > stars) ?? null;
 }
+
+/** Unlocked collectibles as a stable string (e.g. "cap,shoes") — what the 3D bunny wears. */
+export function outfitFor(stars: number): string {
+  return COLLECTIBLES.filter((c) => stars >= c.stars)
+    .map((c) => c.id)
+    .join(",");
+}

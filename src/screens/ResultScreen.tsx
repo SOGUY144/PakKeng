@@ -2,7 +2,11 @@ import { CollectibleIcon, StarShape } from "../components/Art";
 import { BarChart, type ChartBar } from "../components/BarChart";
 import { Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
-import { COLLECTIBLES, nextCollectible, totalStars } from "../data/analytics";
+import { RenderImg } from "../components/RenderImg";
+import { COLLECTIBLES, nextCollectible, outfitFor, totalStars } from "../data/analytics";
+import { useReducedMotion } from "../lib/hooks";
+import { stageMode, useGfx } from "../three/gfx";
+import { World3D } from "../three/World3D";
 import { fmtDayMonth, fmtPct, isSameDay } from "../data/format";
 import { getLastResultId } from "../data/rounds";
 import { GAME_LABEL, LEVEL_LABEL, type Session } from "../data/schema";
@@ -24,6 +28,8 @@ function metric(s: Session): number | null {
 
 export function ResultScreen() {
   const db = useDB();
+  const mode = stageMode(useGfx());
+  const reduced = useReducedMotion();
   const id = getLastResultId();
   const session = db.sessions.find((x) => x.id === id);
 
@@ -101,6 +107,14 @@ export function ResultScreen() {
             {roundToday > 0 ? ` · รอบที่ ${roundToday} วันนี้` : ""}
           </p>
         </header>
+
+        <div className={`result__scene result__scene--${session.game}`} aria-hidden="true">
+          {mode.kind === "3d" ? (
+            <World3D kind="celebrate" game={session.game} outfit={outfitFor(totalNow)} tier={mode.tier} active reduced={reduced} />
+          ) : (
+            <RenderImg name={`thumb-${session.game}`} fallback={null} />
+          )}
+        </div>
 
         <div className="result__stars" role="img" aria-label={`ได้ ${stars} ดาวจาก 3`}>
           {[1, 2, 3].map((i) => (
@@ -210,7 +224,7 @@ export function ResultScreen() {
           {newly ? (
             <>
               <span className="unlock__icon">
-                <CollectibleIcon id={newly.id} size={40} />
+                <RenderImg name={`item-${newly.id}`} fallback={<CollectibleIcon id={newly.id} size={40} />} />
               </span>
               <span>
                 <strong>ปลดล็อกของใหม่: {newly.name}!</strong>

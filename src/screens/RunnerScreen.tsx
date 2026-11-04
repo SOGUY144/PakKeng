@@ -4,9 +4,11 @@ import { DemoPanel } from "../components/DemoPanel";
 import { DoneSheet, GameHud, PauseOverlay, PromptCard } from "../components/GameParts";
 import { Icon } from "../components/Icon";
 import { Meter } from "../components/Meter";
+import { StageNote } from "../components/StageNote";
 import { signalProblem, type MeterStatus } from "../signal/status";
+import type { SignalFrame } from "../signal/SignalProcessor";
 import { showToast } from "../lib/toast";
-import { COLLECTIBLES, totalStars } from "../data/analytics";
+import { COLLECTIBLES, outfitFor, totalStars } from "../data/analytics";
 import { fmtPct } from "../data/format";
 import { promptFor, promptInstruction } from "../data/plan";
 import { finishRound, setPendingRunner } from "../data/rounds";
@@ -14,7 +16,9 @@ import { LEVEL_LABEL } from "../data/schema";
 import { useActiveChild, useDB } from "../data/store";
 import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
-import { RUNNER_ATTEMPTS_PER_ROUND, RunnerGame, type RunnerAttempt } from "../logic/runner";
+import { RUNNER_ATTEMPTS_PER_ROUND, RunnerGame, type RunnerAttempt, type RunnerState } from "../logic/runner";
+import { stageMode, useGfx } from "../three/gfx";
+import { World3D } from "../three/World3D";
 import { useGameRuntime } from "./useGameRuntime";
 
 const DECOR: { kind: "tree" | "rock" | "bush" | "log"; x: number; y0: number }[] = [
@@ -35,11 +39,50 @@ interface Flash {
 
 const FLASH_MS = 1800;
 
+const gapLabelFor = (gap: number) => (gap >= 0.66 ? "ไกล" : gap >= 0.33 ? "กลาง" : "ใกล้");
+
+/** The original 2D scene, kept as the fallback when 3D is unavailable or switched off. */
+function Runner2D({ s, frame, reduced, capOn }: { s: RunnerState; frame: SignalFrame; reduced: boolean; capOn: boolean }) {
+  const chaserCenter = 57 + s.gap * 29;
+  const scrollPx = reduced ? 0 : s.scroll * 220;
+  return (
+    <div className="stage2d" style={{ ["--scroll" as string]: `${scrollPx % 40}px`, ["--bob" as string]: `${0.55 / Math.max(0.5, s.speed)}s` }}>
+      <div className="runner__path" aria-hidden="true">
+        <span className="runner__lane runner__lane--a" />
+        <span className="runner__lane runner__lane--b" />
+      </div>
+      {DECOR.map((d, i) => {
+        const y = ((d.y0 * 100 + (reduced ? 0 : s.scroll * 55)) % 120) - 10;
+        return (
+          <div key={i} className="runner__decor" style={{ left: `${d.x}%`, top: `${y}%` }} aria-hidden="true">
+            {d.kind === "tree" ? <Tree size={38} /> : <Obstacle kind={d.kind} />}
+          </div>
+        );
+      })}
+      <div className="runner__stars" aria-hidden="true">
+        <StarShape size={26} />
+        <StarShape size={22} />
+      </div>
+      <div className={`runner__hero${frame.valid && s.speed > 0.2 ? " is-running" : ""}`} aria-hidden="true">
+        <Bunny size={54} cap={capOn} />
+      </div>
+      <div className="runner__gap" style={{ top: "50%", height: `${Math.max(0, chaserCenter - 9 - 50)}%` }} aria-hidden="true" />
+      <span className="runner__gaplabel" style={{ top: `${(50 + chaserCenter - 9) / 2}%` }}>
+        ห่างเพื่อนเมฆ: {gapLabelFor(s.gap)}
+      </span>
+      <div className={`runner__chaser${frame.valid ? " is-floating" : ""}`} style={{ top: `${chaserCenter}%` }} aria-hidden="true">
+        <CloudPal size={66} />
+      </div>
+    </div>
+  );
+}
+
 export function RunnerScreen() {
   const child = useActiveChild();
   const db = useDB();
   const plan = child.plan;
   const reduced = useReducedMotion();
+  const mode = stageMode(useGfx());
   const startedAt = useRef(new Date().toISOString());
   const [flash, setFlash] = useState<Flash | null>(null);
   const nowRef = useRef(0);
@@ -66,7 +109,8 @@ export function RunnerScreen() {
   const s = game.state;
   const thr = game.cfg.oralThreshold;
   const flashOn = flash !== null && nowRef.current - flash.at < FLASH_MS;
-  const capOn = totalStars(db, child) >= COLLECTIBLES[0].stars;
+  const stars = totalStars(db, child);
+  const capOn = stars >= COLLECTIBLES[0].stars;
 
   let status: MeterStatus = signalProblem(frame) ?? { kind: "idle", text: "พร้อมแล้ว พูดคำบนจอได้เลย" };
   if (!signalProblem(frame)) {
@@ -81,10 +125,6 @@ export function RunnerScreen() {
     }
   }
   if (rt.ended) status = { kind: "done", text: "วิ่งครบรอบแล้ว! เกมหยุดนับแล้ว" };
-
-  const gapLabel = s.gap >= 0.66 ? "ไกล" : s.gap >= 0.33 ? "กลาง" : "ใกล้";
-  const chaserCenter = 57 + s.gap * 29;
-  const scrollPx = reduced ? 0 : s.scroll * 220;
 
   const goGateOrResult = () => {
     const st = game.state;
@@ -135,6 +175,7 @@ export function RunnerScreen() {
 
   const passedCount = s.attempts.filter((a) => a.passed).length;
   const word = game.currentPrompt();
+  const is3d = mode.kind === "3d";
 
   return (
     <div className="kid-screen kid-screen--game">
@@ -145,40 +186,26 @@ export function RunnerScreen() {
           word={word}
           sub={`คำที่ ${Math.min(s.attempts.length + 1, game.cfg.attemptsPerRound)} จาก ${game.cfg.attemptsPerRound}`}
         />
-        <div
-          className={`stage stage--runner${frame.valid ? "" : " is-frozen"}${s.passing ? " is-passing" : ""}`}
-          style={{ ["--scroll" as string]: `${scrollPx % 40}px`, ["--bob" as string]: `${0.55 / Math.max(0.5, s.speed)}s` }}
-        >
-          <div className="runner__path" aria-hidden="true">
-            <span className="runner__lane runner__lane--a" />
-            <span className="runner__lane runner__lane--b" />
-          </div>
-          {DECOR.map((d, i) => {
-            const y = ((d.y0 * 100 + (reduced ? 0 : s.scroll * 55)) % 120) - 10;
-            return (
-              <div key={i} className="runner__decor" style={{ left: `${d.x}%`, top: `${y}%` }} aria-hidden="true">
-                {d.kind === "tree" ? <Tree size={38} /> : <Obstacle kind={d.kind} />}
-              </div>
-            );
-          })}
-          <div className="runner__stars" aria-hidden="true">
-            <StarShape size={26} />
-            <StarShape size={22} />
-          </div>
-          <div className={`runner__hero${frame.valid && s.speed > 0.2 ? " is-running" : ""}`} aria-hidden="true">
-            <Bunny size={54} cap={capOn} />
-          </div>
-          <div
-            className="runner__gap"
-            style={{ top: "50%", height: `${Math.max(0, chaserCenter - 9 - 50)}%` }}
-            aria-hidden="true"
-          />
-          <span className="runner__gaplabel" style={{ top: `${(50 + chaserCenter - 9) / 2}%` }}>
-            ห่างเพื่อนเมฆ: {gapLabel}
-          </span>
-          <div className={`runner__chaser${frame.valid ? " is-floating" : ""}`} style={{ top: `${chaserCenter}%` }} aria-hidden="true">
-            <CloudPal size={66} />
-          </div>
+        <div className={`stage stage--runner${is3d ? " stage--3d" : ""}${frame.valid ? "" : " is-frozen"}${s.passing ? " is-passing" : ""}`}>
+          {is3d ? (
+            <World3D
+              kind="runner"
+              tier={mode.tier}
+              active={rt.paused === null}
+              reduced={reduced}
+              gameRef={rt.gameRef}
+              frameRef={rt.frameRef}
+              outfit={outfitFor(stars)}
+            />
+          ) : (
+            <Runner2D s={s} frame={frame} reduced={reduced} capOn={capOn} />
+          )}
+          {is3d ? (
+            <span className={`pill stage__pill stage__pill--tl runner__distpill runner__distpill--${gapLabelFor(s.gap) === "ใกล้" ? "near" : "ok"}`}>
+              <span className="runner__distswatch" aria-hidden="true" />
+              ห่างเพื่อนเมฆ: {gapLabelFor(s.gap)}
+            </span>
+          ) : null}
           <span className="pill stage__pill stage__pill--tr">
             {frame.valid ? `ความเร็ว ×${Math.max(0.6, s.speed).toFixed(1)}` : "หยุดชั่วคราว"}
           </span>
@@ -193,6 +220,7 @@ export function RunnerScreen() {
             </div>
           ) : null}
         </div>
+        <StageNote mode={mode} />
         <Meter primary="oral" frame={frame} threshold={thr} thresholdLabel={`เกณฑ์ ${thr}%`} status={status} />
       </div>
 

@@ -9,9 +9,18 @@ import "./styles/base.css";
 import "./styles/kid.css";
 import "./styles/dashboard.css";
 import { App } from "./App";
+import { initMotion } from "./lib/motion";
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+initMotion();
+
+const root = createRoot(document.getElementById("root") as HTMLElement);
+if (import.meta.env.DEV && new URLSearchParams(location.search).has("studio")) {
+  // dev-only render studio: saves still images of the 3D models into public/renders/
+  void import("./three/RenderStudio").then(({ RenderStudio }) => root.render(<RenderStudio />));
+} else {
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

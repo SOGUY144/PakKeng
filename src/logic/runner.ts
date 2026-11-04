@@ -11,10 +11,18 @@ export interface RunnerConfig {
 
 export const RUNNER_ATTEMPTS_PER_ROUND = 6;
 
-/** Demo tuning (per second). The chaser never reaches the hero: no collision, no fail state. */
-const GAP_GAIN_PASS = 0.42;
-const GAP_LOSS_TRY = 0.1;
-const GAP_LOSS_SILENT = 0.05;
+/**
+ * Demo tuning (per second). The oral value acts continuously: the further above the threshold,
+ * the faster the chaser falls back; just under it, the chaser closes in only slowly.
+ * The chaser never reaches the hero: no collision, no fail state.
+ */
+const GAP_GAIN_AT_THRESHOLD = 0.28;
+const GAP_GAIN_AT_100 = 0.62;
+const GAP_LOSS_NEAR = 0.04;
+const GAP_LOSS_FAR = 0.13;
+/** How far under the threshold (points) counts as "far". */
+const UNDER_RANGE = 30;
+const GAP_LOSS_SILENT = 0.04;
 export const GAP_MIN = 0.12;
 
 export type RunnerEvent = { type: "attempt"; attempt: RunnerAttempt } | { type: "done" };
@@ -85,18 +93,20 @@ export class RunnerGame {
 
     let gap = s.gap;
     let targetSpeed: number;
+    const thr = this.cfg.oralThreshold;
     if (!frame.valid) {
       targetSpeed = 0; // freeze: nothing counts while data is unusable
     } else if (passing) {
-      gap += GAP_GAIN_PASS * dt;
-      const over = clamp(((frame.oral ?? 0) - this.cfg.oralThreshold) / Math.max(1, 100 - this.cfg.oralThreshold), 0, 1);
-      targetSpeed = 1.15 + 0.45 * over;
+      const over = clamp(((frame.oral ?? 0) - thr) / Math.max(1, 100 - thr), 0, 1);
+      gap += (GAP_GAIN_AT_THRESHOLD + (GAP_GAIN_AT_100 - GAP_GAIN_AT_THRESHOLD) * over) * dt;
+      targetSpeed = 1.15 + 0.5 * over;
     } else if (frame.speaking) {
-      gap -= GAP_LOSS_TRY * dt;
-      targetSpeed = 0.85;
+      const under = clamp((thr - (frame.oral ?? 0)) / UNDER_RANGE, 0, 1);
+      gap -= (GAP_LOSS_NEAR + (GAP_LOSS_FAR - GAP_LOSS_NEAR) * under) * dt;
+      targetSpeed = 0.95 - 0.35 * under;
     } else {
       gap -= GAP_LOSS_SILENT * dt;
-      targetSpeed = 0.6;
+      targetSpeed = 0.5;
     }
     gap = clamp(gap, GAP_MIN, 1);
     const speed = s.speed + (targetSpeed - s.speed) * (1 - Math.exp(-dt / 0.25));

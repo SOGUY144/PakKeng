@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useSyncExternalStore } from "react";
+import { getMotionPref, motionReduced, subscribeMotion, type MotionPref } from "./motion";
 
 /**
  * One requestAnimationFrame loop per screen. `running=false` stops calling `tick`,
@@ -28,18 +29,13 @@ export function useFrameRender(): () => void {
   return bump;
 }
 
-function subscribeReducedMotion(cb: () => void): () => void {
-  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  mq.addEventListener("change", cb);
-  return () => mq.removeEventListener("change", cb);
+/** Effective reduced-motion: the OS setting unless the demo tools override it (see lib/motion). */
+export function useReducedMotion(): boolean {
+  return useSyncExternalStore(subscribeMotion, motionReduced, () => false);
 }
 
-export function useReducedMotion(): boolean {
-  return useSyncExternalStore(
-    subscribeReducedMotion,
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => false,
-  );
+export function useMotionPref(): MotionPref {
+  return useSyncExternalStore(subscribeMotion, getMotionPref, () => "system" as MotionPref);
 }
 
 /** Calls `onHidden` when the tab is hidden (auto-pause so scoring time never runs in the background). */

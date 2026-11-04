@@ -4,6 +4,7 @@ import { DemoPanel } from "../components/DemoPanel";
 import { DoneSheet, GameHud, PauseOverlay, PromptCard } from "../components/GameParts";
 import { Icon } from "../components/Icon";
 import { Meter } from "../components/Meter";
+import { StageNote } from "../components/StageNote";
 import { signalProblem, type MeterStatus } from "../signal/status";
 import { showToast } from "../lib/toast";
 import { fmtSec1 } from "../data/format";
@@ -11,8 +12,11 @@ import { promptFor, promptInstruction } from "../data/plan";
 import { finishRound } from "../data/rounds";
 import { LEVEL_LABEL } from "../data/schema";
 import { useActiveChild } from "../data/store";
+import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
-import { BALLOONS_PER_ROUND, BalloonGame } from "../logic/balloon";
+import { BALLOONS_PER_ROUND, BalloonGame, type BalloonState } from "../logic/balloon";
+import { stageMode, useGfx } from "../three/gfx";
+import { World3D } from "../three/World3D";
 import { useGameRuntime } from "./useGameRuntime";
 
 /** Sky mapping: height 1 → 8% from top, height 0 → 84%. */
@@ -20,9 +24,36 @@ const SKY_TOP = 8;
 const SKY_BOTTOM = 84;
 const yFor = (h: number) => SKY_BOTTOM - h * (SKY_BOTTOM - SKY_TOP);
 
+/** The original 2D sky, kept as the fallback when 3D is unavailable or switched off. */
+function Balloon2D({ s, thr }: { s: BalloonState; thr: number }) {
+  const zoneTop = yFor(1);
+  const zoneBottom = yFor(thr / 100);
+  return (
+    <div className="stage2d">
+      <div className="balloon__cloud balloon__cloud--a" aria-hidden="true" />
+      <div className="balloon__cloud balloon__cloud--b" aria-hidden="true" />
+      <div className="balloon__cloud balloon__cloud--c" aria-hidden="true" />
+      <div className="balloon__zone" style={{ top: `${zoneTop}%`, height: `${zoneBottom - zoneTop}%` }}>
+        <span className="balloon__zonelabel">
+          โซนเป้าหมาย
+          <br />
+          ออกปาก ≥ {thr}%
+        </span>
+      </div>
+      <div className="balloon__craft" style={{ top: `${yFor(s.height)}%` }} aria-hidden="true">
+        <HotAirBalloon size={64} />
+      </div>
+      <div className="balloon__ground" aria-hidden="true" />
+    </div>
+  );
+}
+
 export function BalloonScreen() {
   const child = useActiveChild();
   const plan = child.plan;
+  const reduced = useReducedMotion();
+  const mode = stageMode(useGfx());
+  const zoneLabel = useRef<HTMLSpanElement>(null);
   const startedAt = useRef(new Date().toISOString());
   const [popAt, setPopAt] = useState(0);
   const wordIndex = useRef(0);
@@ -97,30 +128,36 @@ export function BalloonScreen() {
     save(true);
   };
 
-  const zoneTop = yFor(1);
-  const zoneBottom = yFor(thr / 100);
   const ring = Math.min(1, s.holdMs / game.cfg.holdMs);
+  const is3d = mode.kind === "3d";
 
   return (
     <div className="kid-screen kid-screen--game">
       <div className="kid-frame" inert={rt.paused !== null || rt.ended ? true : undefined}>
         <GameHud title="บอลลูนลอยสูง" sub={`ด่านที่ ${plan.level} · ${LEVEL_LABEL[plan.level]}`} stars={s.stars} onPause={() => rt.pause("user")} />
         <PromptCard label={promptInstruction("balloon", plan.level)} word={word} />
-        <div className={`stage stage--balloon${frame.valid ? "" : " is-frozen"}${s.inZone ? " is-inzone" : ""}`}>
-          <div className="balloon__cloud balloon__cloud--a" aria-hidden="true" />
-          <div className="balloon__cloud balloon__cloud--b" aria-hidden="true" />
-          <div className="balloon__cloud balloon__cloud--c" aria-hidden="true" />
-          <div className="balloon__zone" style={{ top: `${zoneTop}%`, height: `${zoneBottom - zoneTop}%` }}>
-            <span className="balloon__zonelabel">
-              โซนเป้าหมาย
-              <br />
-              ออกปาก ≥ {thr}%
-            </span>
-          </div>
-          <div className="balloon__craft" style={{ top: `${yFor(s.height)}%` }} aria-hidden="true">
-            <HotAirBalloon size={64} />
-          </div>
-          <div className="balloon__ground" aria-hidden="true" />
+        <div className={`stage stage--balloon${is3d ? " stage--3d" : ""}${frame.valid ? "" : " is-frozen"}${s.inZone ? " is-inzone" : ""}`}>
+          {is3d ? (
+            <>
+              <World3D
+                kind="balloon"
+                tier={mode.tier}
+                active={rt.paused === null}
+                reduced={reduced}
+                gameRef={rt.gameRef}
+                frameRef={rt.frameRef}
+                threshold={thr}
+                labelRef={zoneLabel}
+              />
+              <span ref={zoneLabel} className="balloon__zonelabel3d">
+                โซนเป้าหมาย
+                <br />
+                ออกปาก ≥ {thr}%
+              </span>
+            </>
+          ) : (
+            <Balloon2D s={s} thr={thr} />
+          )}
           <div className="stage__pill stage__pill--tl balloon__count" aria-label={`บอลลูนลูกที่ ${Math.min(s.completed + 1, game.cfg.balloonsPerRound)} จาก ${game.cfg.balloonsPerRound}`}>
             {Array.from({ length: game.cfg.balloonsPerRound }, (_, i) => (
               <span key={i} className={`balloon__dot${i < s.completed ? " is-done" : i === s.completed ? " is-current" : ""}`} />
@@ -159,6 +196,7 @@ export function BalloonScreen() {
             </div>
           ) : null}
         </div>
+        <StageNote mode={mode} />
         <Meter primary="oral" frame={frame} threshold={thr} thresholdLabel={`เกณฑ์ ${thr}%`} status={status} />
         <p className="kid-note">
           <Icon name="clock" size={16} /> เวลาเป็นแบบสะสม: นับเฉพาะตอนมีเสียงและบอลลูนอยู่ในโซน หลุดโซนแล้วไม่เริ่มใหม่

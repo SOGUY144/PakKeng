@@ -2,6 +2,9 @@ import { useEffect, type ReactNode } from "react";
 import { mockSource, useConnection, useMockParams } from "../signal/mock";
 import type { SpeechMode, ValuePattern } from "../signal/MockSignalSource";
 import { renderDelayStats } from "../signal/latency";
+import { useMotionPref } from "../lib/hooks";
+import { setMotionPref, type MotionPref } from "../lib/motion";
+import { setGfxPref, stageMode, TIER_LABEL, useGfx, type GfxPref, type GfxState } from "../three/gfx";
 import { Icon } from "./Icon";
 
 interface DemoPanelProps {
@@ -23,6 +26,30 @@ const PATTERNS: { id: ValuePattern; label: string }[] = [
   { id: "oscillate", label: "แกว่งใกล้เกณฑ์" },
 ];
 
+const GFX: { id: GfxPref; label: string }[] = [
+  { id: "auto", label: "อัตโนมัติ" },
+  { id: "high", label: "3D สูง" },
+  { id: "low", label: "3D ประหยัด" },
+  { id: "2d", label: "2D" },
+];
+
+const MOTION: { id: MotionPref; label: string }[] = [
+  { id: "system", label: "ตามเครื่อง" },
+  { id: "reduce", label: "ลดลง" },
+  { id: "full", label: "เต็ม" },
+];
+
+function gfxText(g: GfxState): string {
+  const mode = stageMode(g);
+  if (mode.kind === "2d") {
+    return mode.reason === "pref" ? "แสดงแบบ 2D" : mode.reason === "no-webgl" ? "เบราว์เซอร์นี้ไม่มี WebGL → 2D" : `${mode.message ?? "3D มีปัญหา"} → 2D`;
+  }
+  const st = g.stats;
+  const tier = `3D ระดับ${TIER_LABEL[mode.tier]}${g.pref === "auto" ? " (เลือกอัตโนมัติ)" : ""}`;
+  if (!st) return `${tier} · กำลังวัดเฟรม…`;
+  return `${tier} · ${st.fps} fps · ${st.calls} draw calls · ${(st.triangles / 1000).toFixed(1)}k สามเหลี่ยม · pixel ratio ${st.dpr}`;
+}
+
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
   return t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "SUMMARY", "A"].includes(t.tagName);
@@ -31,6 +58,8 @@ function isTypingTarget(t: EventTarget | null): boolean {
 export function DemoPanel({ target, hint, children }: DemoPanelProps) {
   const params = useMockParams();
   const conn = useConnection();
+  const gfx = useGfx();
+  const motion = useMotionPref();
   const oscCenter = target.kind === "oral" ? target.threshold : 100 - target.threshold;
 
   useEffect(() => {
@@ -181,6 +210,28 @@ export function DemoPanel({ target, hint, children }: DemoPanelProps) {
           <span className="demo__meta">
             สถานะ: {conn === "connected" ? "เชื่อมต่อแล้ว" : conn === "connecting" ? "กำลังเชื่อมต่อ…" : "ขาดการเชื่อมต่อ"}
           </span>
+        </div>
+        <div className="demo__group">
+          <span className="demo__label">ภาพฉากเกม</span>
+          <div className="seg" role="group" aria-label="ภาพฉากเกม">
+            {GFX.map((o) => (
+              <button key={o.id} type="button" className="seg__btn" aria-pressed={gfx.pref === o.id} onClick={() => setGfxPref(o.id)}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <span className="demo__meta">{gfxText(gfx)}</span>
+        </div>
+        <div className="demo__group">
+          <span className="demo__label">ภาพเคลื่อนไหว</span>
+          <div className="seg" role="group" aria-label="ภาพเคลื่อนไหว">
+            {MOTION.map((o) => (
+              <button key={o.id} type="button" className="seg__btn" aria-pressed={motion === o.id} onClick={() => setMotionPref(o.id)}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <span className="demo__meta">“ตามเครื่อง” ใช้ค่าลดการเคลื่อนไหวของระบบปฏิบัติการ</span>
         </div>
         <button type="button" className="btn btn--secondary btn--sm" onClick={() => mockSource.reset()}>
           <Icon name="refresh" size={16} /> รีเซ็ตเครื่องมือเดโม

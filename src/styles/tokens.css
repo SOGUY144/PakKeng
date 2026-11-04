@@ -110,11 +110,10 @@
   --tap-lg: 56px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --dur-1: 1ms;
-    --dur-2: 1ms;
-    --dur-3: 1ms;
-    --ease-spring: linear;
-  }
+/* data-motion is set from prefers-reduced-motion (or the demo override) by src/lib/motion.ts */
+:root[data-motion="reduce"] {
+  --dur-1: 1ms;
+  --dur-2: 1ms;
+  --dur-3: 1ms;
+  --ease-spring: linear;
 }

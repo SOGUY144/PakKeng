@@ -140,6 +140,13 @@
   margin-top: 8px;
 }
 
+.avatar > img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .home-head__hello {
   font-size: var(--fs-small);
   color: var(--ink-3);
@@ -328,6 +335,26 @@
   aspect-ratio: 120 / 84;
 }
 
+/* images rendered from the 3D models have transparent skies: each card gets its world's sky */
+.game-card__thumb > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-card__thumb--runner {
+  background: linear-gradient(180deg, #fbe4ee 0%, #fff0df 60%);
+}
+
+.game-card__thumb--balloon {
+  background: linear-gradient(180deg, #fff3df 0%, #fff8ea 60%, #eef3dd 100%);
+}
+
+.game-card__thumb--frog {
+  background: linear-gradient(180deg, #fbe4ee 0%, #fff0df 40%);
+}
+
 .game-card__lock {
   position: absolute;
   inset: 0;
@@ -399,6 +426,13 @@
   place-items: center;
   width: 40px;
   height: 40px;
+}
+
+.collect__icon > img,
+.unlock__icon > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .collect__name {
@@ -684,6 +718,114 @@
   filter: saturate(0.4) opacity(0.8);
 }
 
+/* ---------- Stage: 3D canvas / 2D fallback ---------- */
+.stage2d {
+  position: absolute;
+  inset: 0;
+}
+
+.stage.stage--3d {
+  /* warm pastel sky behind the transparent canvas (blue stays reserved for oral values) */
+  background: linear-gradient(180deg, #fbe4ee 0%, #fff0df 46%, #f7f0de 72%, #eef2db 100%);
+}
+
+/* result: short celebration with the character of the game just played */
+.result__scene {
+  position: relative;
+  height: 168px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: linear-gradient(180deg, #fbe4ee 0%, #fff0df 55%, #f6f1df 100%);
+}
+
+.result__scene--balloon {
+  background: linear-gradient(180deg, #fff3df 0%, #fff8ea 60%, #eef3dd 100%);
+}
+
+.result__scene > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* balloon: a cream sky (no pink) so the blue target zone reads as blue */
+.stage.stage--3d.stage--balloon {
+  background: linear-gradient(180deg, #fff3df 0%, #fff8ea 50%, #f3f5e2 78%, #e9f1d8 100%);
+}
+
+.balloon__zonelabel3d {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  visibility: hidden; /* shown once the 3D scene has placed it beside the threshold ring */
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--oral);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--oral-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.stage3d canvas {
+  display: block;
+  transition: filter var(--dur-2);
+}
+
+.stage.is-frozen .stage3d canvas {
+  filter: saturate(0.45) brightness(0.98);
+}
+
+.stage3d__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--sp-2);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.stage3d__spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(43, 36, 51, 0.15);
+  border-top-color: var(--ink-2);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.kid-note--stage {
+  margin-top: var(--sp-2);
+}
+
+.runner__distpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.runner__distswatch {
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(37, 99, 235, 0.35);
+  border: 1.5px solid var(--oral);
+}
+
 @keyframes bob {
   0%,
   100% {
@@ -825,6 +967,10 @@
 /* ---------- Gate ---------- */
 .stage--gate {
   background: var(--grass);
+}
+
+.stage--3d.stage--gate::before {
+  content: none;
 }
 
 .stage--gate::before {
@@ -2235,19 +2381,21 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .runner__stars,
-  .runner__hero.is-running > svg,
-  .runner__chaser.is-floating > svg,
-  .balloon__cloud,
-  .btn.is-ready,
-  .result__star.is-on,
-  .frog__inner.is-hopping {
-    animation: none;
-  }
-  .frog__world,
-  .frog__frog,
-  .gate__hero {
-    transition: none;
-  }
+/* reduced motion (OS setting or demo override → html[data-motion="reduce"], see src/lib/motion.ts) */
+[data-motion="reduce"] .runner__stars,
+[data-motion="reduce"] .runner__hero.is-running > svg,
+[data-motion="reduce"] .runner__chaser.is-floating > svg,
+[data-motion="reduce"] .balloon__cloud,
+[data-motion="reduce"] .btn.is-ready,
+[data-motion="reduce"] .result__star.is-on,
+[data-motion="reduce"] .frog__inner.is-hopping,
+[data-motion="reduce"] .stage__pop,
+[data-motion="reduce"] .stage3d__spinner {
+  animation: none;
+}
+
+[data-motion="reduce"] .frog__world,
+[data-motion="reduce"] .frog__frog,
+[data-motion="reduce"] .gate__hero {
+  transition: none;
 }

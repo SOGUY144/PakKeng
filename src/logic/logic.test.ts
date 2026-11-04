@@ -183,6 +183,27 @@ describe("RunnerGame", () => {
     expect(g.currentPrompt()).toBe("ตา");
   });
 
+  it("acts continuously: more oral pushes the chaser back faster and runs faster", () => {
+    const lo = make();
+    const hi = make();
+    run(lo, [say(800, 74)]);
+    run(hi, [say(800, 95)]);
+    expect(hi.state.gap).toBeGreaterThan(lo.state.gap);
+    expect(hi.state.speed).toBeGreaterThan(lo.state.speed);
+    const near = make();
+    const far = make();
+    run(near, [say(1500, 66)]);
+    run(far, [say(1500, 40)]);
+    expect(far.state.gap).toBeLessThan(near.state.gap);
+    expect(near.state.gap).toBeLessThan(make().state.gap);
+  });
+
+  it("freezes the decorative speed while data is unusable", () => {
+    const g = make();
+    run(g, [say(600, 90), { ms: 1500, nasal: 10, speech: true, conn: "disconnected" }]);
+    expect(g.state.speed).toBeLessThan(0.01);
+  });
+
   it("finishes after the configured number of attempts", () => {
     const g = make();
     const phases: Phase[] = [];

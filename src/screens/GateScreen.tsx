@@ -4,16 +4,50 @@ import { DemoPanel } from "../components/DemoPanel";
 import { GameHud, PauseOverlay, PromptCard } from "../components/GameParts";
 import { Icon } from "../components/Icon";
 import { Meter } from "../components/Meter";
+import { StageNote } from "../components/StageNote";
 import { signalProblem, type MeterStatus } from "../signal/status";
+import { outfitFor, totalStars } from "../data/analytics";
 import { finishRound, getPendingRunner, summarizeGate } from "../data/rounds";
-import { useActiveChild } from "../data/store";
+import { useActiveChild, useDB } from "../data/store";
+import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
-import { GATE_OPEN_MS, GATE_SKIP_AFTER, GateGame } from "../logic/gate";
+import { GATE_OPEN_MS, GATE_SKIP_AFTER, GateGame, type GateState } from "../logic/gate";
+import { stageMode, useGfx } from "../three/gfx";
+import { World3D } from "../three/World3D";
 import { useGameRuntime } from "./useGameRuntime";
+
+/** The original 2D gate, kept as the fallback when 3D is unavailable or switched off. */
+function Gate2D({ s }: { s: GateState }) {
+  return (
+    <div className="stage2d">
+      <div className="gate__wall" aria-hidden="true">
+        <div className="gate__arch">
+          <div className="gate__beyond" />
+          <div className="gate__door gate__door--l" style={{ transform: `translateX(${-s.progress * 100}%)` }}>
+            <DoorPanel side="left" />
+          </div>
+          <div className="gate__door gate__door--r" style={{ transform: `translateX(${s.progress * 100}%)` }}>
+            <DoorPanel side="right" />
+          </div>
+          {s.progress > 0.12 && !s.open ? <span className="gate__gaplabel">ช่องที่เปิดแล้ว</span> : null}
+        </div>
+      </div>
+      <div className="gate__hero" aria-hidden="true">
+        <Bunny size={50} cap />
+      </div>
+      <div className="gate__chaser" aria-hidden="true">
+        <CloudPal size={58} />
+      </div>
+    </div>
+  );
+}
 
 export function GateScreen() {
   const child = useActiveChild();
+  const db = useDB();
   const plan = child.plan;
+  const reduced = useReducedMotion();
+  const mode = stageMode(useGfx());
   const pending = useMemo(() => getPendingRunner(child.id), [child.id]);
   const startedAt = useRef(pending?.startedAt ?? new Date().toISOString());
   const word = plan.nasalWords[0] ?? "มา";
@@ -65,25 +99,20 @@ export function GateScreen() {
       <div className="kid-frame" inert={rt.paused !== null ? true : undefined}>
         <GameHud title="ด่านประตู" sub="เสียงนาสิก" stars={stars} onPause={() => rt.pause("user")} />
         <PromptCard label="ประตูนี้เปิดด้วยเสียงที่ก้องออกจมูก" word={prompt} sub={pending ? undefined : "เล่นด่านนี้เดี่ยว ๆ (ไม่มีรอบวิ่งหนีก่อนหน้า)"} />
-        <div className={`stage stage--gate${s.open ? " is-open" : ""}`}>
-          <div className="gate__wall" aria-hidden="true">
-            <div className="gate__arch">
-              <div className="gate__beyond" />
-              <div className="gate__door gate__door--l" style={{ transform: `translateX(${-s.progress * 100}%)` }}>
-                <DoorPanel side="left" />
-              </div>
-              <div className="gate__door gate__door--r" style={{ transform: `translateX(${s.progress * 100}%)` }}>
-                <DoorPanel side="right" />
-              </div>
-              {s.progress > 0.12 && !s.open ? <span className="gate__gaplabel">ช่องที่เปิดแล้ว</span> : null}
-            </div>
-          </div>
-          <div className="gate__hero" aria-hidden="true">
-            <Bunny size={50} cap />
-          </div>
-          <div className="gate__chaser" aria-hidden="true">
-            <CloudPal size={58} />
-          </div>
+        <div className={`stage stage--gate${mode.kind === "3d" ? " stage--3d" : ""}${s.open ? " is-open" : ""}${frame.valid ? "" : " is-frozen"}`}>
+          {mode.kind === "3d" ? (
+            <World3D
+              kind="gate"
+              tier={mode.tier}
+              active={rt.paused === null}
+              reduced={reduced}
+              gameRef={rt.gameRef}
+              frameRef={rt.frameRef}
+              outfit={outfitFor(totalStars(db, child))}
+            />
+          ) : (
+            <Gate2D s={s} />
+          )}
           <div className="pill stage__pill stage__pill--tr gate__pill">
             <span>ประตูเปิด {pct}%</span>
             <span className="gate__pillbar" aria-hidden="true">
@@ -96,6 +125,7 @@ export function GateScreen() {
             </div>
           ) : null}
         </div>
+        <StageNote mode={mode} />
         <Meter primary="nasal" frame={frame} threshold={thr} thresholdLabel={`โซนเป้าหมาย ≥ ${thr}%`} status={status} />
         <div className="kid-actions">
           <button
