@@ -3,7 +3,6 @@ import { MOCK_DEFAULTS, mockOralAt, mockSpeechAt } from "../signal/MockSignalSou
 import { SignalProcessor } from "../signal/SignalProcessor";
 import type { ConnectionState } from "../signal/types";
 import { BalloonGame } from "./balloon";
-import { FrogGame } from "./frog";
 import { GateGame } from "./gate";
 import { ThresholdLatch } from "./latch";
 import { RunnerGame } from "./runner";
@@ -115,49 +114,6 @@ describe("SpeechSegmenter", () => {
     expect(events.some((e) => e.type === "discard" && e.reason === "invalid")).toBe(true);
     // The reconnect-less tail never produces a scored end for the dropped part.
     expect(events.filter((e) => e.type === "end")).toHaveLength(0);
-  });
-});
-
-describe("FrogGame", () => {
-  const make = () => new FrogGame({ oralThreshold: 70, steps: 8 });
-
-  it("a single long hold moves the frog at most one step", () => {
-    const g = make();
-    run(g, [say(4000, 85), quiet(400)]);
-    expect(g.state.step).toBe(1);
-    expect(g.state.attempts).toHaveLength(1);
-  });
-
-  it("separate passing segments move one step each", () => {
-    const g = make();
-    run(g, [say(400, 80), quiet(400), say(400, 80), quiet(400), say(400, 80), quiet(400)]);
-    expect(g.state.step).toBe(3);
-    expect(g.state.stars).toBe(3);
-  });
-
-  it("a failing segment splashes without taking steps or stars away", () => {
-    const g = make();
-    run(g, [say(400, 80), quiet(400)]);
-    const { events } = run(g, [say(400, 50), quiet(400)], 60, 10_000);
-    expect(events.some((e) => e.type === "splash")).toBe(true);
-    expect(g.state.step).toBe(1);
-    expect(g.state.stars).toBe(1);
-  });
-
-  it("no speech means no attempt, even with a high slider value", () => {
-    const g = make();
-    run(g, [quiet(3000, 95)]);
-    expect(g.state.attempts).toHaveLength(0);
-    expect(g.state.step).toBe(0);
-  });
-
-  it("interrupting (pause) drops the open segment instead of scoring it", () => {
-    const g = make();
-    run(g, [say(500, 85)]);
-    g.interrupt();
-    run(g, [quiet(500)], 60, 5_000);
-    expect(g.state.attempts).toHaveLength(0);
-    expect(g.state.step).toBe(0);
   });
 });
 

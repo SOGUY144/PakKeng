@@ -1,10 +1,11 @@
 import type { Attempt } from "../logic/common";
 import { totals } from "../logic/common";
+import { callGroupNasal } from "./callWords";
 import { addSession } from "./store";
-import type { BalloonSummary, Child, FrogSummary, GameId, GateSummary, Session } from "./schema";
+import type { BalloonSummary, CallSummary, Child, FrogSummary, GameId, GateSummary, RoundChoice, Session } from "./schema";
 
 /**
- * Hand-off between screens of one round (วิ่งหนี → ด่านประตู → สรุป).
+ * Hand-off between screens of one round (เลือกทางวิ่ง → ด่านประตู → สรุป).
  * Kept in sessionStorage so a refresh on the gate does not lose the runner part.
  */
 const PENDING_KEY = "nasal-trainer-demo:pending-runner";
@@ -61,13 +62,18 @@ interface FinishArgs {
   gate?: GateSummary | null;
   balloon?: BalloonSummary | null;
   frog?: FrogSummary | null;
+  call?: CallSummary | null;
+  choice?: RoundChoice | null;
   endedEarly?: boolean;
 }
+
+const round1 = (v: number | null) => (v === null ? null : Math.round(v * 10) / 10);
 
 /** Save a finished demo round as a session the dashboard can read, and remember it for the result screen. */
 export function finishRound(a: FinishArgs): Session {
   const t = totals(a.attempts);
   const p = a.child.plan;
+  const call = a.call ?? null;
   const session: Session = {
     id: `d-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`,
     childId: a.child.id,
@@ -76,16 +82,18 @@ export function finishRound(a: FinishArgs): Session {
     durationSec: Math.round(a.practiceMs / 1000),
     game: a.game,
     rounds: 1,
-    words: [...p.words],
+    words: call ? call.words.map((w) => w.word) : [...p.words],
     level: p.level,
     oralThreshold: p.oralThreshold,
     gateThreshold: p.gateThreshold,
-    attempts: t.attempts,
-    passed: t.passed,
-    meanNasalOral: t.meanNasal === null ? null : Math.round(t.meanNasal * 10) / 10,
+    attempts: call ? call.words.reduce((n, w) => n + w.attempts, 0) : t.attempts,
+    passed: call ? call.words.reduce((n, w) => n + w.usable, 0) : t.passed,
+    meanNasalOral: call ? round1(callGroupNasal(call, "oral").mean) : round1(t.meanNasal),
     gate: a.gate ?? null,
     balloon: a.balloon ?? null,
     frog: a.frog ?? null,
+    call,
+    choice: a.choice ?? null,
     stars: a.stars,
     endedEarly: a.endedEarly ?? false,
   };

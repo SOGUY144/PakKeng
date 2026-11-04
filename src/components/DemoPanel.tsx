@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
-import { mockSource, useConnection, useMockParams } from "../signal/mock";
-import type { SpeechMode, ValuePattern } from "../signal/MockSignalSource";
+import { isPlaying, subscribePlaying } from "../lib/speech";
+import { mockSource, switchToDemo, useConnection, useMockParams, useSignalSource } from "../signal/mock";
+import type { MicChannels, SpeechMode, ValuePattern, VoiceLevel } from "../signal/MockSignalSource";
 import { renderDelayStats } from "../signal/latency";
 import { useMotionPref } from "../lib/hooks";
 import { setMotionPref, type MotionPref } from "../lib/motion";
@@ -24,6 +25,18 @@ const PATTERNS: { id: ValuePattern; label: string }[] = [
   { id: "manual", label: "ตามแถบเลื่อน" },
   { id: "ramp", label: "ค่อย ๆ เปลี่ยน" },
   { id: "oscillate", label: "แกว่งใกล้เกณฑ์" },
+];
+
+const LEVELS: { id: VoiceLevel; label: string }[] = [
+  { id: "normal", label: "ปกติ" },
+  { id: "quiet", label: "เบาเกินไป" },
+  { id: "loud", label: "ดังจนล้น" },
+];
+
+const CHANNELS: { id: MicChannels; label: string }[] = [
+  { id: "both", label: "ครบสองช่อง" },
+  { id: "nasal-missing", label: "ไมค์บน (จมูก) หลุด" },
+  { id: "oral-missing", label: "ไมค์ล่าง (ปาก) หลุด" },
 ];
 
 const GFX: { id: GfxPref; label: string }[] = [
@@ -55,7 +68,25 @@ function isTypingTarget(t: EventTarget | null): boolean {
   return t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "SUMMARY", "A"].includes(t.tagName);
 }
 
-export function DemoPanel({ target, hint, children }: DemoPanelProps) {
+export function DemoPanel(props: DemoPanelProps) {
+  const src = useSignalSource();
+  if (src.kind !== "mock") {
+    return (
+      <aside className="demo" aria-label="เครื่องมือเดโม">
+        <div className="demo__head">
+          <span className="demo__title">ใช้อุปกรณ์จริงอยู่ (ESP32)</span>
+        </div>
+        <p className="demo__hint">เครื่องมือจำลองสัญญาณปิดอยู่ ค่าทั้งหมดมาจากอุปกรณ์</p>
+        <button type="button" className="btn btn--secondary btn--sm" onClick={switchToDemo}>
+          กลับไปโหมดสาธิต
+        </button>
+      </aside>
+    );
+  }
+  return <MockControls {...props} />;
+}
+
+function MockControls({ target, hint, children }: DemoPanelProps) {
   const params = useMockParams();
   const conn = useConnection();
   const gfx = useGfx();
@@ -65,6 +96,15 @@ export function DemoPanel({ target, hint, children }: DemoPanelProps) {
   useEffect(() => {
     mockSource.setParams({ oscillateCenter: oscCenter });
   }, [oscCenter]);
+
+  // "Speaker leaks into the mics" demo: follow the example player so the leak lasts exactly as long as playback.
+  useEffect(
+    () =>
+      subscribePlaying(() => {
+        mockSource.setParams({ speaker: isPlaying() });
+      }),
+    [],
+  );
 
   // Space = hold to speak (ignored while typing or when a control has focus).
   useEffect(() => {
@@ -211,6 +251,30 @@ export function DemoPanel({ target, hint, children }: DemoPanelProps) {
             สถานะ: {conn === "connected" ? "เชื่อมต่อแล้ว" : conn === "connecting" ? "กำลังเชื่อมต่อ…" : "ขาดการเชื่อมต่อ"}
           </span>
         </div>
+        <div className="demo__group">
+          <span className="demo__label">ความดังเสียงที่ไมค์ (จำลอง)</span>
+          <div className="seg" role="group" aria-label="ความดังเสียงที่ไมค์ (จำลอง)">
+            {LEVELS.map((o) => (
+              <button key={o.id} type="button" className="seg__btn" aria-pressed={params.level === o.id} onClick={() => mockSource.setParams({ level: o.id })}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="demo__group">
+          <span className="demo__label">ช่องไมค์ (จำลอง)</span>
+          <div className="seg seg--wrap" role="group" aria-label="ช่องไมค์ (จำลอง)">
+            {CHANNELS.map((o) => (
+              <button key={o.id} type="button" className="seg__btn" aria-pressed={params.channels === o.id} onClick={() => mockSource.setParams({ channels: o.id })}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="demo__check">
+          <input type="checkbox" checked={params.leak} onChange={(e) => mockSource.setParams({ leak: e.target.checked })} />
+          จำลองเสียงลำโพงรั่วเข้าไมค์ระหว่างเล่นเสียงตัวอย่าง (เกมต้องไม่นับ)
+        </label>
         <div className="demo__group">
           <span className="demo__label">ภาพฉากเกม</span>
           <div className="seg" role="group" aria-label="ภาพฉากเกม">

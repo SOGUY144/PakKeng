@@ -106,6 +106,13 @@ const PATHS: Record<string, ReactElement> = {
   wave: <path d="M3 12h2l2-5 3 10 3-12 3 10 2-3h3" />,
   flag: <path d="M6 21V4m0 1h11l-2 4 2 4H6" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  ear: (
+    <>
+      <path d="M7.5 9.5a4.5 4.5 0 019 0c0 2.6-1.8 3.6-2.6 5-.8 1.5-.6 4-3 4a2.4 2.4 0 01-2.4-2.4" />
+      <path d="M10 9.6a2 2 0 014 0c0 1.2-1 1.6-1.4 2.4" />
+    </>
+  ),
+  skip: <path d="M5 6l6 6-6 6M13 6l6 6-6 6" />,
   trash: <path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13" />,
   save: <path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6" />,
 };

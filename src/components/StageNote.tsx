@@ -1,13 +1,20 @@
-import { retry3D, type StageMode } from "../three/gfx";
+import { retry3D, setGfxPref, type StageMode } from "../three/gfx";
 import { Icon } from "./Icon";
 
 /** Tells the player plainly why the scene is shown in 2D (no blank stage, no silent downgrade). */
 export function StageNote({ mode }: { mode: StageMode }) {
   if (mode.kind === "3d") return null;
   if (mode.reason === "pref") {
+    // 2D was chosen on this device earlier: offer 3D plainly; the new choice is remembered the same way.
     return (
       <p className="kid-note kid-note--stage">
-        <Icon name="info" size={16} /> แสดงภาพแบบ 2D ตามที่เลือกในเครื่องมือเดโม
+        <Icon name="info" size={16} />
+        <span>
+          แสดงภาพแบบ 2D ตามที่เลือกไว้ในเครื่องนี้{" "}
+          <button type="button" className="link-btn" onClick={() => setGfxPref("auto")}>
+            ลองฉาก 3D
+          </button>
+        </span>
       </p>
     );
   }

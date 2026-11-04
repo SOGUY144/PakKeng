@@ -1,3 +1,4 @@
+import { CALL_WORDS, DEFAULT_CALL_WORDS } from "./callWords";
 import type { GameId, Level, Plan } from "./schema";
 
 /** ค่าเริ่มต้นของเดโม (ไม่ใช่เกณฑ์มาตรฐานสำหรับเด็กทุกคน) — แก้ได้ที่แดชบอร์ด */
@@ -11,6 +12,7 @@ export const DEFAULT_PLAN: Omit<Plan, "updatedAt"> = {
   level: 3,
   games: { runner: true, balloon: true, frog: true },
   gateEnabled: true,
+  callWords: [...DEFAULT_CALL_WORDS],
 };
 
 export const PLAN_LIMITS = {
@@ -31,6 +33,7 @@ export type PlanDraft = {
   level: Level;
   games: Record<GameId, boolean>;
   gateEnabled: boolean;
+  callWords: string[];
 };
 
 export type PlanErrors = Partial<Record<keyof PlanDraft, string>>;
@@ -46,6 +49,7 @@ export function planToDraft(p: Plan): PlanDraft {
     level: p.level,
     games: { ...p.games },
     gateEnabled: p.gateEnabled,
+    callWords: [...(p.callWords ?? DEFAULT_CALL_WORDS)],
   };
 }
 
@@ -90,6 +94,8 @@ export function validatePlan(d: PlanDraft): { ok: true; plan: Omit<Plan, "update
 
   if (!d.games.runner && !d.games.balloon && !d.games.frog) errors.games = "เปิดอย่างน้อย 1 เกม";
   if (![1, 2, 3].includes(d.level)) errors.level = "เลือกด่าน";
+  const callWords = CALL_WORDS.map((w) => w.id).filter((id) => d.callWords.includes(id));
+  if (d.games.frog && callWords.length < 1) errors.callWords = "เปิดกบข้ามบึงอยู่ ต้องเลือกคำเรียกเพื่อนอย่างน้อย 1 คำ";
 
   if (Object.keys(errors).length > 0) return { ok: false, errors };
   return {
@@ -104,6 +110,7 @@ export function validatePlan(d: PlanDraft): { ok: true; plan: Omit<Plan, "update
       level: d.level,
       games: { ...d.games },
       gateEnabled: d.gateEnabled,
+      callWords,
     },
   };
 }
@@ -124,7 +131,7 @@ export function promptFor(word: string, level: Level): string {
 }
 
 export function promptInstruction(game: GameId, level: Level): string {
-  if (game === "frog") return "พูดทีละพยางค์ แล้วหยุดสั้น ๆ";
+  if (game === "frog") return "ฟังคำ แล้วเรียกเพื่อน";
   if (game === "balloon") return "พูดลากเสียงค้างไว้ ให้บอลลูนอยู่ในโซน";
   if (level === 1) return "พูดคำนี้ ลากเสียงให้ยาว";
   if (level === 2) return "พูดคำนี้ หนึ่งครั้ง";

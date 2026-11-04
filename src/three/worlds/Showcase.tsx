@@ -9,6 +9,7 @@ import { Bunny } from "../models/Bunny";
 import { CloudPal } from "../models/CloudPal";
 import { bunnyDrive, cloudDrive, type BunnyPose } from "../models/drives";
 import { Frog, type FrogPose } from "../models/Frog";
+import { Friend, type FriendKind, type FriendPose } from "../models/Friends";
 import { C } from "../palette";
 import { BlobShadow, Burst, Field, FitCamera, Lights, type BurstFire, type Placement } from "../parts";
 import * as S from "../shapes";
@@ -138,16 +139,37 @@ export type StudioSubject =
   | "item-cap"
   | "item-shoes"
   | "item-scarf"
-  | "item-crown";
+  | "item-crown"
+  | `friend-${FriendKind}`
+  | `friend-${FriendKind}-back`;
 
-/** Still subjects rendered once (dev tool) into the images used by Home and Result. */
+/** Still subjects rendered once (dev tool) into the images used by Home, Result and the call-a-friend cards. */
 export function StudioScene({ subject }: { subject: StudioSubject }) {
   const kit = useKit();
   const bunny = useRef(bunnyDrive({ pose: subject === "thumb-runner" ? "run" : "stand", speed: 1.3, boost: true }));
   const ride = useRef(bunnyDrive({ pose: "ride" }));
   const cloud = useRef(cloudDrive({ reduced: true }));
   const frogPose = useRef<FrogPose>({ crouch: false, airborne: false, land: 0, reduced: true });
+  const friendPose = useRef<FriendPose>({ listening: false, happy: 0, asking: 0, reduced: true });
   const lights = <Lights tier="high" sun={[-3, 7, 6]} box={4} intensity={2.5} />;
+  const friend = /^friend-(crab|dog|fish|bird|turtle)(-back)?$/.exec(subject);
+  if (friend) {
+    const kind = friend[1] as FriendKind;
+    return (
+      <group dispose={null}>
+        {lights}
+        <FitCamera target={[0, kind === "fish" ? 0.36 : 0.44, 0]} dir={[0.1, 0.22, 1]} width={1.2} height={1.2} />
+        {kind === "fish" ? (
+          <mesh geometry={kit.geo("studio-pond-small", () => new THREE.CircleGeometry(0.46, 36))} material={kit.clay(C.water, { roughness: 0.3 })} rotation-x={-Math.PI / 2} />
+        ) : (
+          <BlobShadow at={[0, 0, 0]} size={[0.85, 0.75]} />
+        )}
+        <group rotation-y={friend[2] ? Math.PI : 0.12}>
+          <Friend kind={kind} pose={friendPose} />
+        </group>
+      </group>
+    );
+  }
   switch (subject) {
     case "thumb-runner":
       return (

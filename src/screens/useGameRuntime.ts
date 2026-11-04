@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useFrameRender, useGameLoop, useOnHidden } from "../lib/hooks";
 import { recordRenderDelay } from "../signal/latency";
-import { mockSource } from "../signal/mock";
+import { signalSource } from "../signal/mock";
+import { UNKNOWN_QUALITY } from "../signal/quality";
 import { SignalProcessor, type SignalFrame } from "../signal/SignalProcessor";
 
 export const IDLE_FRAME: SignalFrame = {
@@ -11,6 +12,7 @@ export const IDLE_FRAME: SignalFrame = {
   nasalRaw: null,
   nasal: null,
   oral: null,
+  quality: UNKNOWN_QUALITY,
   sampleT: null,
 };
 
@@ -43,7 +45,8 @@ export function useGameRuntime<G extends Interruptible>(
   const render = useFrameRender();
 
   useGameLoop((now, dt) => {
-    const frame = processorRef.current.step(mockSource.latest(), mockSource.connection(), now);
+    const src = signalSource();
+    const frame = processorRef.current.step(src.latest(), src.connection(), now);
     frameRef.current = frame;
     if (frame.valid && frame.sampleT !== null) recordRenderDelay(now - frame.sampleT);
     const done = onFrame(gameRef.current as G, frame, now, dt);

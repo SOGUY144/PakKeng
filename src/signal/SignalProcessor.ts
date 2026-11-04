@@ -1,10 +1,12 @@
+import { frameQuality, UNKNOWN_QUALITY, type FrameQuality } from "./quality";
 import type { ConnectionState, SignalSample } from "./types";
 
-export type FrameStatus = "ok" | "silent" | "stale" | "connecting" | "disconnected";
+/** "channel" = linked and fresh, but one or both mics give no signal — the nasal % is meaningless then. */
+export type FrameStatus = "ok" | "silent" | "stale" | "channel" | "connecting" | "disconnected";
 
 export interface SignalFrame {
   status: FrameStatus;
-  /** Data is usable (link up, fresh, in range). */
+  /** Data is usable (link up, fresh, in range, both mic channels alive). */
   valid: boolean;
   /** valid && speechDetected — the only state in which games may score. */
   speaking: boolean;
@@ -14,6 +16,8 @@ export interface SignalFrame {
   nasal: number | null;
   /** 100 - nasal while speaking, else null. */
   oral: number | null;
+  /** Level / clipping / mic-channel checks of the sample behind this frame. */
+  quality: FrameQuality;
   /** performance.now() of the sample behind this frame (for latency readout). */
   sampleT: number | null;
 }
@@ -53,7 +57,7 @@ export class SignalProcessor {
 
     if (conn !== "connected") {
       this.smooth = null;
-      return { status: conn, valid: false, ...EMPTY, sampleT: sample?.t ?? null };
+      return { status: conn, valid: false, ...EMPTY, quality: UNKNOWN_QUALITY, sampleT: sample?.t ?? null };
     }
     if (
       !sample ||
@@ -63,11 +67,17 @@ export class SignalProcessor {
       now - sample.t > this.staleAfterMs
     ) {
       this.smooth = null;
-      return { status: "stale", valid: false, ...EMPTY, sampleT: sample?.t ?? null };
+      return { status: "stale", valid: false, ...EMPTY, quality: UNKNOWN_QUALITY, sampleT: sample?.t ?? null };
+    }
+    const quality = frameQuality(sample);
+    if (quality.known && quality.channels !== "ok") {
+      // A dead mic makes the ratio read 0% or 100% — never pass that on as a measurement.
+      this.smooth = null;
+      return { status: "channel", valid: false, ...EMPTY, quality, sampleT: sample.t };
     }
     if (!sample.speechDetected) {
       this.smooth = null;
-      return { status: "silent", valid: true, ...EMPTY, sampleT: sample.t };
+      return { status: "silent", valid: true, ...EMPTY, quality, sampleT: sample.t };
     }
 
     // Start each voiced stretch from the raw value so onset feedback is immediate.
@@ -85,6 +95,7 @@ export class SignalProcessor {
       nasalRaw: sample.nasalPercent,
       nasal,
       oral: 100 - nasal,
+      quality,
       sampleT: sample.t,
     };
   }

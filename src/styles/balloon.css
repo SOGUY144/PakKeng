@@ -1,0 +1,444 @@
+/* ---------- Balloon trip (พาบอลลูนไปส่ง) ----------
+   Uses the shared world layout of kid.css (pick / world-frame / world-dock / world-side); only what is specific
+   to the trip lives here: the sky picker, the trip's sky and name tag, the balloon trail, the 2D fallback.
+   Trip colours come from src/data/trips.ts as --trip-* custom properties set on the screen. */
+.kid-screen--balloon {
+  --sky-ink: #3b3266;
+}
+
+/* the 2D note's link reaches 48 px on this screen (quiet buttons and the demo tag are 48 px in kid.css) */
+.kid-screen--balloon .link-btn {
+  min-height: 48px;
+}
+
+/* Picker: "where do the balloons go today?" — postcards on a dawn sky */
+.pick.pick--sky {
+  background:
+    radial-gradient(circle at 84% 11%, rgba(255, 255, 255, 0.8) 0 24px, transparent 25px),
+    radial-gradient(ellipse 120px 30px at 16% 26%, rgba(255, 255, 255, 0.75), transparent 70%),
+    linear-gradient(#efe8ff, #fff4e6 58%, #f2f3dd);
+}
+
+.pick--sky .pick__title,
+.pick--sky .pick__note {
+  color: var(--sky-ink);
+}
+
+.pick-trip {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 8px 10px;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  border-radius: var(--r-xl);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 6px 0 rgba(59, 50, 102, 0.12),
+    var(--shadow-2);
+  color: var(--trip-ink, var(--sky-ink));
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-2);
+}
+
+.pick-trip:hover,
+.pick-trip:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--trip-ink);
+}
+
+.pick-trip:active {
+  transform: translateY(1px);
+}
+
+.pick-trip__pic {
+  display: block;
+  width: 100%;
+}
+
+.pick-trip__pic svg {
+  width: 100%;
+  height: auto;
+}
+
+.pick-trip__name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 600px) {
+  .pick--sky .pick__list > li {
+    width: 200px;
+    max-width: none;
+  }
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .pick--sky .pick__list > li {
+    width: 220px;
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .pick--sky .pick__list > li {
+    width: 240px;
+  }
+}
+
+/* The round: the trip's own sky behind the transparent canvas (no blue: blue means oral values) */
+.stage.stage--balloon.stage--trip {
+  background: linear-gradient(180deg, var(--trip-sky-top) 0%, var(--trip-sky-mid) 55%, var(--trip-sky-low) 100%);
+}
+
+/* Name of the destination; the 3D scene keeps it under the porch (a fixed spot, never over a moving balloon) */
+.balloon-dest {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  visibility: hidden; /* shown once the scene has placed it */
+  padding: 1px 12px;
+  border-radius: var(--r-pill);
+  border: 2px solid #fff;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow-1);
+  color: var(--trip-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.6;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* World bar: one small balloon per balloon of the round (delivered ✓, the one on the pad, still to come) */
+.sky-trail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.sky-trail__balloon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--shadow-1);
+}
+
+.sky-trail__balloon svg {
+  width: 19px;
+  height: 26px;
+}
+
+.sky-trail__balloon.is-current {
+  width: 46px;
+  height: 46px;
+  border-color: var(--listen-gold);
+  box-shadow:
+    0 0 0 3px var(--listen-soft),
+    var(--shadow-1);
+}
+
+.sky-trail__balloon.is-current svg {
+  width: 24px;
+  height: 32px;
+}
+
+.sky-trail__balloon.is-next svg {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.sky-trail__balloon.is-skipped {
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.sky-trail__balloon.is-done {
+  border-color: var(--primary);
+}
+
+.sky-trail__check {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+/* Dock: the balloon of the word (tap = hear the word), with the speaker badge of the pond's dock */
+.dock-glyph.dock-glyph--balloon {
+  position: relative;
+  background: radial-gradient(circle at 50% 60%, #ffffff, var(--trip-sky-low));
+}
+
+.dock-glyph--balloon > svg {
+  width: 46px;
+  height: 62px;
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .dock-glyph--balloon > svg {
+    width: 54px;
+    height: 73px;
+  }
+}
+
+/* Side card (landscape): the destination with the balloons delivered so far, then one row per balloon */
+.trip-side__pic svg,
+.trip-done__pic svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.trip-side__pic {
+  width: 100%;
+  max-width: 240px;
+  margin-inline: auto;
+}
+
+.side-item__pic svg {
+  width: 38px;
+  height: 51px;
+}
+
+.trip-done__pic {
+  width: min(100%, 280px);
+  margin: 0 auto;
+}
+
+/* ---------- 2D fallback: the same trip as flat pictures ---------- */
+.sky2d {
+  --col: 30%;
+  --top: 35%;
+  --base: 9%;
+}
+
+.sky2d__cloud {
+  position: absolute;
+  width: 90px;
+  height: 26px;
+  border-radius: 26px;
+  background: #fff;
+  opacity: 0.9;
+  animation: drift 26s linear infinite;
+}
+
+.sky2d__cloud::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: -14px;
+  width: 38px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.sky2d__cloud--a {
+  top: 24%;
+}
+
+.sky2d__cloud--b {
+  top: 54%;
+  animation-delay: -12s;
+  transform: scale(0.8);
+}
+
+.sky2d__ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 11%;
+  background: var(--grass);
+  border-top: 3px solid var(--grass-deep);
+}
+
+.kid-screen--balloon[data-trip="lighthouse"] .sky2d__ground {
+  background: var(--path);
+  border-top-color: var(--path-edge);
+}
+
+.sky2d__dest {
+  position: absolute;
+  right: 3%;
+  top: 16%;
+  width: min(40%, 200px);
+  aspect-ratio: 100 / 120;
+}
+
+.sky2d__landmark {
+  width: 100%;
+  height: 100%;
+}
+
+.sky2d__tied {
+  position: absolute;
+  left: -6%;
+  top: -4%;
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sky2d__tied svg {
+  width: 24px;
+  height: 32px;
+}
+
+.sky2d__tag {
+  position: absolute;
+  left: calc(var(--col) + 62px);
+  top: calc(var(--top) + 8px);
+  z-index: 3;
+  padding: 1px 12px;
+  border-radius: var(--r-pill);
+  border: 2px solid #fff;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow-1);
+  color: var(--trip-ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* the route from the pad up to the pin; the gold part is how far this balloon has come */
+.sky2d__route {
+  position: absolute;
+  left: calc(var(--col) + 44px);
+  top: calc(var(--top) + 2px);
+  bottom: calc(var(--base) + 6px);
+  width: 4px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(to top, #ddd2ea 0 6px, transparent 6px 12px);
+}
+
+.sky2d__routefill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: var(--star);
+}
+
+.sky2d__pin {
+  position: absolute;
+  left: calc(var(--col) + 46px);
+  top: calc(var(--top) - 30px);
+  z-index: 2;
+  width: 24px;
+  height: 32px;
+  transform: translateX(-50%);
+}
+
+.sky2d__pad {
+  position: absolute;
+  left: var(--col);
+  bottom: calc(var(--base) - 9px);
+  width: 76px;
+  height: 18px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #c48d5c;
+  box-shadow: 0 3px 0 #a26f45;
+}
+
+/* --p = this balloon's progress 0..1: from the pad (--base) up to the pin's height (--top from the top) */
+.sky2d__craft {
+  position: absolute;
+  left: var(--col);
+  bottom: calc(var(--base) + var(--p, 0) * (100% - var(--top) - var(--base)));
+  z-index: 3;
+  width: 56px;
+  transform: translateX(-50%);
+}
+
+.sky2d__craft svg {
+  width: 100%;
+  height: auto;
+  transform-origin: 50% 100%;
+}
+
+.sky2d__craft--docked {
+  --p: 1;
+}
+
+/* blue ring = the voice meets the expert's oral criterion; small warm flame = usable voice heard */
+.sky2d__craft.is-inzone::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 46px;
+  height: 14px;
+  transform: translateX(-50%);
+  border: 3px solid var(--oral);
+  border-radius: 50%;
+}
+
+.sky2d__craft.is-heard::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  width: 10px;
+  height: 14px;
+  margin-left: -5px;
+  border-radius: 50% 50% 45% 45%;
+  background: radial-gradient(circle at 50% 70%, #fff4c2, #ffd877);
+}
+
+.sky2d__craft.is-breathing svg {
+  animation: sky-breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes sky-breathe {
+  0%,
+  100% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+.sky2d__bunny {
+  position: absolute;
+  left: max(8px, calc(var(--col) - 96px));
+  bottom: calc(var(--base) - 6px);
+  z-index: 2;
+}
+
+/* reduced motion (OS setting or demo override → html[data-motion="reduce"], see src/lib/motion.ts) */
+[data-motion="reduce"] .sky2d__cloud,
+[data-motion="reduce"] .sky2d__craft.is-breathing svg {
+  animation: none;
+}
+
+[data-motion="reduce"] .pick-trip {
+  transition: none;
+}

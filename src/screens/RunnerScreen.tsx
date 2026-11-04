@@ -1,256 +1,418 @@
-import { useRef, useState } from "react";
-import { Bunny, CloudPal, Obstacle, StarShape, Tree } from "../components/Art";
-import { DemoPanel } from "../components/DemoPanel";
-import { DoneSheet, GameHud, PauseOverlay, PromptCard } from "../components/GameParts";
-import { Icon } from "../components/Icon";
-import { Meter } from "../components/Meter";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Bunny, CloudPal, StarShape } from "../components/Art";
+import { PauseOverlay } from "../components/GameParts";
+import { Icon, type IconName } from "../components/Icon";
+import { Destination, RouteBranch, RouteFlag } from "../components/RouteArt";
 import { StageNote } from "../components/StageNote";
-import { signalProblem, type MeterStatus } from "../signal/status";
-import type { SignalFrame } from "../signal/SignalProcessor";
-import { showToast } from "../lib/toast";
-import { COLLECTIBLES, outfitFor, totalStars } from "../data/analytics";
-import { fmtPct } from "../data/format";
-import { promptFor, promptInstruction } from "../data/plan";
+import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
+import { outfitFor, totalStars } from "../data/analytics";
+import { promptFor } from "../data/plan";
 import { finishRound, setPendingRunner } from "../data/rounds";
-import { LEVEL_LABEL } from "../data/schema";
+import { ROUTES, routeById, routePoints, type Route, type RouteId } from "../data/routes";
 import { useActiveChild, useDB } from "../data/store";
 import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
-import { RUNNER_ATTEMPTS_PER_ROUND, RunnerGame, type RunnerAttempt, type RunnerState } from "../logic/runner";
+import { exampleKind, playExample, stopExample, subscribeVoices } from "../lib/speech";
+import { showToast } from "../lib/toast";
+import type { CallIssue, CallItem } from "../logic/call";
+import { ROUTE_LEGS, RouteRun } from "../logic/route";
+import { useConnection, useSignalSource } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
+import { callStatusLine } from "./callStatus";
 import { useGameRuntime } from "./useGameRuntime";
+import "../styles/runner.css";
 
-const DECOR: { kind: "tree" | "rock" | "bush" | "log"; x: number; y0: number }[] = [
-  { kind: "tree", x: 7, y0: 0.05 },
-  { kind: "tree", x: 93, y0: 0.42 },
-  { kind: "tree", x: 6, y0: 0.72 },
-  { kind: "tree", x: 94, y0: 0.98 },
-  { kind: "rock", x: 27, y0: 0.18 },
-  { kind: "bush", x: 73, y0: 0.6 },
-  { kind: "log", x: 27, y0: 0.9 },
-];
+const RUN_ISSUE: Record<CallIssue, string> = {
+  quiet: "พูดด้วยเสียงปกติอีกครั้งนะ",
+  loud: "พูดเสียงสบาย ๆ อีกครั้งนะ",
+  lost: "สัญญาณหลุดไปแป๊บหนึ่ง พูดใหม่ได้เลย",
+  channel: "รอผู้ใหญ่ช่วยดูไมค์แป๊บหนึ่ง",
+};
 
-interface Flash {
-  attempt: RunnerAttempt;
-  index: number;
-  at: number;
+/** "วันนี้จะวิ่งไปทางไหน" — a fork in the road; each branch shows its stops and where it ends. */
+function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => void }) {
+  return (
+    <div className="kid-screen kid-screen--pick">
+      <div className="pick pick--map">
+        <header className="pick__bar">
+          <button type="button" className="world-btn" onClick={() => navigate("home")} aria-label="กลับหน้าหลัก">
+            <Icon name="back" size={22} />
+          </button>
+          <DemoTag />
+        </header>
+        <h1 className="pick__title">วันนี้จะวิ่งไปทางไหน?</h1>
+        <div className="route-map">
+          {ROUTES.map((r, i) => (
+            <button key={r.id} type="button" className={`route-map__branch route-map__branch--${i === 0 ? "left" : "right"}`} onClick={() => onPick(r.id)}>
+              <span className="route-map__dest">
+                <Destination route={r} size={84} />
+                <span className="route-map__destname" lang="th">
+                  {r.destination}
+                </span>
+              </span>
+              <RouteBranch route={r} side={i === 0 ? "left" : "right"} stops={legs - 1} />
+              <span className="route-map__name" lang="th" style={{ ["--flag" as string]: r.flag }}>
+                {r.name}
+              </span>
+            </button>
+          ))}
+          <span className="route-map__start" aria-hidden="true">
+            <Bunny size={58} />
+          </span>
+        </div>
+        <p className="pick__note">พูดหนึ่งคำ กระต่ายวิ่งหนึ่งช่วง จนถึงปลายทาง</p>
+      </div>
+    </div>
+  );
 }
 
-const FLASH_MS = 1800;
-
-const gapLabelFor = (gap: number) => (gap >= 0.66 ? "ไกล" : gap >= 0.33 ? "กลาง" : "ใกล้");
-
-/** The original 2D scene, kept as the fallback when 3D is unavailable or switched off. */
-function Runner2D({ s, frame, reduced, capOn }: { s: RunnerState; frame: SignalFrame; reduced: boolean; capOn: boolean }) {
-  const chaserCenter = 57 + s.gap * 29;
-  const scrollPx = reduced ? 0 : s.scroll * 220;
+/** 2D fallback: the same route as a strip — flags come in from the right, the bunny runs one leg per word. */
+function Route2D({ run, route }: { run: RouteRun; route: Route }) {
+  const legs = run.legs;
   return (
-    <div className="stage2d" style={{ ["--scroll" as string]: `${scrollPx % 40}px`, ["--bob" as string]: `${0.55 / Math.max(0.5, s.speed)}s` }}>
-      <div className="runner__path" aria-hidden="true">
-        <span className="runner__lane runner__lane--a" />
-        <span className="runner__lane runner__lane--b" />
-      </div>
-      {DECOR.map((d, i) => {
-        const y = ((d.y0 * 100 + (reduced ? 0 : s.scroll * 55)) % 120) - 10;
+    <div className="stage2d route2d">
+      <div className="route2d__path" aria-hidden="true" />
+      {Array.from({ length: legs }, (_, i) => i + 1).map((k) => {
+        const x = 34 + (k - run.pos) * 48;
+        if (x < -30 || x > 130) return null;
         return (
-          <div key={i} className="runner__decor" style={{ left: `${d.x}%`, top: `${y}%` }} aria-hidden="true">
-            {d.kind === "tree" ? <Tree size={38} /> : <Obstacle kind={d.kind} />}
+          <div key={k} className={k === legs ? "route2d__goal" : "route2d__flag"} style={{ left: `${x}%` }} aria-hidden="true">
+            {k === legs ? <Destination route={route} size={140} /> : <RouteFlag color={route.flag} size={72} />}
           </div>
         );
       })}
-      <div className="runner__stars" aria-hidden="true">
-        <StarShape size={26} />
-        <StarShape size={22} />
+      <div className={`route2d__bunny${run.running ? " is-running" : ""}`} aria-hidden="true">
+        <Bunny size={88} />
       </div>
-      <div className={`runner__hero${frame.valid && s.speed > 0.2 ? " is-running" : ""}`} aria-hidden="true">
-        <Bunny size={54} cap={capOn} />
+      <div className="route2d__pal" aria-hidden="true">
+        <CloudPal size={64} />
       </div>
-      <div className="runner__gap" style={{ top: "50%", height: `${Math.max(0, chaserCenter - 9 - 50)}%` }} aria-hidden="true" />
-      <span className="runner__gaplabel" style={{ top: `${(50 + chaserCenter - 9) / 2}%` }}>
-        ห่างเพื่อนเมฆ: {gapLabelFor(s.gap)}
-      </span>
-      <div className={`runner__chaser${frame.valid ? " is-floating" : ""}`} style={{ top: `${chaserCenter}%` }} aria-hidden="true">
-        <CloudPal size={66} />
+    </div>
+  );
+}
+
+function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => void }) {
+  const child = useActiveChild();
+  const db = useDB();
+  const plan = child.plan;
+  const reduced = useReducedMotion();
+  const mode = stageMode(useGfx());
+  const conn = useConnection();
+  useSignalSource();
+  const care = useCareDrawer();
+  const startedAt = useRef(new Date().toISOString());
+  const [adultModel, setAdultModel] = useState(false);
+  const [, setVoices] = useState(0);
+  const points = useMemo(() => routePoints(route, ROUTE_LEGS), [route]);
+  const items = useMemo<CallItem[]>(() => {
+    const prompts = (plan.words.length ? plan.words : ["ปา"]).map((w) => promptFor(w, plan.level));
+    return Array.from({ length: ROUTE_LEGS }, (_, k) => ({ id: String(k), word: prompts[k % prompts.length], resonance: "oral" }));
+  }, [plan.words, plan.level]);
+
+  useEffect(() => subscribeVoices(() => setVoices((n) => n + 1)), []);
+  useEffect(() => () => stopExample(), []);
+
+  const rt = useGameRuntime(
+    () => new RouteRun(items, plan.oralThreshold),
+    (game, frame, now, dt) => game.update(frame, now, dt).some((e) => e.type === "finish"),
+  );
+
+  const { game, frame } = rt;
+  const s = game.call.state;
+  /** The point the bunny is heading for (1 … ROUTE_LEGS). */
+  const target = game.running ? (game.leg?.to ?? 1) : Math.min(game.reached + 1, ROUTE_LEGS);
+  const stat = s.words[Math.min(s.index, s.words.length - 1)];
+  const kind = exampleKind(stat.word);
+  const playing = s.phase === "playing";
+  const adultModelling = adultModel && playing && s.playKind === "model";
+  const nextPoint = points[target - 1];
+  const frozen = !frame.valid && !playing && !game.running;
+
+  let line = callStatusLine(s, frame, adultModelling, kind, "", RUN_ISSUE);
+  if (game.done) line = { tone: "done", icon: "star", text: `ถึง${route.destination}แล้ว!` };
+  else if (game.running) line = { tone: "heard", icon: "next", text: `วิ่งไป${nextPoint}…`, sub: "ระหว่างวิ่ง เกมยังไม่ฟัง" };
+
+  useEffect(() => {
+    if (rt.paused !== null) stopExample();
+  }, [rt.paused]);
+
+  const settleAudio = () => {
+    stopExample();
+    setAdultModel(false);
+  };
+
+  const listen = () => {
+    const g = rt.gameRef.current;
+    if (!g || g.done || g.running) return;
+    g.call.listenStart("model");
+    if (kind === "none") {
+      setAdultModel(true);
+      return;
+    }
+    setAdultModel(false);
+    void playExample(stat.word).then((r) => {
+      if (rt.gameRef.current !== g) return;
+      if (r === "ended") g.call.listenEnd(performance.now());
+      else if (r === "error") setAdultModel(true);
+    });
+  };
+
+  const adultDone = () => {
+    setAdultModel(false);
+    rt.gameRef.current?.call.listenEnd(performance.now());
+  };
+
+  const retry = () => {
+    settleAudio();
+    rt.gameRef.current?.call.retry();
+  };
+
+  const skip = () => {
+    settleAudio();
+    rt.gameRef.current?.skip(performance.now());
+  };
+
+  const choice = { kind: "route" as const, id: route.id, label: `${route.name} ไป${route.destination}` };
+
+  /** Save the round (or hand it to the door game when the plan has it on). */
+  const save = (endedEarly: boolean, then: "result" | "gate" | "again") => {
+    const g = game;
+    if (g.attempts.length === 0 && g.reached === 0) {
+      showToast("ยังไม่มีการพูดในรอบนี้ จึงยังไม่ได้บันทึก");
+      if (then === "again") onPlayAgain();
+      else navigate("home");
+      return;
+    }
+    const practiceMs = g.call.state.practiceMs;
+    if (then === "gate") {
+      setPendingRunner({ childId: child.id, startedAt: startedAt.current, attempts: g.attempts, stars: g.stars, practiceMs, completed: g.done });
+      navigate("gate");
+      return;
+    }
+    finishRound({ child, game: "runner", startedAt: startedAt.current, practiceMs, attempts: g.attempts, stars: g.stars, gate: null, choice, endedEarly });
+    if (then === "again") {
+      showToast("บันทึกรอบนี้แล้ว เลือกทางใหม่ได้เลย");
+      onPlayAgain();
+    } else navigate("result");
+  };
+
+  const finishEarly = () => {
+    rt.gameRef.current?.finish();
+    save(true, "result");
+  };
+
+  const restart = () => {
+    settleAudio();
+    startedAt.current = new Date().toISOString();
+    rt.restart();
+  };
+
+  const is3d = mode.kind === "3d";
+  const blocked = rt.paused !== null || rt.ended;
+
+  let primary: { label: string; icon: IconName; onClick: () => void; disabled?: boolean };
+  if (adultModelling) primary = { label: "ผู้ใหญ่พูดแล้ว ถึงตาหนู", icon: "ear", onClick: adultDone };
+  else if (game.running) primary = { label: "กำลังวิ่ง…", icon: "next", onClick: () => {}, disabled: true };
+  else if (playing) primary = { label: "กำลังเล่นเสียง…", icon: "speaker", onClick: () => {}, disabled: true };
+  else primary = { label: stat.listens > 0 ? "ฟังอีกครั้ง" : "ฟังคำ", icon: "speaker", onClick: listen };
+  const busy = game.done || game.running;
+
+  return (
+    <div className="kid-screen kid-screen--world">
+      <div className="world-main" inert={blocked ? true : undefined}>
+        <div className="world-frame">
+          <div className={`stage stage--world stage--runner${is3d ? " stage--3d" : ""}${frozen ? " is-frozen" : ""}`}>
+            {is3d ? (
+              <World3D
+                kind="runner"
+                route={route.id}
+                tier={mode.tier}
+                active={rt.paused === null}
+                reduced={reduced}
+                gameRef={rt.gameRef}
+                frameRef={rt.frameRef}
+                outfit={outfitFor(totalStars(db, child))}
+              />
+            ) : (
+              <Route2D run={game} route={route} />
+            )}
+            <header className="world-bar">
+              <button type="button" className="world-btn" onClick={() => rt.pause("user")} aria-label="พักเกม">
+                <Icon name="pause" size={22} />
+              </button>
+              <ol className="route-trail" aria-label={`ถึงแล้ว ${game.reached} จาก ${ROUTE_LEGS} จุด`}>
+                {points.map((p, i) => {
+                  const k = i + 1;
+                  const state = game.reached >= k ? "is-done" : target === k ? "is-current" : "is-next";
+                  return (
+                    <li key={p} className={`route-trail__point ${state}${k === ROUTE_LEGS ? " route-trail__point--goal" : ""}`} style={{ ["--flag" as string]: route.flag }}>
+                      {k === ROUTE_LEGS ? <Destination route={route} size={30} /> : <span className="route-trail__dot" />}
+                      <span className="sr-only">
+                        {p} {game.reached >= k ? "ถึงแล้ว" : "ยังไม่ถึง"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+              <span className="world-stars" aria-label={`ดาวรอบนี้ ${game.stars} ดวง`}>
+                <StarShape size={20} />
+                <span aria-hidden="true">{game.stars}</span>
+              </span>
+            </header>
+          </div>
+
+          <section className="world-dock world-dock--meadow" aria-label="คำของช่วงนี้">
+            <button type="button" className="dock-pic dock-pic--flag" onClick={listen} disabled={busy || playing} aria-label={`ฟังคำ “${stat.word}”`}>
+              {game.reached >= ROUTE_LEGS - 1 && !game.done ? <Destination route={route} size={64} /> : <RouteFlag color={route.flag} size={58} />}
+              <span className="dock-pic__speaker" aria-hidden="true">
+                <Icon name="speaker" size={16} />
+              </span>
+            </button>
+            <div className="dock-text">
+              <p className="dock-goal">{game.done ? route.destination : `ไป${nextPoint}`}</p>
+              <p className="dock-word" lang="th">
+                {stat.word}
+              </p>
+              <p className={`dock-state dock-state--${line.tone}`} role="status">
+                <span className={`dock-state__icon${s.inAttempt ? " is-live" : ""}`} aria-hidden="true">
+                  <Icon name={line.icon} size={18} />
+                </span>
+                <span>
+                  <strong>{line.text}</strong>
+                  {line.sub ? <small>{line.sub}</small> : null}
+                </span>
+              </p>
+            </div>
+            <div className="dock-actions">
+              <button type="button" className="btn btn--primary btn--lg dock-main" onClick={primary.onClick} disabled={primary.disabled || game.done}>
+                <Icon name={primary.icon} size={22} />
+                {primary.label}
+              </button>
+              <div className="dock-quiet">
+                <button type="button" className="quiet-btn" onClick={retry} disabled={busy}>
+                  <Icon name="refresh" size={18} /> ลองใหม่
+                </button>
+                <button type="button" className="quiet-btn" onClick={skip} disabled={busy}>
+                  <Icon name="skip" size={18} /> ข้ามช่วงนี้
+                </button>
+                <DemoTag onOpen={care.open} />
+              </div>
+            </div>
+          </section>
+        </div>
+        <StageNote mode={mode} />
+      </div>
+
+      <aside className="world-side" aria-label="เส้นทางและผู้ดูแล" inert={blocked ? true : undefined}>
+        <section className="side-card world-side__info" aria-labelledby="route-title">
+          <h2 id="route-title" className="side-card__title">
+            {route.name}
+          </h2>
+          <ol className="side-list">
+            {points.map((p, i) => {
+              const k = i + 1;
+              const reached = game.reached >= k;
+              const now = !reached && target === k;
+              const w = s.words[i];
+              const state = reached ? (w?.skipped ? "ข้ามไป" : "ถึงแล้ว") : now ? (game.running ? "กำลังวิ่งไป" : `พูด “${w?.word ?? ""}”`) : "รอก่อน";
+              return (
+                <li key={p}>
+                  <div className={`side-item${now ? " is-current" : ""}${reached ? " is-done" : ""}`}>
+                    <span className="side-item__pic">{k === ROUTE_LEGS ? <Destination route={route} size={50} /> : <RouteFlag color={route.flag} size={44} />}</span>
+                    <span className="side-item__name" lang="th">
+                      {p}
+                    </span>
+                    <span className="side-item__state">{state}</span>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+        <CareDrawer
+          careRef={care.ref}
+          frame={frame}
+          conn={conn}
+          issue={s.issue}
+          demo={{
+            target: { kind: "oral", threshold: plan.oralThreshold },
+            hint: "กดค้าง “กดค้างเพื่อพูด” แล้วปล่อย = พูดหนึ่งคำ กระต่ายวิ่งหนึ่งช่วง",
+          }}
+        >
+          <p className="call-note">
+            กระต่ายวิ่งต่อเมื่อเกมได้ยินเสียงที่สัญญาณใช้ได้ ข้ามช่วงได้โดยไม่เสียอะไร เกณฑ์ออกปาก {plan.oralThreshold}% ของผู้เชี่ยวชาญใช้บันทึกในหน้าผู้ดูแลเท่านั้น
+            ไม่ได้ใช้ตัดสินในฉาก
+          </p>
+          <p className="call-note">
+            พูดแล้ว {game.attempts.length} ครั้ง (สัญญาณใช้ได้) ถึงเกณฑ์ {game.attempts.filter((a) => a.passed).length} ครั้ง
+          </p>
+        </CareDrawer>
+      </aside>
+
+      {rt.paused !== null ? (
+        <PauseOverlay reason={rt.paused} onResume={rt.resume} onRestart={restart} onFinish={finishEarly} onHome={() => navigate("home")} />
+      ) : null}
+      {rt.ended && rt.paused === null ? (
+        <RouteDone
+          route={route}
+          gate={plan.gateEnabled}
+          onGate={() => save(false, "gate")}
+          onResult={() => save(false, "result")}
+          onAgain={() => save(false, "again")}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/** Arrived: the destination, then the door game (when the plan has it), the summary, or another route. */
+function RouteDone({ route, gate, onGate, onResult, onAgain }: { route: Route; gate: boolean; onGate: () => void; onResult: () => void; onAgain: () => void }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+  return (
+    <div className="overlay overlay--soft" role="dialog" aria-modal="true" aria-labelledby="route-done-title">
+      <div className="overlay__card overlay__card--done">
+        <Destination route={route} size={110} />
+        <h2 id="route-done-title">ถึง{route.destination}แล้ว!</h2>
+        <p className="overlay__text">วิ่ง{route.name}ครบ {ROUTE_LEGS} ช่วง</p>
+        {gate ? (
+          <button ref={ref} type="button" className="btn btn--primary btn--lg btn--block" onClick={onGate}>
+            ไปเปิดประตูต่อ <Icon name="next" size={20} />
+          </button>
+        ) : (
+          <button ref={ref} type="button" className="btn btn--primary btn--lg btn--block" onClick={onResult}>
+            ดูสรุปรอบ <Icon name="next" size={20} />
+          </button>
+        )}
+        {gate ? (
+          <button type="button" className="btn btn--secondary btn--block" onClick={onResult}>
+            ดูสรุปรอบ
+          </button>
+        ) : null}
+        <button type="button" className="quiet-btn" onClick={onAgain}>
+          <Icon name="refresh" size={18} /> เลือกทางใหม่
+        </button>
       </div>
     </div>
   );
 }
 
 export function RunnerScreen() {
-  const child = useActiveChild();
-  const db = useDB();
-  const plan = child.plan;
-  const reduced = useReducedMotion();
-  const mode = stageMode(useGfx());
-  const startedAt = useRef(new Date().toISOString());
-  const [flash, setFlash] = useState<Flash | null>(null);
-  const nowRef = useRef(0);
-
-  const rt = useGameRuntime(
-    () =>
-      new RunnerGame({
-        oralThreshold: plan.oralThreshold,
-        prompts: plan.words.map((w) => promptFor(w, plan.level)),
-        attemptsPerRound: RUNNER_ATTEMPTS_PER_ROUND,
-      }),
-    (game, frame, now, dt) => {
-      nowRef.current = now;
-      let done = false;
-      for (const ev of game.update(frame, now, dt)) {
-        if (ev.type === "attempt") setFlash({ attempt: ev.attempt, index: game.state.attempts.length, at: now });
-        if (ev.type === "done") done = true;
-      }
-      return done;
-    },
-  );
-
-  const { game, frame } = rt;
-  const s = game.state;
-  const thr = game.cfg.oralThreshold;
-  const flashOn = flash !== null && nowRef.current - flash.at < FLASH_MS;
-  const stars = totalStars(db, child);
-  const capOn = stars >= COLLECTIBLES[0].stars;
-
-  let status: MeterStatus = signalProblem(frame) ?? { kind: "idle", text: "พร้อมแล้ว พูดคำบนจอได้เลย" };
-  if (!signalProblem(frame)) {
-    if (s.speaking) {
-      status = s.passing
-        ? { kind: "pass", text: "ผ่านเกณฑ์: กระต่ายวิ่งเร็วขึ้น เพื่อนเมฆตามไม่ทัน" }
-        : { kind: "try", text: "อีกนิด! ลองให้เสียงออกทางปากมากขึ้น" };
-    } else if (flashOn && flash) {
-      status = flash.attempt.passed
-        ? { kind: "done", text: `ครั้งที่ ${flash.index}: ผ่านเกณฑ์ +1 ดาว` }
-        : { kind: "try", text: `ครั้งที่ ${flash.index}: ออกปากเฉลี่ย ${fmtPct(100 - flash.attempt.meanNasal)} · ไปคำต่อไปกัน` };
-    }
+  const [route, setRoute] = useState<RouteId | null>(null);
+  const [round, setRound] = useState(0);
+  if (route === null) {
+    return (
+      <RoutePicker
+        legs={ROUTE_LEGS}
+        onPick={(id) => {
+          setRoute(id);
+          setRound((r) => r + 1);
+        }}
+      />
+    );
   }
-  if (rt.ended) status = { kind: "done", text: "วิ่งครบรอบแล้ว! เกมหยุดนับแล้ว" };
-
-  const goGateOrResult = () => {
-    const st = game.state;
-    if (plan.gateEnabled) {
-      setPendingRunner({
-        childId: child.id,
-        startedAt: startedAt.current,
-        attempts: st.attempts.map(({ meanNasal, passed, durationMs }) => ({ meanNasal, passed, durationMs })),
-        stars: st.stars,
-        practiceMs: st.practiceMs,
-        completed: st.done,
-      });
-      navigate("gate");
-      return;
-    }
-    finishRound({
-      child,
-      game: "runner",
-      startedAt: startedAt.current,
-      practiceMs: st.practiceMs,
-      attempts: st.attempts,
-      stars: st.stars,
-      gate: null,
-      endedEarly: !st.done,
-    });
-    navigate("result");
-  };
-
-  const finishEarly = () => {
-    const st = game.state;
-    if (st.attempts.length === 0) {
-      showToast("ยังไม่มีการพูดในรอบนี้ จึงยังไม่ได้บันทึก");
-      navigate("home");
-      return;
-    }
-    finishRound({
-      child,
-      game: "runner",
-      startedAt: startedAt.current,
-      practiceMs: st.practiceMs,
-      attempts: st.attempts,
-      stars: st.stars,
-      gate: null,
-      endedEarly: true,
-    });
-    navigate("result");
-  };
-
-  const passedCount = s.attempts.filter((a) => a.passed).length;
-  const word = game.currentPrompt();
-  const is3d = mode.kind === "3d";
-
-  return (
-    <div className="kid-screen kid-screen--game">
-      <div className="kid-frame" inert={rt.paused !== null || rt.ended ? true : undefined}>
-        <GameHud title="วิ่งหนี" sub={`ด่านที่ ${plan.level} · ${LEVEL_LABEL[plan.level]}`} stars={s.stars} onPause={() => rt.pause("user")} />
-        <PromptCard
-          label={promptInstruction("runner", plan.level)}
-          word={word}
-          sub={`คำที่ ${Math.min(s.attempts.length + 1, game.cfg.attemptsPerRound)} จาก ${game.cfg.attemptsPerRound}`}
-        />
-        <div className={`stage stage--runner${is3d ? " stage--3d" : ""}${frame.valid ? "" : " is-frozen"}${s.passing ? " is-passing" : ""}`}>
-          {is3d ? (
-            <World3D
-              kind="runner"
-              tier={mode.tier}
-              active={rt.paused === null}
-              reduced={reduced}
-              gameRef={rt.gameRef}
-              frameRef={rt.frameRef}
-              outfit={outfitFor(stars)}
-            />
-          ) : (
-            <Runner2D s={s} frame={frame} reduced={reduced} capOn={capOn} />
-          )}
-          {is3d ? (
-            <span className={`pill stage__pill stage__pill--tl runner__distpill runner__distpill--${gapLabelFor(s.gap) === "ใกล้" ? "near" : "ok"}`}>
-              <span className="runner__distswatch" aria-hidden="true" />
-              ห่างเพื่อนเมฆ: {gapLabelFor(s.gap)}
-            </span>
-          ) : null}
-          <span className="pill stage__pill stage__pill--tr">
-            {frame.valid ? `ความเร็ว ×${Math.max(0.6, s.speed).toFixed(1)}` : "หยุดชั่วคราว"}
-          </span>
-          {flashOn && flash?.attempt.passed ? (
-            <span key={flash.at} className="stage__pop" aria-hidden="true">
-              +1 <StarShape size={18} />
-            </span>
-          ) : null}
-          {!frame.valid ? (
-            <div className="stage__frozen">
-              <Icon name="alert" size={18} /> หยุดไว้ก่อน · ไม่นับคะแนนจนกว่าสัญญาณจะกลับมา
-            </div>
-          ) : null}
-        </div>
-        <StageNote mode={mode} />
-        <Meter primary="oral" frame={frame} threshold={thr} thresholdLabel={`เกณฑ์ ${thr}%`} status={status} />
-      </div>
-
-      <DemoPanel target={{ kind: "oral", threshold: thr }} hint="เปิด “มีเสียง” หรือกดค้างเพื่อพูด แล้วลากแถบเพื่อดูกระต่ายวิ่ง">
-        <button type="button" className="link-btn" onClick={goGateOrResult}>
-          ข้ามไป{plan.gateEnabled ? "ด่านประตู" : "สรุปรอบ"} (เดโม) →
-        </button>
-      </DemoPanel>
-
-      {rt.paused !== null ? (
-        <PauseOverlay
-          reason={rt.paused}
-          onResume={rt.resume}
-          onRestart={() => {
-            startedAt.current = new Date().toISOString();
-            setFlash(null);
-            rt.restart();
-          }}
-          onFinish={finishEarly}
-          onHome={() => navigate("home")}
-        />
-      ) : null}
-      {rt.ended && rt.paused === null ? (
-        <DoneSheet
-          title={plan.gateEnabled ? "วิ่งถึงประตูแล้ว!" : "วิ่งครบรอบแล้ว!"}
-          text={`ผ่านเกณฑ์ออกปาก ${passedCount} จาก ${s.attempts.length} ครั้ง${plan.gateEnabled ? " · ต่อไปเป็นด่านประตูเสียงนาสิก" : ""}`}
-          action={plan.gateEnabled ? "ไปด่านประตู" : "ดูสรุปรอบ"}
-          onAction={goGateOrResult}
-        />
-      ) : null}
-    </div>
-  );
+  return <RouteRound key={round} route={routeById(route)} onPlayAgain={() => setRoute(null)} />;
 }

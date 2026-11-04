@@ -1,0 +1,397 @@
+/* ---------- Gate (เปิดประตู) ----------
+   The shared world layout lives in kid.css (stage / world-bar / world-dock / world-side / pick).
+   This file only adds the door: picker, door art, lock beads, the 2D stage and the done card.
+   Orange stays the nasal colour (beads, live ring); door colours avoid blue and orange. */
+
+/* The world stage draws its own ground (3D or the 2D hedge below), not the old path strip */
+.stage--world.stage--gate::before {
+  content: none;
+}
+
+/* ---------- Door art (components/DoorArt.tsx) ----------
+   On open the bolt slides back first, then both leaves fold toward their hinges and a short light passes. */
+.door-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.door-art__leaf {
+  transform-box: view-box;
+  transition: transform 0.9s var(--ease-out) 0.3s;
+}
+
+.door-art__leaf--l {
+  transform-origin: 20px 96px;
+}
+
+.door-art__leaf--r {
+  transform-origin: 80px 96px;
+}
+
+.door-art.is-open .door-art__leaf {
+  transform: scaleX(0.12);
+}
+
+.door-art__bolt {
+  transition: transform 0.32s var(--ease-out);
+}
+
+.door-art.is-open .door-art__bolt {
+  transform: translateX(-13px);
+}
+
+.door-art__flash {
+  opacity: 0;
+}
+
+.door-art.is-open .door-art__flash {
+  animation: door-flash 1.3s ease-out 0.3s both;
+}
+
+@keyframes door-flash {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.door-art__bead {
+  fill: #fbf6ee;
+  stroke: #cdbfdc;
+  stroke-width: 0.6;
+}
+
+.door-art__bead.is-lit {
+  fill: var(--nasal);
+  stroke: var(--nasal-text);
+}
+
+.door-art__live {
+  stroke: var(--nasal);
+  opacity: 0.28;
+  transition: opacity var(--dur-2);
+}
+
+.door-art__live.is-on {
+  opacity: 1;
+}
+
+/* ---------- Picker: three doors side by side, standing in the garden ---------- */
+.pick.pick--gate {
+  --gate-ink: #24452f;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.32) 0 2px, transparent 3px) 0 0 / 64px 64px,
+    linear-gradient(#fdf3e7 0%, #f6eedd 34%, #d9edc3 66%, #b9dc99 100%);
+}
+
+.pick--gate .pick__title,
+.pick--gate .pick__note {
+  color: var(--gate-ink);
+}
+
+.pick--gate .pick__list {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pick--gate .pick__list > li {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: 190px;
+}
+
+.pick-door {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 6px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  /* arched like the doorway it holds */
+  border-radius: 50% 50% 18px 18px / 30% 30% 18px 18px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 0 rgba(36, 69, 47, 0.14);
+  color: var(--gate-ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    background-color var(--dur-2);
+}
+
+.pick-door:hover,
+.pick-door:focus-visible {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.pick-door__pic {
+  display: block;
+  width: 100%;
+  aspect-ratio: 100 / 132;
+}
+
+.pick-door__name {
+  max-width: 100%;
+  font-size: clamp(1.05rem, 4.4vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* already opened in this visit: what was behind it */
+.pick-door__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--ok-soft);
+  color: var(--ok-text);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.pick-door__done svg {
+  flex: none;
+}
+
+/* ---------- Round: progress pill, the near edge (garden wall), side column ---------- */
+.gate-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  margin: 0 auto;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-1);
+  color: var(--ink-2);
+}
+
+.gate-lock svg {
+  flex: none;
+  margin-right: 2px;
+}
+
+.gate-lock__bead {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid #cdbfdc;
+  background: #fbf6ee;
+}
+
+.gate-lock__bead.is-lit {
+  border-color: var(--nasal-text);
+  background: var(--nasal);
+}
+
+@media (max-width: 359px) {
+  .gate-lock {
+    gap: 3px;
+    padding: 0 8px;
+  }
+  .gate-lock__bead {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* the chosen door stands in for a picture of the word; tapping it plays the word */
+.gate-glyph {
+  position: relative;
+}
+
+.gate-glyph .door-art {
+  width: 60%;
+  height: 76%;
+}
+
+.gate-dock .dock-word {
+  overflow-wrap: anywhere;
+}
+
+/* the expert may set a longer nasal word: keep it on screen in full */
+.gate-dock .dock-word--long {
+  font-size: clamp(1.7rem, 7.5vw, 2.3rem);
+}
+
+/* small controls stay at least 48 px tall on every screen */
+.gate-dock .quiet-btn,
+.gate-dock button.demo-tag {
+  min-height: 48px;
+}
+
+.gate-side__pic .door-art {
+  width: 44px;
+  height: 56px;
+}
+
+.gate-side__mystery {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px dashed var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* adult corner */
+.gate-explain {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: var(--bw) solid #f6d6c2;
+  background: var(--nasal-soft);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+
+.gate-explain svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--nasal-text);
+}
+
+.gate-facts {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+
+/* ---------- 2D stage: the door in a tall clipped hedge, the bunny and its cloud friend in front ---------- */
+.gate2d {
+  overflow: hidden;
+  background: linear-gradient(180deg, #fbe4ee 0%, #fff0df 46%, #f7f0de 72%);
+}
+
+.gate2d::before {
+  --hedge: #8fc46f;
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 22%;
+  bottom: 27%;
+  background:
+    radial-gradient(circle at 50% 100%, var(--hedge) 64%, transparent 66%) 0 0 / 44px 24px repeat-x,
+    linear-gradient(var(--hedge), #74b358) 0 22px / 100% calc(100% - 22px) no-repeat;
+}
+
+.gate2d::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 27%;
+  background:
+    linear-gradient(var(--path), var(--path)) 50% 0 / 32% 100% no-repeat,
+    var(--grass);
+}
+
+.gate2d__door {
+  position: absolute;
+  left: 50%;
+  bottom: 23%;
+  z-index: 1;
+  height: 56%;
+  aspect-ratio: 100 / 132;
+  transform: translateX(-50%);
+}
+
+.gate2d__bunny {
+  position: absolute;
+  left: 20%;
+  bottom: 6%;
+  z-index: 2;
+}
+
+.gate2d__cloud {
+  position: absolute;
+  right: 10%;
+  bottom: 11%;
+  z-index: 2;
+}
+
+.gate2d__bunny.is-singing > svg {
+  animation: gate-sing 0.6s ease-in-out infinite alternate;
+}
+
+.gate2d.is-open .gate2d__bunny > svg {
+  animation: gate-hop 0.5s var(--ease-out) 0.4s 2 alternate;
+}
+
+@keyframes gate-sing {
+  to {
+    transform: translateY(-4px) rotate(-3deg);
+  }
+}
+
+@keyframes gate-hop {
+  to {
+    transform: translateY(-14px);
+  }
+}
+
+.stage.is-frozen .gate2d__door,
+.stage.is-frozen .gate2d__bunny {
+  filter: saturate(0.4) opacity(0.8);
+}
+
+/* ---------- Done card: sits below (portrait) or beside (landscape) the open doorway, so the place stays in view ---------- */
+.overlay.gate-done {
+  place-items: end center;
+  padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  background: rgba(31, 35, 48, 0.16);
+}
+
+.gate-done__pic {
+  width: 104px;
+  margin: 0 auto;
+  aspect-ratio: 100 / 132;
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .overlay.gate-done {
+    place-items: center end;
+    padding-inline: var(--sp-6);
+  }
+}
+
+[data-motion="reduce"] .door-art__leaf,
+[data-motion="reduce"] .door-art__bolt,
+[data-motion="reduce"] .pick-door {
+  transition: none;
+}
+
+[data-motion="reduce"] .door-art.is-open .door-art__flash,
+[data-motion="reduce"] .gate2d__bunny > svg {
+  animation: none;
+}

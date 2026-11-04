@@ -28,11 +28,6 @@
   padding: var(--sp-4) var(--sp-4) var(--sp-8);
 }
 
-.kid-screen--game > .demo {
-  width: 100%;
-  max-width: var(--kid-col);
-}
-
 @media (min-width: 600px) {
   .kid-screen {
     padding: var(--sp-6) var(--sp-4) var(--sp-10);
@@ -46,27 +41,10 @@
   .kid-frame--page {
     padding: var(--sp-6) var(--sp-6) var(--sp-8);
   }
-  .kid-screen--game > .demo {
-    margin-top: var(--sp-4);
-    border: var(--bw) dashed var(--line-strong);
-    border-radius: var(--r-lg);
-  }
 }
 
-@media (min-width: 1100px) {
-  .kid-screen--game {
-    display: grid;
-    grid-template-columns: var(--kid-col) 340px;
-    justify-content: center;
-    align-items: start;
-    gap: var(--sp-6);
-  }
-  .kid-screen--game > .demo {
-    position: sticky;
-    top: var(--sp-6);
-    margin-top: 0;
-  }
-}
+/* (the old desktop grid that gave a 340px column to the demo tools is gone: the games use the world layout below,
+   and the demo tools live in each game's adult corner) */
 
 .t-oral {
   color: var(--oral-text);
@@ -2075,12 +2053,40 @@
 }
 
 .result__head h1 {
-  font-size: 1.75rem;
+  font-size: clamp(1.9rem, 7.5vw, 2.6rem);
+  line-height: 1.35;
+  text-wrap: balance;
 }
 
 .result__sub {
-  font-size: var(--fs-small);
+  font-size: 1rem;
   color: var(--ink-2);
+}
+
+/* the numbers belong to the adult: folded under the child's moment */
+.result__care {
+  padding: 0;
+}
+
+.result__care .care__body {
+  gap: var(--sp-3);
+}
+
+.result__care .result__chart {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.result__meta {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+
+.met--result .met__friend {
+  width: 72px;
+  font-size: 1.1rem;
 }
 
 .result__stars {
@@ -2398,4 +2404,1172 @@
 [data-motion="reduce"] .frog__frog,
 [data-motion="reduce"] .gate__hero {
   transition: none;
+}
+
+/* ---------- Call-a-friend pond (กบข้ามบึง · ด่านเรียกเพื่อน) ----------
+   One hero: the pond. The controls sit on the near bank under it, the friend's name appears once,
+   one status line says whether the game is playing a sound, listening, or heard. */
+.kid-screen--world,
+.kid-screen--pick {
+  --pond-ink: #1f4d43;
+  --bank-grass: #9ccf74;
+  --bank-grass-deep: #7fb85a;
+  --bank-sand: #f6e7c4;
+  --listen-gold: #f5c542;
+  --listen-soft: #fff1c2;
+}
+
+.world-frame {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bank-sand);
+}
+
+.stage--world {
+  height: clamp(300px, 56dvh, 600px);
+  border: none;
+}
+
+.world-bar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px 12px 18px;
+  background: linear-gradient(rgba(255, 250, 242, 0.88), rgba(255, 250, 242, 0));
+  pointer-events: none;
+}
+
+.world-bar > * {
+  pointer-events: auto;
+}
+
+.world-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.pond-trail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.pond-trail__friend {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: var(--shadow-1);
+}
+
+.pond-trail__friend img,
+.pond-trail__friend .friend-pic__fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: contain;
+  font-size: 0.8rem;
+}
+
+.pond-trail__friend.is-current {
+  width: 46px;
+  height: 46px;
+  border-color: var(--listen-gold);
+  box-shadow: 0 0 0 3px var(--listen-soft), var(--shadow-1);
+}
+
+.pond-trail__friend.is-next img {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.pond-trail__friend.is-skipped {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.pond-trail__friend.is-heard {
+  border-color: var(--primary);
+}
+
+.pond-trail__check {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+.world-stars {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-1);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* The friend's reply. The 3D scene keeps it above the friend's head (CSS `translate`); it never covers a character. */
+.world-bubble {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 18px;
+  border: 2px solid #f3dc8f;
+  background: #fffbe9;
+  box-shadow: var(--shadow-2);
+  color: #5b4300;
+  font-size: 1.2rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  translate: -999px -999px;
+  transform: translate(-50%, -100%) scale(0.85);
+  transform-origin: 50% 100%;
+  transition:
+    opacity var(--dur-2),
+    transform 0.3s var(--ease-spring);
+}
+
+.world-bubble.is-on {
+  opacity: 1;
+  transform: translate(-50%, -100%) scale(1);
+}
+
+.world-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid #f3dc8f;
+  border-bottom: 2px solid #f3dc8f;
+  background: #fffbe9;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.world-bubble--ask {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.world-bubble--ask::after {
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+
+.world-bubble--flat {
+  left: 50%;
+  top: 16%;
+  translate: none;
+}
+
+/* The near edge of each world under the scene (pond bank, meadow path, cloud bank, garden wall) holds the controls */
+.world-dock {
+  --dock-lip: var(--bank-grass);
+  --dock-lip-deep: var(--bank-grass-deep);
+  --dock-body: var(--bank-sand);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "pic text"
+    "actions actions";
+  gap: 12px 14px;
+  padding: 16px 16px 14px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  background: linear-gradient(var(--dock-lip) 0 10px, var(--dock-lip-deep) 10px 13px, var(--dock-body) 13px);
+}
+
+.world-dock::before {
+  content: "";
+  position: absolute;
+  inset: -12px 0 auto;
+  height: 14px;
+  background: radial-gradient(circle at 12px 14px, var(--dock-lip) 11.5px, transparent 12.5px) 0 0 / 24px 14px repeat-x;
+}
+
+.world-dock--meadow {
+  --dock-body: #f7ebce;
+}
+
+.world-dock--sky {
+  --dock-lip: #ffffff;
+  --dock-lip-deep: #f0e9dc;
+  --dock-body: #fff8ec;
+}
+
+.world-dock--garden {
+  --dock-lip: #8fc46f;
+  --dock-lip-deep: #6fa955;
+  --dock-body: #efe9f4;
+}
+
+/* the word being practised, when it is not a friend's picture (runner / balloon / gate) */
+.dock-glyph {
+  grid-area: pic;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-top: 4px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: radial-gradient(circle at 50% 60%, #ffffff, #f3ead8);
+  box-shadow: var(--shadow-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.dock-glyph:disabled {
+  cursor: default;
+}
+
+.dock-pic {
+  grid-area: pic;
+  position: relative;
+  width: 88px;
+  height: 88px;
+  margin-top: 4px;
+  padding: 4px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: radial-gradient(circle at 50% 60%, #ffffff, #fdf0d4);
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+}
+
+.dock-pic img,
+.dock-pic .friend-pic__fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.dock-pic:disabled {
+  cursor: default;
+}
+
+.dock-pic__speaker {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+.dock-text {
+  grid-area: text;
+  align-self: center;
+  min-width: 0;
+}
+
+.dock-word {
+  color: var(--pond-ink);
+  font-size: clamp(2.25rem, 10vw, 2.9rem);
+  font-weight: 800;
+  /* room for Thai marks above/below (เต่า, ปู) */
+  line-height: 1.3;
+}
+
+.dock-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.dock-state strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.dock-state small {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+
+.dock-state__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink-2);
+}
+
+.dock-state--speak .dock-state__icon,
+.dock-state--heard .dock-state__icon {
+  background: var(--listen-gold);
+  color: #4d3800;
+}
+
+.dock-state--heard strong {
+  color: #6b4e00;
+}
+
+.dock-state--retry .dock-state__icon {
+  background: var(--surface-muted);
+}
+
+.dock-state--warn .dock-state__icon {
+  background: var(--warn-soft);
+  color: var(--warn-text);
+}
+
+.dock-state--warn strong {
+  color: var(--warn-text);
+}
+
+.dock-state--done .dock-state__icon {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.dock-state__icon.is-live {
+  animation: ear-pulse 1s ease-in-out infinite;
+}
+
+@keyframes ear-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 197, 66, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(245, 197, 66, 0);
+  }
+}
+
+.dock-actions {
+  grid-area: actions;
+  display: grid;
+  gap: 6px;
+}
+
+.dock-main {
+  width: 100%;
+  min-height: var(--tap-lg);
+  font-size: 1.15rem;
+}
+
+.dock-quiet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 6px;
+}
+
+.quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.quiet-btn:hover:not(:disabled) {
+  background: rgba(43, 36, 51, 0.06);
+}
+
+.quiet-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.demo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1.5px dashed var(--line-strong);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+button.demo-tag {
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.demo-tag--device {
+  border-style: solid;
+  border-color: #b9e4d3;
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.kid-screen--world .kid-note--stage {
+  padding-top: var(--sp-2);
+  background: var(--bank-sand);
+}
+
+.kid-screen--world .care {
+  margin: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* Picker: "who do we visit first?" — lily pads on the water */
+.pick {
+  width: 100%;
+  max-width: 560px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 12px 16px 28px;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.35) 0 2px, transparent 3px) 0 0 / 72px 72px,
+    linear-gradient(#a8dccb, var(--pond) 45%, var(--pond-deep));
+}
+
+.pick__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pick__title {
+  margin: 8px 0 4px;
+  color: var(--pond-ink);
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.pick__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick__list > li {
+  width: calc(50% - 7px);
+  max-width: 180px;
+}
+
+.pick-pad {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* the pad itself (with its notch) is a layer under the picture, so the notch never cuts the friend */
+.pick-pad::before {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 40%, #a9df92, var(--pad) 62%, var(--pad-deep));
+  box-shadow: 0 8px 0 rgba(31, 77, 67, 0.18);
+  mask: conic-gradient(from 52deg, #0000 0 24deg, #000 0);
+  transition: transform var(--dur-2) var(--ease-spring);
+}
+
+.pick-pad:hover::before,
+.pick-pad:focus-visible::before {
+  transform: scale(1.04);
+}
+
+.pick-pad__pic {
+  position: relative;
+  width: 78%;
+  aspect-ratio: 1;
+  margin-top: -10%;
+}
+
+.pick-pad__pic img,
+.pick-pad__pic .friend-pic__fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pick-pad__name {
+  position: absolute;
+  bottom: 6%;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--pond-ink);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.pick__note {
+  margin-top: auto;
+  color: var(--pond-ink);
+  font-size: var(--fs-small);
+  text-align: center;
+}
+
+/* End of round: the friends the child met */
+.met {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: var(--sp-2) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.met__friend {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 64px;
+  font-weight: 700;
+}
+
+.met__friend img,
+.met__friend .friend-pic__fallback {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fff7e6;
+  object-fit: contain;
+}
+
+/* shared bits of the level */
+.friend-pic__fallback {
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.care {
+  padding: 0;
+}
+
+.care__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-4);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.care__body {
+  display: grid;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+
+.care__title {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
+.device-status__rows {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-small);
+}
+
+.device-status__rows li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.device-status__rows .is-ok svg {
+  color: var(--ok);
+}
+
+.device-status__rows .is-bad {
+  color: var(--warn-text);
+  font-weight: 600;
+}
+
+.device-status__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.device-status__fix {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+  color: var(--warn-text);
+  font-size: var(--fs-small);
+}
+
+/* fits a phone without sideways scrolling: headers and reasons wrap (beats `.table` in dashboard.css, which loads later) */
+.table.call-table {
+  min-width: 0;
+}
+
+.table.call-table thead th,
+.table.call-table td {
+  white-space: normal;
+}
+
+.table.call-table thead th {
+  vertical-align: bottom;
+}
+
+.table.call-table tbody th {
+  min-width: 96px;
+}
+
+.table.call-table td,
+.table.call-table th {
+  padding-inline: 8px;
+}
+
+.call-table tbody th {
+  background: none;
+  color: var(--ink);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  white-space: normal;
+  vertical-align: top;
+}
+
+.call-table small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.call-table__word {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.call-table .call-table__type--oral,
+.check .call-table__type--oral {
+  color: var(--oral-text);
+}
+
+.call-table .call-table__type--nasal,
+.check .call-table__type--nasal {
+  color: var(--nasal-text);
+}
+
+.call-note {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.source-switch {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.demo__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+
+.demo__check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.seg--wrap {
+  flex-wrap: wrap;
+}
+
+/* 2D fallback of the pond */
+.call2d {
+  position: absolute;
+  inset: 0;
+}
+
+.call2d__pad {
+  position: absolute;
+  display: grid;
+  place-items: center;
+}
+
+.call2d__pad--friend {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scaleY(0.55);
+}
+
+.call2d__pad--frog {
+  left: 14%;
+  bottom: 4%;
+  transform: scaleY(0.55);
+}
+
+.call2d__friend {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: min(46%, 190px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -62%);
+}
+
+.call2d__friend img,
+.call2d__friend .friend-pic__fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.call2d__friend.is-facing img {
+  animation: friend-turn 0.45s var(--ease-spring);
+}
+
+@keyframes friend-turn {
+  from {
+    transform: scaleX(0.2);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.call2d__frog {
+  position: absolute;
+  left: calc(14% + 22px);
+  bottom: calc(4% + 22px);
+}
+
+@media (min-width: 600px) {
+  .world-frame,
+  .pick {
+    border: var(--bw) solid var(--line);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+  .pick {
+    min-height: 0;
+  }
+  .pick__list > li {
+    width: 150px;
+  }
+}
+
+/* Picker screens (who first / which balloon trip / which route / which door) */
+.kid-screen--pick {
+  justify-content: flex-start;
+}
+
+/* "who next?" sheet after a friend has heard the child */
+.pick-sheet {
+  display: grid;
+  gap: var(--sp-3);
+  max-width: 520px;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.35) 0 2px, transparent 3px) 0 0 / 72px 72px,
+    linear-gradient(#bfe6d8, var(--pond) 70%);
+}
+
+.pick-sheet__title {
+  margin: 0;
+  color: var(--pond-ink);
+  font-size: 1.9rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.pick-sheet .pick__list > li {
+  width: calc(50% - 7px);
+  max-width: 150px;
+}
+
+.pick-sheet .quiet-btn {
+  justify-self: center;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.overlay__card--done {
+  display: grid;
+  gap: var(--sp-3);
+  text-align: center;
+}
+
+.overlay__card--done > svg,
+.overlay__card--done > .quiet-btn {
+  justify-self: center;
+}
+
+/* Game strip beside the scene (landscape tablets / desktop): friends, balloons, route stops, doors.
+   Rows show what the child chose and what is next; a row becomes a button when it is a real choice. */
+.side-card {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.side-card__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.side-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.side-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-areas:
+    "pic name"
+    "pic state";
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 6px 12px 6px 6px;
+  border: 2px solid transparent;
+  border-radius: var(--r-lg);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+}
+
+.side-item > img,
+.side-item > .friend-pic__fallback,
+.side-item > .side-item__pic {
+  grid-area: pic;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.side-item__pic {
+  display: grid;
+  place-items: center;
+}
+
+.side-item__name {
+  grid-area: name;
+  align-self: end;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.side-item__state {
+  grid-area: state;
+  align-self: start;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.side-item.is-current {
+  border-color: var(--star-deep);
+  background: #fff6dc;
+}
+
+.side-item.is-done .side-item__state {
+  color: var(--ok-text);
+  font-weight: 600;
+}
+
+button.side-item {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--line);
+  cursor: pointer;
+}
+
+button.side-item:hover {
+  border-color: var(--primary);
+}
+
+button.side-item .side-item__state {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ---------- World layout: phone → iPad portrait → iPad landscape / desktop ----------
+   Phone: scene + near edge fill the screen, the adult corner sits below.
+   Portrait tablet: same column, wider, bigger targets.
+   Landscape (iPad 1180×820, desktop): the scene fills the height beside a side column that belongs to the game
+   (friends / route / balloons / door) with the adult corner under it. Breakpoints follow what the content needs. */
+.kid-screen--world {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.world-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.world-side {
+  width: 100%;
+  max-width: 560px;
+  display: grid;
+  align-content: start;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4) var(--sp-6);
+}
+
+.world-side__info {
+  display: none;
+}
+
+.care {
+  padding: 0;
+}
+
+.care .demo {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .world-frame,
+  .pick,
+  .world-side {
+    max-width: 760px;
+  }
+  /* the scene takes the height the dock leaves (hand on the dock never covers the characters) */
+  .stage--world {
+    height: clamp(420px, calc(100dvh - 300px), 860px);
+  }
+  .dock-pic,
+  .dock-glyph {
+    width: 104px;
+    height: 104px;
+  }
+  .pick__list > li {
+    width: 190px;
+  }
+  /* pickers fill the tablet screen: title, choices and note sit together in the middle */
+  .pick {
+    min-height: calc(100dvh - var(--sp-6) - var(--sp-10));
+    gap: var(--sp-6);
+  }
+  .pick__title {
+    margin-top: auto;
+    font-size: 2.6rem;
+  }
+  .pick__note {
+    margin: 0 0 auto;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .kid-screen.kid-screen--world {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(290px, 27vw, 380px);
+    align-items: start;
+    width: 100%;
+    max-width: 1560px;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  .world-main {
+    align-items: stretch;
+  }
+  .world-frame {
+    max-width: none;
+  }
+  .stage--world {
+    height: calc(100dvh - 2 * var(--sp-4) - 136px);
+    min-height: 340px;
+  }
+  .world-dock {
+    grid-template-columns: auto minmax(0, 1fr) minmax(300px, 400px);
+    grid-template-areas: "pic text actions";
+    align-items: center;
+    padding: 16px 22px 14px;
+  }
+  .world-side {
+    position: sticky;
+    top: var(--sp-4);
+    max-width: none;
+    max-height: calc(100dvh - 2 * var(--sp-4));
+    overflow: auto;
+    padding: 0;
+  }
+  .world-side__info {
+    display: grid;
+  }
+  .pick {
+    max-width: 1100px;
+    min-height: min(calc(100dvh - 2 * var(--sp-4)), 760px);
+    gap: var(--sp-6);
+  }
+  /* bar stays on top; title, choices and note sit together in the middle */
+  .pick__title {
+    margin-top: auto;
+    font-size: 2.8rem;
+  }
+  .pick__note {
+    margin: 0 0 auto;
+  }
+  .pick__list > li {
+    width: 170px;
+  }
+}
+
+[data-motion="reduce"] .dock-state__icon.is-live,
+[data-motion="reduce"] .call2d__friend.is-facing img {
+  animation: none;
+}
+
+[data-motion="reduce"] .world-bubble,
+[data-motion="reduce"] .pick-pad::before {
+  transition: none;
+}
+
+/* Result on iPad landscape / desktop: the celebration scene gets the big side, the child's moment and actions sit beside it */
+@media (min-width: 700px) and (orientation: portrait) {
+  .kid-frame.result {
+    max-width: 760px;
+  }
+  .result__scene {
+    height: min(34dvh, 360px);
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .kid-frame.result {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(340px, 1fr);
+    column-gap: var(--sp-8);
+    align-items: start;
+    max-width: 1240px;
+  }
+  .result > * {
+    grid-column: 2;
+  }
+  .result > .result__scene {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    position: sticky;
+    top: var(--sp-6);
+    height: min(calc(100dvh - 2 * var(--sp-8)), 640px);
+  }
+  .result > .disclaimer {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Landscape: the scene fills the height, so the 2D / 3D note floats on it (under the top bar) instead of below the fold */
+@media (min-width: 900px) and (orientation: landscape) {
+  .kid-screen--world .world-main {
+    position: relative;
+  }
+  .kid-screen--world .world-main > .kid-note--stage {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    z-index: 7;
+    translate: -50% 0;
+    max-width: min(560px, 90%);
+    margin: 0;
+    padding: 6px 14px;
+    border-radius: var(--r-pill);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: var(--shadow-1);
+  }
 }

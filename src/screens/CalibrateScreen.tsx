@@ -8,7 +8,7 @@ import { saveCalibration, useActiveChild } from "../data/store";
 import { useFrameRender, useGameLoop } from "../lib/hooks";
 import { navigate } from "../lib/router";
 import { clampDt } from "../logic/common";
-import { mockSource } from "../signal/mock";
+import { signalSource } from "../signal/mock";
 import { SignalProcessor, type SignalFrame } from "../signal/SignalProcessor";
 import { IDLE_FRAME } from "./useGameRuntime";
 
@@ -35,10 +35,11 @@ const STEPS = [
 
 function frameLine(frame: SignalFrame, word: string, done: boolean): { kind: "ok" | "wait" | "warn"; text: string } {
   if (done) return { kind: "ok", text: "เก็บค่าครบแล้ว" };
-  if (frame.status === "disconnected") return { kind: "warn", text: "อุปกรณ์หลุด (จำลอง) · หยุดเก็บค่าไว้ก่อน" };
-  if (frame.status === "connecting" || frame.status === "stale") return { kind: "warn", text: "สัญญาณไม่พร้อม · รอสักครู่" };
-  if (!frame.speaking) return { kind: "wait", text: `ยังไม่ได้ยินเสียง · พูด “${word}” ค้างไว้ได้เลย` };
-  return { kind: "ok", text: "ได้ยินเสียงแล้ว · กำลังเก็บค่า" };
+  if (frame.status === "disconnected") return { kind: "warn", text: "อุปกรณ์หลุด หยุดเก็บค่าไว้ก่อน" };
+  if (frame.status === "connecting" || frame.status === "stale") return { kind: "warn", text: "สัญญาณยังไม่พร้อม รอสักครู่" };
+  if (frame.status === "channel") return { kind: "warn", text: "ไมค์ช่องหนึ่งไม่มีสัญญาณ ตรวจสายไมค์ก่อนเก็บค่า" };
+  if (!frame.speaking) return { kind: "wait", text: `พูด “${word}” ค้างไว้ได้เลย` };
+  return { kind: "ok", text: "ได้ยินเสียงแล้ว กำลังเก็บค่า" };
 }
 
 export function CalibrateScreen() {
@@ -56,7 +57,8 @@ export function CalibrateScreen() {
     window.scrollTo({ top: 0 });
   }, [step]);
   useGameLoop((now, dt) => {
-    const frame = processor.current.step(mockSource.latest(), mockSource.connection(), now);
+    const src = signalSource();
+    const frame = processor.current.step(src.latest(), src.connection(), now);
     frameRef.current = frame;
     const key = step === 2 ? "aa" : "ma";
     const take = takes.current[key];
@@ -118,8 +120,8 @@ export function CalibrateScreen() {
         : "ขั้นนี้ยังไม่ใช้สัญญาณ";
 
   return (
-    <div className="kid-screen kid-screen--game">
-      <div className="kid-frame kid-frame--page">
+    <div className="kid-screen">
+      <div className="kid-frame kid-frame--page cal">
         <header className="cal-head">
           <button type="button" className="icon-btn" onClick={back} aria-label={step === 1 ? "กลับหน้าหลัก" : "ย้อนกลับขั้นก่อนหน้า"}>
             <Icon name="back" size={22} />
@@ -216,17 +218,6 @@ export function CalibrateScreen() {
           </section>
         ) : null}
 
-        {step === 1 || step === 2 ? (
-          <section className="cal-next">
-            <p className="cal-next__title">ขั้นถัดไป (ขั้นที่ {step + 1})</p>
-            <p>
-              {step === 1
-                ? "พูด “อาาา” ค้างไว้ เพื่อเก็บค่าเสียงที่ควรออกทางปาก"
-                : "พูด “มาาา” เพื่อเก็บค่าเสียงที่ควรออกจมูกของน้อง แล้วระบบจะตั้งค่าฐานให้เป็นรายคน"}
-            </p>
-          </section>
-        ) : null}
-
         {step === 4 ? (
           <section className="card cal-card">
             <h2 className="cal-card__title">ค่าฐานรายบุคคล (จำลอง)</h2>
@@ -242,7 +233,7 @@ export function CalibrateScreen() {
             </dl>
             {separationOk ? (
               <p className="cal-check cal-check--ok">
-                <Icon name="check" size={18} /> สองเสียงต่างกัน {Math.round(separation ?? 0)} จุด แยกกันได้ · บันทึกค่าฐานจำลองแล้ว
+                <Icon name="check" size={18} /> สองเสียงต่างกัน {Math.round(separation ?? 0)} จุด แยกกันได้ บันทึกค่าฐานจำลองแล้ว
               </p>
             ) : (
               <p className="cal-check cal-check--warn">
@@ -251,12 +242,6 @@ export function CalibrateScreen() {
             )}
             <p className="cal-disclaimer">ค่าฐานรายบุคคลนี้ไม่ใช่การตรวจสอบความแม่นยำกับเครื่องมาตรฐาน และยังไม่ได้ใช้ปรับสเกลค่าในเกม</p>
           </section>
-        ) : null}
-
-        {step <= 3 ? (
-          <p className="cal-warn">
-            <Icon name="alert" size={16} /> ถ้าเสียงรอบข้างดังหรือแผ่นกั้นเลื่อน ระบบจะให้ลองใหม่ก่อนเริ่มเล่น
-          </p>
         ) : null}
 
         <div className="kid-actions">
@@ -290,8 +275,17 @@ export function CalibrateScreen() {
           ) : null}
           {saved ? <p className="kid-actions__hint">บันทึกค่าฐานจำลองแล้ว</p> : null}
         </div>
+
+        {/* demo tools stay with the adult, folded until needed (same as in the games) */}
+        <details className="card care">
+          <summary className="care__summary">
+            <Icon name="user" size={18} /> สำหรับผู้ดูแล: เครื่องมือสาธิต (เมื่อยังไม่ต่ออุปกรณ์จริง)
+          </summary>
+          <div className="care__body">
+            <DemoPanel target={{ kind: step === 3 ? "nasal" : "oral", threshold: step === 3 ? plan.gateThreshold : plan.oralThreshold }} hint={hint} />
+          </div>
+        </details>
       </div>
-      <DemoPanel target={{ kind: step === 3 ? "nasal" : "oral", threshold: step === 3 ? plan.gateThreshold : plan.oralThreshold }} hint={hint} />
     </div>
   );
 }

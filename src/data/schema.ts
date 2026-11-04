@@ -3,7 +3,7 @@ export type Level = 1 | 2 | 3;
 
 /** แผนการฝึกที่นักแก้ไขการพูดตั้งต่อเด็กหนึ่งคน — แหล่งเดียวของเกณฑ์ทุกค่าในเกม */
 export interface Plan {
-  /** ชุดคำด้านปาก (โจทย์ในวิ่งหนี/บอลลูน/กบ) */
+  /** ชุดคำด้านปาก (โจทย์ของเกมวิ่งและบอลลูน) */
   words: string[];
   /** คำนาสิกสำหรับด่านประตู */
   nasalWords: string[];
@@ -18,6 +18,8 @@ export interface Plan {
   level: Level;
   games: Record<GameId, boolean>;
   gateEnabled: boolean;
+  /** ชุดคำของด่านเรียกเพื่อน (id ใน CALL_WORDS) — ไม่มี = ใช้ชุดตั้งต้น */
+  callWords?: string[];
   updatedAt: string;
 }
 
@@ -51,6 +53,42 @@ export interface FrogSummary {
   target: number;
 }
 
+/** สรุปรายคำของด่านเรียกเพื่อน — เก็บเท่าที่จำเป็น: ไม่มีเสียงดิบ มีแต่จำนวนครั้งและค่าเฉลี่ย */
+export interface CallWordSummary {
+  id: string;
+  word: string;
+  resonance: "oral" | "nasal";
+  listens: number;
+  /** Detected speech segments while the game listened. */
+  attempts: number;
+  /** Attempts whose signal was usable. */
+  usable: number;
+  /** Unusable attempts by reason (device/signal trouble, not the child's failure). */
+  issues: { quiet: number; loud: number; lost: number; channel: number };
+  /** Mean nasal % of usable attempts — descriptive, judged per word type by the therapist. */
+  meanNasal: number | null;
+  heard: boolean;
+  skipped: boolean;
+}
+
+export interface CallSummary {
+  words: CallWordSummary[];
+  /** Friends that heard the child at least once / friends in the round. */
+  heard: number;
+  target: number;
+  /** "demo" = labelled demo mode (simulated signal), "device" = real ESP32 data. */
+  source: "demo" | "device";
+}
+
+/** What the child picked at the start of a round (friend order, balloon trip, route, door) — shown back on the result screen. */
+export interface RoundChoice {
+  kind: "friends" | "trip" | "route" | "door";
+  /** Stable id of the choice (e.g. "crab,dog,fish", "lighthouse", "river", "flower"). */
+  id: string;
+  /** Short Thai name the child saw, e.g. "ประภาคาร". */
+  label: string;
+}
+
 export interface Session {
   id: string;
   childId: string;
@@ -64,14 +102,19 @@ export interface Session {
   level: Level;
   oralThreshold: number;
   gateThreshold: number;
-  /** Voiced attempts judged on the oral criterion. */
+  /** Voiced attempts judged on the oral criterion (call rounds: all detected attempts). */
   attempts: number;
+  /** Attempts that met the oral criterion (call rounds: attempts with usable signal — no criterion is applied). */
   passed: number;
   /** Mean nasal % while saying oral-target words (null when nothing was said). */
   meanNasalOral: number | null;
   gate: GateSummary | null;
   balloon: BalloonSummary | null;
   frog: FrogSummary | null;
+  /** Present on rounds of the call-a-friend level. */
+  call?: CallSummary | null;
+  /** The child's own pick for this round (older sessions have none). */
+  choice?: RoundChoice | null;
   stars: number;
   /** Ended early by the child/demo user ("จบรอบ"). */
   endedEarly: boolean;
@@ -95,7 +138,7 @@ export interface DemoDB {
 }
 
 export const GAME_LABEL: Record<GameId, string> = {
-  runner: "วิ่งหนี",
+  runner: "กระต่ายวิ่ง",
   balloon: "บอลลูน",
   frog: "กบข้ามบึง",
 };

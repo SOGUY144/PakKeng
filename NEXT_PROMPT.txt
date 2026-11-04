@@ -1,3 +1,6 @@
+(อัปเดต 5 พ.ย. 2569 02:20 น.) สถานะล่าสุดอยู่ที่ docs/OVERNIGHT_HANDOFF.md — 4 เกม: เรียกเพื่อน (#/frog), เลือกทางวิ่ง (#/runner), พาบอลลูนไปส่ง (#/balloon), เปิดประตู (#/gate);
+งานทั้งหมดยังไม่ commit บน branch feat/call-friend · เกมวิ่งไม่ใช่ “วิ่งหนี” แบบไล่อีกต่อไป (1 คำ = 1 ช่วงบนทางที่เด็กเลือก) · เครื่องมือสาธิตอยู่ในมุมผู้ดูแลของแต่ละเกม
+
 ทำงานต่อกับเว็บต้นแบบเกมฝึกพูด (แผ่นกั้นใต้จมูก + ไมค์ 2 ตัว, ESP32 ส่ง nasalPercent และ speechDetected) ซึ่งตอนนี้ฉากเกมเป็น 3D แล้ว
 
 1) เป้าหมายและข้อจำกัดที่ต้องรักษา
@@ -17,6 +20,12 @@
 - อ่านตามลำดับ: HANDOFF.md → PROJECT_BRIEF.md → DECISIONS.md (หัวข้อ “อัปเกรดฉากเกมเป็น 3D”) → ASSETS.md → TODO.md → PROGRESS.md
 - brief ฉบับเต็ม: C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt
 - โค้ด 3D: src/three/* (gfx, World3D, WorldCanvas, kit, parts, shapes, models/*, worlds/*); logic: src/logic/*; screens: src/screens/*
+
+2.5) ด่านเรียกเพื่อน (ล่าสุด, branch feat/call-friend)
+- กบข้ามบึงถูกปรับเป็นด่านเรียกเพื่อนตาม skill cleft-speech-game (C:\Users\TCcomputer\.codex\skills\cleft-speech-game\references\evidence-th.md)
+- ตรรกะ: src/logic/call.ts (ตรวจพบการลองพูด / คุณภาพสัญญาณ / สรุปรายคำ แยกกัน) · test: src/logic/call.test.ts
+- คุณภาพสัญญาณ: src/signal/quality.ts · เสียงตัวอย่าง: src/lib/speech.ts · ชุดคำ: src/data/callWords.ts · โปรโตคอล ESP32: docs/DEVICE_PROTOCOL.md
+- ห้ามนำกติกา “ยิ่งต่ำยิ่งดี” กลับมาในด่านนี้ และห้ามให้เพื่อนตอบสนองจากค่าออกจมูก (ตอบสนองจากการตรวจพบเสียงที่สัญญาณใช้ได้เท่านั้น)
 
 3) สิ่งที่ทำแล้ว / ยังไม่ทำ
 - ทำแล้ว: 8 หน้าจอ; ฉาก 3D วิ่งหนี/ประตู/บอลลูน/กบ + ฉากฉลองหน้าสรุป + ภาพเรนเดอร์จากโมเดลบน Home; ระดับคุณภาพ สูง/กลาง/ประหยัด (เลือกอัตโนมัติ + ลดเองเมื่อช้า);

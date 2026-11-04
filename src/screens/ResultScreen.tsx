@@ -1,5 +1,6 @@
 import { CollectibleIcon, StarShape } from "../components/Art";
 import { BarChart, type ChartBar } from "../components/BarChart";
+import { FriendPicture, WordTable, WordTableNote } from "../components/CallParts";
 import { Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
@@ -9,15 +10,47 @@ import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { fmtDayMonth, fmtPct, isSameDay } from "../data/format";
 import { getLastResultId } from "../data/rounds";
+import type { FriendId } from "../data/callWords";
+import { doorById } from "../data/doors";
+import { routeById } from "../data/routes";
 import { GAME_LABEL, LEVEL_LABEL, type Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
-import { navigate } from "../lib/router";
+import { navigate, type Route } from "../lib/router";
 import { nextStarHint, roundStars } from "../logic/scoring";
 
 function rating(s: Session): { got: number; of: number } {
+  if (s.call) return { got: s.call.heard, of: s.call.target };
   if (s.game === "balloon" && s.balloon) return { got: s.balloon.completed, of: s.balloon.target };
   if (s.game === "runner" && s.attempts === 0 && s.gate) return { got: s.gate.opened ? 1 : 0, of: 1 };
   return { got: s.passed, of: s.attempts };
+}
+
+/** A door-only round (played on its own, or the door after a route). */
+const isGateRound = (s: Session) => s.game === "runner" && s.attempts === 0 && s.gate !== null;
+
+/** The event the child just achieved, in the words of its game (the headline of the kid's result). */
+function achieved(s: Session): { title: string; sub: string } {
+  const c = s.choice ?? null;
+  if (s.call) {
+    return s.call.heard > 0
+      ? { title: `เพื่อนได้ยินหนู ${s.call.heard} ตัว!`, sub: `ไปหาเพื่อนในบึง ${s.call.target} ตัว` }
+      : { title: "จบรอบแล้ว", sub: "รอบหน้ามาเรียกเพื่อนกันใหม่นะ" };
+  }
+  if (s.gate?.opened && c?.kind === "door") {
+    const behind = doorById(c.id)?.behind.name;
+    return { title: `เปิด${c.label}ได้แล้ว!`, sub: behind ? `ข้างหลังประตูคือ${behind}` : "เห็นสิ่งที่อยู่ข้างหลังประตูแล้ว" };
+  }
+  if (s.gate?.opened) return { title: "เปิดประตูได้แล้ว!", sub: "ด้วยเสียงก้องจมูกตามที่ครูตั้งไว้" };
+  if (s.game === "balloon" && s.balloon) {
+    const where = c?.kind === "trip" ? `ถึง${c.label}` : "ถึงหมุด";
+    return { title: `ส่งบอลลูน${where} ${s.balloon.completed} ลูก!`, sub: s.balloon.completed >= s.balloon.target ? "ส่งครบทุกลูกแล้ว" : "พักแล้วค่อยส่งต่อรอบหน้าได้" };
+  }
+  if (s.game === "runner" && c?.kind === "route") {
+    const r = routeById(c.id);
+    return s.endedEarly ? { title: `วิ่ง${r.name}ไปได้ ${s.stars} ช่วง`, sub: `รอบหน้าไปให้ถึง${r.destination}กันนะ` } : { title: `ถึง${r.destination}แล้ว!`, sub: `วิ่ง${r.name}ครบทุกช่วง` };
+  }
+  if (isGateRound(s)) return { title: "ลองเปิดประตูแล้ว", sub: "ไว้รอบหน้ามาลองใหม่นะ" };
+  return { title: "จบรอบแล้ว", sub: `พูดไป ${s.attempts} ครั้ง` };
 }
 
 /** Per-game metric for the "5 ครั้งล่าสุด" chart. */
@@ -90,21 +123,19 @@ export function ResultScreen() {
   const newly = COLLECTIBLES.find((c) => c.stars > before && c.stars <= totalNow) ?? null;
   const next = nextCollectible(totalNow);
 
-  const praise =
-    session.game === "balloon"
-      ? `เก่งมาก! พูดค้างได้รวม ${session.balloon?.speakingSec.toFixed(1) ?? 0} วินาที`
-      : session.game === "frog"
-        ? `เก่งมาก! พูดไป ${session.attempts} ช่วงเสียง`
-        : `เก่งมาก! พูดไป ${session.attempts + (session.gate?.attempts ?? 0)} ครั้ง`;
+  const call = session.call ?? null;
+  const event = achieved(session);
+  const met = call ? call.words.filter((w) => w.heard) : [];
+  const again: Route = isGateRound(session) ? "gate" : session.game;
 
   return (
     <div className="kid-screen">
       <div className="kid-frame kid-frame--page result">
         <header className="result__head">
-          <h1>จบรอบแล้ว</h1>
+          <h1>{event.title}</h1>
           <p className="result__sub">
-            {GAME_LABEL[session.game]} · ด่านที่ {session.level} {LEVEL_LABEL[session.level]}
-            {roundToday > 0 ? ` · รอบที่ ${roundToday} วันนี้` : ""}
+            {event.sub}
+            {roundToday > 0 ? ` (รอบที่ ${roundToday} ของวันนี้)` : ""}
           </p>
         </header>
 
@@ -123,9 +154,26 @@ export function ResultScreen() {
             </span>
           ))}
         </div>
-        <p className="result__praise">{praise}</p>
+        {met.length > 0 ? (
+          <ul className="met met--result" aria-label="เพื่อนที่ได้ยินหนู">
+            {met.map((w) => (
+              <li key={w.id} className="met__friend">
+                <FriendPicture id={w.id as FriendId} word={w.word} />
+                <span lang="th">{w.word}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {hint ? <p className="result__hint">{hint}</p> : stars === 3 ? <p className="result__hint">ได้ครบ 3 ดาวแล้ว!</p> : null}
 
+        <details className="card result__care">
+          <summary className="care__summary">
+            <Icon name="user" size={18} /> สำหรับผู้ดูแล: ตัวเลขของรอบนี้
+          </summary>
+          <div className="care__body">
+        <p className="result__meta">
+          {GAME_LABEL[session.game]} {session.call ? "(ด่านเรียกเพื่อน)" : `ด่านที่ ${session.level} ${LEVEL_LABEL[session.level]}`}
+        </p>
         <div className="tiles">
           {session.game === "runner" ? (
             <>
@@ -173,7 +221,22 @@ export function ResultScreen() {
               </div>
             </>
           ) : null}
-          {session.game === "frog" && session.frog ? (
+          {call ? (
+            <>
+              <div className="tile">
+                <span className="tile__label">เพื่อนที่ได้ยิน</span>
+                <span className="tile__value">
+                  {call.heard}/{call.target} <small>ตัว</small>
+                </span>
+              </div>
+              <div className="tile">
+                <span className="tile__label">ลองเรียก · สัญญาณใช้ได้</span>
+                <span className="tile__value">
+                  {session.attempts} · {session.passed} <small>ครั้ง</small>
+                </span>
+              </div>
+            </>
+          ) : session.game === "frog" && session.frog ? (
             <>
               <div className="tile">
                 <span className="tile__label">กบกระโดดได้</span>
@@ -191,6 +254,16 @@ export function ResultScreen() {
           ) : null}
         </div>
 
+        {call ? (
+          <section className="card result__chart" aria-labelledby="result-words-title">
+            <h2 id="result-words-title" className="section-title section-title--card">
+              คำที่ฝึกรอบนี้
+            </h2>
+            <WordTable words={call.words} caption="คำที่ฝึกรอบนี้" />
+            <WordTableNote />
+            {call.source === "demo" ? <p className="call-note">รอบนี้ใช้โหมดสาธิต (สัญญาณจำลอง) ตัวเลขไม่ได้มาจากอุปกรณ์จริง</p> : null}
+          </section>
+        ) : (
         <section className="card result__chart" aria-labelledby="result-chart-title">
           <div className="result__charthead">
             <h2 id="result-chart-title" className="section-title section-title--card">
@@ -219,6 +292,9 @@ export function ResultScreen() {
             ) : null}
           </p>
         </section>
+        )}
+          </div>
+        </details>
 
         <section className={`unlock${newly ? " is-new" : ""}`} aria-live="polite">
           {newly ? (
@@ -249,7 +325,7 @@ export function ResultScreen() {
         </section>
 
         <div className="kid-actions">
-          <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => navigate(session.game)}>
+          <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => navigate(again)}>
             <Icon name="refresh" size={20} /> เล่นอีกรอบ
           </button>
           <button type="button" className="btn btn--secondary btn--block" onClick={() => navigate("home")}>
@@ -257,7 +333,7 @@ export function ResultScreen() {
           </button>
         </div>
         <p className="result__saved">
-          <Icon name="check" size={16} /> บันทึกรอบนี้แล้ว · นักแก้ไขการพูดเห็นได้ในแดชบอร์ด (เดโม) · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
+          <Icon name="check" size={16} /> บันทึกรอบนี้แล้ว นักแก้ไขการพูดเห็นได้ในแดชบอร์ด (เดโม) ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
         </p>
         <Disclaimer compact />
       </div>

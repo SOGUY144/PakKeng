@@ -1,0 +1,289 @@
+/* ---------- Home: what each game invites the child to do ----------
+   Phone: one column, the four games as a 2×2 grid of big picture buttons.
+   iPad portrait: wider column, bigger pictures. Landscape / desktop: greeting + today on the left, games on the right. */
+
+.home {
+  gap: var(--sp-4);
+}
+
+.home-today {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.home-today__time {
+  display: grid;
+  gap: 6px;
+}
+
+.home-today__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.home-again {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 14px 8px 8px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--line);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.home-again:hover {
+  border-color: var(--primary);
+}
+
+.home-again__pic {
+  display: block;
+  width: 64px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: var(--r-md);
+}
+
+.home-again__pic img,
+.home-again__pic svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-again__text {
+  display: grid;
+  line-height: 1.45;
+}
+
+.home-again__text strong {
+  font-size: 1.15rem;
+}
+
+.home-again__text small {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+
+.home-plays {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.home-plays__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 6.4vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.home-plays__note,
+.home-plays__none {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+
+.plays {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.play-card {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 8px 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--line);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-2);
+}
+
+.play-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.play-card:active {
+  transform: translateY(1px);
+}
+
+.play-card__pic {
+  display: block;
+  aspect-ratio: 120 / 84;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--surface-muted);
+}
+
+.play-card__pic img,
+.play-card__pic svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.play-card__verb {
+  margin-top: 6px;
+  font-size: clamp(1.15rem, 4.8vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.play-card__name {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+}
+
+.home-check {
+  justify-content: center;
+}
+
+.btn--primary-soft {
+  border: 2px solid var(--primary);
+  background: var(--surface);
+  color: var(--primary);
+}
+
+.collect-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+
+.collect-strip__title {
+  display: grid;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.collect-strip__stars {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.collect-strip__title small {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  font-weight: 400;
+}
+
+.collect-strip__items {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collect-strip__item {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--ink-3);
+}
+
+.collect-strip__item img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.collect-strip__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .kid-frame.home {
+    max-width: 760px;
+  }
+  .play-card__verb {
+    font-size: 1.6rem;
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .kid-frame.home {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.4fr);
+    grid-template-areas:
+      "switch switch"
+      "head plays"
+      "today plays"
+      "check plays"
+      "collect plays"
+      "foot foot";
+    /* the games set the height; the left column stays packed at the top */
+    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: var(--sp-8);
+    max-width: 1280px;
+  }
+  .home > .viewswitch {
+    grid-area: switch;
+  }
+  .home > .home-head {
+    grid-area: head;
+    flex-wrap: wrap;
+  }
+  .home > .home-today {
+    grid-area: today;
+  }
+  .home > .home-check {
+    grid-area: check;
+  }
+  .home > .collect-strip {
+    grid-area: collect;
+  }
+  .home > .home-plays {
+    grid-area: plays;
+  }
+  .home > .disclaimer {
+    grid-area: foot;
+  }
+  .home-plays__title {
+    font-size: 2.4rem;
+  }
+  .play-card {
+    padding: 10px 10px 16px;
+  }
+  .play-card__verb {
+    font-size: 1.7rem;
+  }
+}

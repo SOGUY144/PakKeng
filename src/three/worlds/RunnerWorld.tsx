@@ -1,7 +1,9 @@
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { damp, frameDt, seeded } from "../anim";
+import { routeById } from "../../data/routes";
+import { ROUTE_LEGS } from "../../logic/route";
+import { frameDt, seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Bunny } from "../models/Bunny";
 import { CloudPal } from "../models/CloudPal";
@@ -11,12 +13,15 @@ import { BlobShadow, Burst, Dust, FitCamera, Lights, ScrollField, type BurstFire
 import * as S from "../shapes";
 import type { RunnerSpec } from "../spec";
 
-/** Hero stands still on the middle lane; the garden scrolls past (camera never moves). */
-export const BUNNY_X = 1.5;
-/** World units per second at decorative speed 1. */
-const RUN_UNITS = 2.8;
+/** Hero stands on the middle lane; the garden scrolls past one leg at a time (camera never moves). */
+export const BUNNY_X = -1.3;
+/** World units between two stops of the route. */
+const LEG_UNITS = 3.1;
 const SPAN = 30;
 const LANE_Z = 1.14;
+/** Stop flags stand on the far edge of the path, a little ahead of where the bunny stops. */
+const FLAG_Z = -1.05;
+const FLAG_AHEAD = 0.55;
 
 function along(n: number, span: number, r: () => number, jitter = 0.35): number[] {
   return Array.from({ length: n }, (_, i) => (i + 0.5 + (r() * 2 - 1) * jitter) * (span / n));
@@ -48,14 +53,16 @@ function layout() {
 }
 
 /**
- * ฉากวิ่งหนี 3D: สวนลอยฟ้าเส้นทาง 3 เลน มองเฉียงจากด้านข้าง (เห็นระยะห่างระหว่างกระต่ายกับเพื่อนเมฆเป็นแนวนอน)
- * - ความเร็วของฉาก/จังหวะวิ่งมาจาก state.speed (ตกแต่งเท่านั้น) และเป็น 0 เมื่อข้อมูลใช้ไม่ได้
- * - ระยะห่างตัวไล่มาจาก state.gap (ตรรกะเกม) แสดงด้วยแถบสีน้ำเงินบนพื้น (ค่าด้านปาก)
- * - สิ่งกีดขวางอยู่เลนข้างเท่านั้น ไม่มีการชน ไม่ต้องหลบ
+ * ฉากเกมวิ่ง 3D (เลือกทางวิ่ง): สวนลอยฟ้า มองเฉียงจากด้านข้าง กระต่ายวิ่งไปทีละช่วงตามเส้นทางที่เด็กเลือก
+ * - ตำแหน่งมาจาก RouteRun.pos (จำนวนจุดแวะที่ถึงแล้ว) เท่านั้น: ได้ยินเสียงที่ใช้ได้หรือกดข้าม → วิ่งไปธงถัดไป
+ * - ธงจุดแวะเป็นสีของเส้นทาง ปลายทางเป็นสิ่งปลูกสร้างของเส้นทางนั้น (ชิงช้าสวรรค์ / บ้านเห็ด)
+ * - เพื่อนเมฆวิ่งตามเป็นเพื่อนร่วมทาง ไม่ไล่ ไม่มีการชน ไม่มีสถานะแพ้
+ * - วงแหวนใต้เท้ากระต่ายบอกว่าเกมกำลังฟัง (ทอง = มีเสียงเข้ามา) และหายไประหว่างวิ่ง
  */
-export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier }: RunnerSpec) {
+export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }: RunnerSpec) {
   const kit = useKit();
   const L = useMemo(() => layout(), []);
+  const r = routeById(route);
   const geo = useMemo(
     () => ({
       tree: kit.geo("tree", S.tree),
@@ -76,6 +83,17 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier }: Runner
       ground: kit.geo("ground-80x40", () => new THREE.PlaneGeometry(80, 40)),
       path: kit.geo("path-80", () => new THREE.BoxGeometry(80, 0.3, 3.3)),
       edge: kit.geo("path-edge-80", () => new THREE.BoxGeometry(80, 0.32, 0.16)),
+      pole: kit.cylinder(0.035, 0.045, 1.5, 8),
+      banner: kit.geo("flag-banner", () => {
+        const sh = new THREE.Shape();
+        sh.moveTo(0, 0);
+        sh.lineTo(0.62, -0.17);
+        sh.lineTo(0, -0.36);
+        sh.closePath();
+        return new THREE.ExtrudeGeometry(sh, { depth: 0.05, bevelEnabled: false });
+      }),
+      knob: kit.ball(0.07),
+      base: kit.cylinder(0.2, 0.24, 0.1, 14),
     }),
     [kit],
   );
@@ -83,62 +101,80 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier }: Runner
   // low tier: half the small decor (same layout, fewer draws/triangles)
   const thin = (items: Placement[]) => (tier === "low" ? items.filter((_, i) => i % 2 === 0) : items);
 
+  const legs = ROUTE_LEGS;
   const offset = useRef(0);
   const far = useRef(0);
   const drift = useRef(0);
-  const passing = useRef(false);
+  const moving = useRef(false);
   const bunny = useRef(bunnyDrive({ reduced }));
   const cloud = useRef(cloudDrive({ reduced }));
-  const chaser = useRef<THREE.Group>(null);
-  const chaserShadow = useRef<THREE.Mesh>(null);
-  const ribbon = useRef<THREE.Mesh>(null);
+  const pal = useRef<THREE.Group>(null);
+  const flags = useRef<(THREE.Group | null)[]>([]);
+  const goal = useRef<THREE.Group>(null);
+  const wheel = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const ringMat = useMemo(() => kit.own(new THREE.MeshBasicMaterial({ color: C.creamShade })), [kit]);
+  const ringIdle = useMemo(() => new THREE.Color(C.creamShade), []);
+  const ringLive = useMemo(() => new THREE.Color(C.gold), []);
   const fire = useRef<BurstFire>({ seq: 0, x: BUNNY_X, y: 1.75, z: 0 });
-  const seen = useRef<{ game: unknown; attempts: number; x: number | null }>({ game: null, attempts: 0, x: null });
+  const seen = useRef<{ game: unknown; reached: number; off: number | null }>({ game: null, reached: 0, off: null });
 
   useFrame((_, dtRaw) => {
     const g = gameRef.current;
     if (!g) return;
     const dt = frameDt(dtRaw);
-    const s = g.state;
     const f = frameRef.current;
-    if (seen.current.game !== g) seen.current = { game: g, attempts: s.attempts.length, x: null }; // restart
+    const call = g.call.state;
+    if (seen.current.game !== g) seen.current = { game: g, reached: g.reached, off: null }; // new round / restart
 
-    const speed = f.valid && !s.done ? s.speed : 0;
-    if (!reduced) {
-      offset.current += speed * RUN_UNITS * dt;
-      far.current += dt * 0.12 + speed * dt * 0.1;
-    }
-    drift.current = speed * RUN_UNITS;
+    // where the bunny is on the route: eased run from the logic; reduced motion cuts straight to the next stop
+    const want = (reduced && g.leg ? g.leg.to : g.pos) * LEG_UNITS;
+    const prev = seen.current.off ?? want;
+    seen.current.off = want;
+    offset.current = want;
+    const v = dt > 0 ? (want - prev) / dt : 0;
+    if (!reduced) far.current += dt * 0.12 + v * dt * 0.03;
+    drift.current = v;
 
     const b = bunny.current;
     b.reduced = reduced;
-    b.speed = speed;
-    b.boost = s.passing;
-    b.pose = s.done ? "wave" : speed > 0.12 ? "run" : "stand";
-    passing.current = s.passing && f.valid && !s.done;
+    b.speed = Math.min(1.6, v / 2.6);
+    b.boost = false;
+    b.pose = g.done ? "wave" : g.running ? "run" : "stand";
+    moving.current = g.running && !reduced;
 
-    if (s.attempts.length > seen.current.attempts) {
-      if (s.attempts[s.attempts.length - 1]?.passed) {
-        b.cheer += 1;
-        cloud.current.wave += 1;
-        fire.current = { seq: fire.current.seq + 1, x: BUNNY_X, y: 1.75, z: 0 };
-      }
-      seen.current.attempts = s.attempts.length;
+    if (g.reached > seen.current.reached) {
+      // arrived at a stop: a small cheer, the cloud friend waves
+      b.cheer += 1;
+      cloud.current.wave += 1;
+      fire.current = { seq: fire.current.seq + 1, x: BUNNY_X, y: 1.75, z: 0 };
+      seen.current.reached = g.reached;
     }
-    if (s.done && cloud.current.wave === 0) cloud.current.wave = 1;
-
-    const target = BUNNY_X - (1.2 + s.gap * 2.7);
-    const x = seen.current.x === null ? target : damp(seen.current.x, target, 3.5, dt);
-    seen.current.x = x;
-    cloud.current.excite = 1 - s.gap;
+    cloud.current.excite = g.running ? 0.8 : 0.3;
     cloud.current.reduced = reduced;
-    chaser.current?.position.setX(x);
-    chaserShadow.current?.position.setX(x);
-    if (ribbon.current) {
-      const x0 = x + 0.55;
-      const x1 = BUNNY_X - 0.42;
-      ribbon.current.position.x = (x0 + x1) / 2;
-      ribbon.current.scale.x = Math.max(0.05, x1 - x0);
+    pal.current?.position.setY(0.85 + (reduced ? 0 : Math.sin(far.current * 9) * 0.04));
+
+    // stop flags (1 … legs−1) and the destination, placed by the distance still to run
+    const pos = want / LEG_UNITS;
+    for (let k = 1; k < legs; k++) {
+      const fl = flags.current[k];
+      if (!fl) continue;
+      const x = BUNNY_X + FLAG_AHEAD + (k - pos) * LEG_UNITS;
+      fl.visible = x > -7 && x < 9;
+      fl.position.x = x;
+      fl.rotation.z = reduced ? 0 : Math.sin(far.current * 11 + k) * 0.03;
+    }
+    if (goal.current) {
+      const x = BUNNY_X + 1.55 + (legs - pos) * LEG_UNITS;
+      goal.current.visible = x < 11;
+      goal.current.position.x = x;
+    }
+    if (wheel.current && !reduced) wheel.current.rotation.z = far.current * 1.6;
+
+    // listening ring: shown on the child's turn, gold while a voice is coming in
+    if (ring.current) {
+      ring.current.visible = !g.running && !g.done && call.phase !== "playing" && call.phase !== "settle";
+      ringMat.color.copy(call.inAttempt && f.valid ? ringLive : ringIdle);
     }
   }, -1);
 
@@ -147,7 +183,7 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier }: Runner
       <fog attach="fog" args={[C.fog, 16, 38]} />
       <group dispose={null}>
         <Lights tier={tier} sun={[-3, 9, 7]} box={8} />
-        <FitCamera target={[-0.45, 0.95, 0]} dir={[0, 0.3, 1]} width={6.5} height={3.4} />
+        <FitCamera target={[0.3, 0.95, -0.3]} dir={[0, 0.3, 1]} width={6.2} height={3.3} />
 
         <mesh geometry={geo.ground} material={kit.clay(C.grass)} rotation-x={-Math.PI / 2} position={[0, -0.02, -6]} receiveShadow />
         <mesh geometry={geo.path} material={kit.clay(C.path)} position={[0, -0.15, 0]} receiveShadow />
@@ -172,18 +208,82 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier }: Runner
         <ScrollField geometry={geo.island} items={L.islands} offset={far} span={48} />
         <ScrollField geometry={geo.cloud} items={L.clouds} offset={far} span={52} factor={1.5} />
 
-        <mesh ref={ribbon} geometry={kit.plane()} material={kit.basic(C.oralLight, 0.8)} rotation-x={-Math.PI / 2} position={[0, 0.02, 0]} scale={[1, 0.36, 1]} />
+        {Array.from({ length: legs }, (_, k) =>
+          k === 0 ? null : (
+            <group key={k} ref={(el) => void (flags.current[k] = el)} position={[BUNNY_X + FLAG_AHEAD + k * LEG_UNITS, 0, FLAG_Z]} visible={false}>
+              <mesh geometry={geo.base} material={kit.clay(C.creamShade)} position={[0, 0.05, 0]} receiveShadow />
+              <mesh geometry={geo.pole} material={kit.clay(C.wood)} position={[0, 0.75, 0]} castShadow={shadows} />
+              <mesh geometry={geo.knob} material={kit.clay(C.butter)} position={[0, 1.52, 0]} scale={0.07} />
+              <mesh geometry={geo.banner} material={kit.clay(r.flag)} position={[0.03, 1.45, -0.025]} castShadow={shadows} />
+            </group>
+          ),
+        )}
+        <group ref={goal} position={[BUNNY_X + 1.55 + legs * LEG_UNITS, 0, -1.75]} visible={false}>
+          {route === "mushroom" ? <MushroomHouse color={r.flag} deep={r.flagDeep} /> : <FerrisWheel wheel={wheel} color={r.flag} deep={r.flagDeep} />}
+        </group>
+
+        <mesh ref={ring} geometry={kit.torus(0.62, 0.035)} material={ringMat} rotation-x={-Math.PI / 2} position={[BUNNY_X, 0.02, 0]} />
         <group position={[BUNNY_X, 0, 0]} rotation-y={Math.PI / 2 - 0.6}>
           <Bunny drive={bunny} outfit={outfit} />
         </group>
         <BlobShadow at={[BUNNY_X, 0, 0.04]} size={[0.95, 0.75]} />
-        <group ref={chaser} position={[BUNNY_X - 3, 0.95, 0]} rotation-y={Math.PI / 2 - 0.5}>
+        <group ref={pal} position={[BUNNY_X - 1.45, 0.95, 0.5]} rotation-y={Math.PI / 2 - 0.5} scale={0.7}>
           <CloudPal drive={cloud} />
         </group>
-        <BlobShadow ref={chaserShadow} at={[BUNNY_X - 3, 0, 0]} size={[1.15, 0.8]} materialKey="soft" opacity={0.55} />
-        <Dust on={passing} drift={drift} at={[BUNNY_X - 0.1, 0.02, 0]} reduced={reduced} />
+        <BlobShadow at={[BUNNY_X - 1.45, 0, 0.5]} size={[0.85, 0.6]} materialKey="soft" opacity={0.5} />
+        <Dust on={moving} drift={drift} at={[BUNNY_X - 0.1, 0.02, 0]} reduced={reduced} />
         <Burst fire={fire} reduced={reduced} />
       </group>
     </>
+  );
+}
+
+/** Destination of the flower route: a small clay ferris wheel in the route colour (turns slowly). */
+function FerrisWheel({ wheel, color, deep }: { wheel: RefObject<THREE.Group | null>; color: string; deep: string }) {
+  const kit = useKit();
+  const cabins = 8;
+  return (
+    <group scale={1.05}>
+      <mesh geometry={kit.cylinder(0.06, 0.09, 2.2, 8)} material={kit.clay(C.white)} position={[-0.55, 1.05, 0.25]} rotation-z={-0.26} castShadow />
+      <mesh geometry={kit.cylinder(0.06, 0.09, 2.2, 8)} material={kit.clay(C.white)} position={[0.55, 1.05, 0.25]} rotation-z={0.26} castShadow />
+      <mesh geometry={kit.cylinder(0.5, 0.6, 0.18, 18)} material={kit.clay(C.creamShade)} position={[0, 0.09, 0.25]} receiveShadow />
+      <group ref={wheel} position={[0, 2.05, 0.25]}>
+        <mesh geometry={kit.torus(1.15, 0.07)} material={kit.clay(color)} castShadow />
+        <mesh geometry={kit.torus(0.42, 0.05)} material={kit.clay(deep)} />
+        {Array.from({ length: cabins }, (_, i) => {
+          const a = (i / cabins) * Math.PI * 2;
+          return (
+            <group key={i}>
+              <mesh geometry={kit.cylinder(0.025, 0.025, 1.15, 6)} material={kit.clay(C.white)} position={[Math.cos(a) * 0.58, Math.sin(a) * 0.58, 0]} rotation-z={a + Math.PI / 2} />
+              <mesh geometry={kit.ball(0.17)} material={kit.clay(i % 2 ? C.butter : C.mint)} position={[Math.cos(a) * 1.15, Math.sin(a) * 1.15 - 0.12, 0.12]} scale={0.17} castShadow />
+            </group>
+          );
+        })}
+      </group>
+      <mesh geometry={kit.ball(0.12)} material={kit.clay(C.butter)} position={[0, 2.05, 0.36]} scale={0.12} />
+    </group>
+  );
+}
+
+/** Destination of the mushroom route: a big clay mushroom house with a door and a round window. */
+function MushroomHouse({ color, deep }: { color: string; deep: string }) {
+  const kit = useKit();
+  return (
+    <group scale={1.1}>
+      <mesh geometry={kit.cylinder(0.62, 0.74, 1.3, 20)} material={kit.clay(C.cream)} position={[0, 0.65, 0]} castShadow receiveShadow />
+      <mesh geometry={kit.dome()} material={kit.clay(color)} position={[0, 1.22, 0]} scale={[1.35, 0.95, 1.35]} castShadow />
+      {[
+        [0.55, 1.75, 0.75],
+        [-0.6, 1.6, 0.7],
+        [0.05, 2.02, 0.62],
+        [-0.15, 1.5, 1.05],
+        [0.75, 1.42, 0.38],
+      ].map(([x, y, z], i) => (
+        <mesh key={i} geometry={kit.ball(0.11)} material={kit.clay(C.white)} position={[x, y, z]} scale={0.11} />
+      ))}
+      <mesh geometry={kit.capsule(0.2, 0.32)} material={kit.clay(C.woodDeep)} position={[0, 0.42, 0.66]} scale={[1, 1, 0.35]} />
+      <mesh geometry={kit.ball(0.15)} material={kit.clay(deep)} position={[0.42, 0.85, 0.55]} scale={[0.15, 0.15, 0.06]} />
+      <mesh geometry={kit.ball(0.1)} material={kit.clay(C.butter)} position={[0.42, 0.85, 0.6]} scale={[0.1, 0.1, 0.04]} />
+    </group>
   );
 }

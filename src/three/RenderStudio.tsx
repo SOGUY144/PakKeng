@@ -8,7 +8,9 @@ import { StudioScene, type StudioSubject } from "./worlds/Showcase";
  * still images to public/renders/*.webp through the dev-server endpoint in vite.config.ts.
  * Home and Result show these files, so those pages never need to load three.js.
  */
-const SHOTS: { name: StudioSubject; w: number; h: number }[] = [
+const FRIENDS = ["crab", "dog", "fish", "bird", "turtle"] as const;
+
+const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   { name: "thumb-runner", w: 360, h: 252 },
   { name: "thumb-balloon", w: 360, h: 252 },
   { name: "thumb-frog", w: 360, h: 252 },
@@ -17,7 +19,15 @@ const SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   { name: "item-shoes", w: 128, h: 128 },
   { name: "item-scarf", w: 128, h: 128 },
   { name: "item-crown", w: 128, h: 128 },
+  ...FRIENDS.flatMap((f) => [
+    { name: `friend-${f}` as const, w: 200, h: 200 },
+    { name: `friend-${f}-back` as const, w: 200, h: 200 },
+  ]),
 ];
+
+/** `/?studio&only=friend` re-renders just the shots whose name starts with "friend". */
+const only = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("only") : null;
+const SHOTS = only ? ALL_SHOTS.filter((s) => s.name.startsWith(only)) : ALL_SHOTS;
 
 function Capture({ onShot }: { onShot: (dataUrl: string) => void }) {
   const frames = useRef(0);

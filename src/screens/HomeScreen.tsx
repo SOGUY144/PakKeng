@@ -1,29 +1,66 @@
 import { useState } from "react";
-import { Bunny, CollectibleIcon, GameThumb } from "../components/Art";
+import { Bunny, CollectibleIcon, DoorPanel, GameThumb } from "../components/Art";
 import { Disclaimer, ViewSwitch } from "../components/Chrome";
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
-import { COLLECTIBLES, nextCollectible, practiceSecToday, totalStars } from "../data/analytics";
+import { childSessions, COLLECTIBLES, nextCollectible, practiceSecToday, totalStars } from "../data/analytics";
 import { fmtDuration, isSameDay } from "../data/format";
-import { missionGame } from "../data/plan";
-import { GAME_LABEL, LEVEL_LABEL, type GameId } from "../data/schema";
+import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
-import { navigate } from "../lib/router";
-import { useConnection } from "../signal/mock";
+import { navigate, type Route } from "../lib/router";
+import { useConnection, useSignalSource } from "../signal/mock";
+import "../styles/home.css";
 
-const GAME_DESC: Record<GameId, string> = {
-  runner: "พูดลากเสียงยาว ให้กระต่ายวิ่งหนีเพื่อนเมฆ",
-  balloon: "พูดค้างไว้ ให้บอลลูนลอยในโซน",
-  frog: "พูดทีละพยางค์ ให้กบกระโดดทีละก้าว",
-};
+type Play = "frog" | "balloon" | "runner" | "gate";
 
-const GAMES: GameId[] = ["runner", "balloon", "frog"];
+/** What each game invites the child to do — the verb is the label, the game's name comes second. */
+const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean }[] = [
+  { id: "frog", verb: "เรียกเพื่อน", name: "กบข้ามบึง", open: (p) => p.games.frog },
+  { id: "balloon", verb: "พาบอลลูนไปส่ง", name: "บอลลูน", open: (p) => p.games.balloon },
+  { id: "runner", verb: "เลือกทางวิ่ง", name: "กระต่ายวิ่ง", open: (p) => p.games.runner },
+  { id: "gate", verb: "เปิดประตู", name: "ประตูเสียงก้องจมูก", open: (p) => p.gateEnabled },
+];
+
+function GateThumb() {
+  return (
+    <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">
+      <rect width="120" height="84" fill="#cfe8b8" />
+      <rect y="58" width="120" height="26" fill="#a3d47f" />
+      <path d="M30 84V34a30 30 0 0 1 60 0v50z" fill="#ddd3e6" />
+      <path d="M38 84V36a22 22 0 0 1 44 0v48z" fill="#fff6dc" />
+      <g transform="translate(39 30) scale(0.42)">
+        <DoorPanel side="left" />
+      </g>
+      <g transform="translate(60 30) scale(0.42)">
+        <DoorPanel side="right" />
+      </g>
+    </svg>
+  );
+}
+
+/** The last round played in this demo, if its game is still in the plan: "play on" from there. */
+function lastRound(sessions: Session[], plan: Plan): { play: Play; text: string } | null {
+  const last = sessions.filter((s) => s.source === "demo").at(-1);
+  if (!last) return null;
+  const play: Play = last.gate && last.attempts === 0 ? "gate" : last.game;
+  if (!PLAYS.find((p) => p.id === play)?.open(plan)) return null;
+  const c = last.choice;
+  let text: string;
+  if (last.call) text = `รอบที่แล้ว เพื่อนได้ยินหนู ${last.call.heard} ตัว`;
+  else if (c?.kind === "route") text = `รอบที่แล้ว ${c.label}`;
+  else if (c?.kind === "trip") text = `รอบที่แล้ว ส่งบอลลูนไป${c.label}`;
+  else if (c?.kind === "door") text = `รอบที่แล้ว เปิด${c.label}`;
+  else if (last.balloon) text = `รอบที่แล้ว ส่งบอลลูนได้ ${last.balloon.completed} ลูก`;
+  else text = "รอบที่แล้ว";
+  return { play, text };
+}
 
 export function HomeScreen() {
   const db = useDB();
   const child = findChild(db, db.activeChildId);
   const plan = child.plan;
   const conn = useConnection();
+  const src = useSignalSource();
   const [deviceInfo, setDeviceInfo] = useState(false);
   const now = new Date();
   const doneSec = practiceSecToday(db, child.id, now);
@@ -31,16 +68,18 @@ export function HomeScreen() {
   const progress = Math.min(1, doneSec / targetSec);
   const stars = totalStars(db, child);
   const next = nextCollectible(stars);
-  const mission = missionGame(plan);
   const cal = db.calibrations[child.id];
   const calToday = cal ? isSameDay(new Date(cal.at), now) : false;
+  const plays = PLAYS.filter((p) => p.open(plan));
+  const closed = PLAYS.length - plays.length;
+  const again = lastRound(childSessions(db, child.id), plan);
+  const demo = src.kind === "mock";
 
-  const deviceText =
-    conn === "connected" ? "สัญญาณจำลอง" : conn === "connecting" ? "กำลังเชื่อมต่อ…" : "อุปกรณ์หลุด (จำลอง)";
+  const deviceText = conn === "connected" ? (demo ? "สัญญาณจำลอง" : "ต่ออุปกรณ์แล้ว") : conn === "connecting" ? "กำลังเชื่อมต่อ…" : "อุปกรณ์หลุด";
 
   return (
     <div className="kid-screen">
-      <div className="kid-frame kid-frame--page">
+      <div className="kid-frame kid-frame--page home">
         <ViewSwitch current="kid" />
 
         <header className="home-head">
@@ -63,154 +102,95 @@ export function HomeScreen() {
               onClick={() => setDeviceInfo((v) => !v)}
             >
               <span className="device__dot" aria-hidden="true" />
-              โหมดเดโม · {deviceText}
+              {demo ? "โหมดสาธิต" : "อุปกรณ์จริง"}: {deviceText}
             </button>
             {deviceInfo ? (
               <p id="device-info" className="device__info">
-                ยังไม่ได้ต่ออุปกรณ์จริง ค่าในเกมมาจากเครื่องมือเดโมด้านล่างของหน้าเกม
+                {demo
+                  ? "ยังไม่ได้ต่ออุปกรณ์จริง ค่าในเกมมาจากเครื่องมือสาธิตในมุมผู้ดูแลของแต่ละเกม"
+                  : "ค่าในเกมมาจากอุปกรณ์ ESP32 ที่ต่อไว้ ดูสถานะไมค์ได้ในมุมผู้ดูแลของแต่ละเกม"}
               </p>
             ) : null}
           </div>
         </header>
 
-        <section className="card mission" aria-labelledby="mission-title">
-          <div className="mission__top">
-            <span className="mission__label">ภารกิจวันนี้</span>
-            <span className="badge">ครูตั้งให้</span>
-          </div>
-          <h2 id="mission-title" className="mission__title">
-            ด่านที่ {plan.level} · {LEVEL_LABEL[plan.level]}
-          </h2>
-          <ul className="chips" aria-label="ชุดคำ">
-            {plan.words.map((w) => (
-              <li key={w} className="chip">
-                {w}
-              </li>
-            ))}
-          </ul>
-          <p className="mission__meta">
-            <span>
-              <Icon name="clock" size={16} /> เป้าหมาย {plan.dailyMinutes} นาที
-            </span>
-            <span>
-              <Icon name="target" size={16} /> เกณฑ์ออกปาก {plan.oralThreshold}%
-            </span>
-            {plan.gateEnabled ? (
-              <span>
-                <Icon name="nose" size={16} /> ด่านประตู ≥ {plan.gateThreshold}%
-              </span>
-            ) : null}
-          </p>
-          <div className="mission__progress">
+        <section className="home-today" aria-label="วันนี้">
+          <div className="home-today__time">
+            <p className="home-today__text">
+              {doneSec > 0 ? `วันนี้ฝึกแล้ว ${fmtDuration(doneSec)} จาก ${plan.dailyMinutes} นาที` : `วันนี้ฝึกกัน ${plan.dailyMinutes} นาทีนะ`}
+            </p>
             <div className="progress" role="progressbar" aria-label="เวลาฝึกวันนี้" aria-valuemin={0} aria-valuemax={targetSec} aria-valuenow={Math.round(doneSec)}>
               <div className="progress__fill" style={{ transform: `scaleX(${progress})` }} />
             </div>
-            <span className="mission__progresstext">
-              {doneSec > 0 ? `ฝึกแล้ว ${fmtDuration(doneSec)} / ${plan.dailyMinutes} นาที` : `ยังไม่ได้ฝึกวันนี้ · 0 / ${plan.dailyMinutes} นาที`}
-            </span>
           </div>
-          {mission ? (
-            <button type="button" className="btn btn--primary btn--lg btn--block mission__start" onClick={() => navigate(mission)}>
-              <Icon name="play" size={22} /> เริ่มเล่น
+          {again ? (
+            <button type="button" className="home-again" onClick={() => navigate(again.play as Route)}>
+              <span className="home-again__pic">
+                <PlayThumb play={again.play} />
+              </span>
+              <span className="home-again__text">
+                <strong>เล่นต่อ: {PLAYS.find((p) => p.id === again.play)?.verb}</strong>
+                <small>{again.text}</small>
+              </span>
+              <Icon name="next" size={22} />
             </button>
-          ) : (
-            <button type="button" className="btn btn--primary btn--lg btn--block" disabled>
-              ครูยังไม่ได้เปิดเกม
-            </button>
-          )}
-          {mission ? (
-            <p className="mission__sub">
-              เกมในภารกิจ: {GAME_LABEL[mission]}
-              {mission === "runner" && plan.gateEnabled ? " + ด่านประตูเสียงนาสิก" : ""}
-            </p>
           ) : null}
         </section>
 
-        {!calToday ? (
-          <p className="home-hint">
-            <Icon name="info" size={18} />
-            <span>ยังไม่ได้ปรับเครื่องวันนี้ แนะนำให้ปรับก่อนเล่นรอบแรก</span>
-          </p>
-        ) : null}
-
-        <section aria-labelledby="games-title">
-          <h2 id="games-title" className="section-title">
-            เกมทั้งหมด
+        <section className="home-plays" aria-labelledby="plays-title">
+          <h2 id="plays-title" className="home-plays__title">
+            วันนี้อยากเล่นอะไร?
           </h2>
-          <ul className="games">
-            {GAMES.map((g) => {
-              const open = plan.games[g];
-              return (
-                <li key={g}>
-                  <button
-                    type="button"
-                    className={`game-card${open ? "" : " is-locked"}`}
-                    onClick={() => open && navigate(g)}
-                    aria-disabled={!open}
-                    aria-describedby={`game-desc-${g}`}
-                  >
-                    <span className={`game-card__thumb game-card__thumb--${g}`}>
-                      <RenderImg name={`thumb-${g}`} fallback={<GameThumb game={g} />} />
-                      {!open ? (
-                        <span className="game-card__lock">
-                          <Icon name="lock" size={18} />
-                        </span>
-                      ) : null}
+          {plays.length > 0 ? (
+            <ul className="plays">
+              {plays.map((p) => (
+                <li key={p.id}>
+                  <button type="button" className={`play-card play-card--${p.id}`} onClick={() => navigate(p.id)}>
+                    <span className="play-card__pic">
+                      <PlayThumb play={p.id} />
                     </span>
-                    <span className="game-card__name">{GAME_LABEL[g]}</span>
-                    <span id={`game-desc-${g}`} className="game-card__desc">
-                      {open ? GAME_DESC[g] : "ครูยังไม่เปิดเกมนี้"}
-                    </span>
+                    <span className="play-card__verb">{p.verb}</span>
+                    <span className="play-card__name">{p.name}</span>
                   </button>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          ) : (
+            <p className="home-plays__none">ครูยังไม่ได้เปิดเกม ให้ผู้ใหญ่ช่วยดูแผนการฝึกนะ</p>
+          )}
+          {closed > 0 && plays.length > 0 ? <p className="home-plays__note">เกมอื่นจะเปิดเมื่อครูตั้งไว้ในแผน</p> : null}
         </section>
 
-        <section className="card collect" aria-labelledby="collect-title">
-          <div className="collect__head">
-            <h2 id="collect-title" className="section-title section-title--card">
-              ของที่สะสมได้
-            </h2>
-            <span className="collect__stars">ดาวรวม {stars}</span>
-          </div>
-          <ul className="collect__items">
+        <button type="button" className={`btn btn--lg btn--block home-check${calToday ? " btn--secondary" : " btn--primary-soft"}`} onClick={() => navigate("calibrate")}>
+          <Icon name="wave" size={20} /> {calToday ? "เช็กไมค์อีกครั้ง" : "เช็กไมค์ก่อนเล่น (ยังไม่ได้เช็กวันนี้)"}
+        </button>
+
+        <section className="collect-strip" aria-labelledby="collect-title">
+          <h2 id="collect-title" className="collect-strip__title">
+            <span className="collect-strip__stars">ดาว {stars} ดวง</span>
+            {next ? <small>อีก {next.stars - stars} ดวง ได้{next.name}</small> : <small>สะสมครบทุกชิ้นแล้ว</small>}
+          </h2>
+          <ul className="collect-strip__items">
             {COLLECTIBLES.map((c) => {
               const unlocked = stars >= c.stars;
               return (
-                <li key={c.id} className={`collect__item${unlocked ? "" : " is-locked"}`}>
-                  <span className="collect__icon">
-                    {unlocked ? <RenderImg name={`item-${c.id}`} fallback={<CollectibleIcon id={c.id} size={36} />} /> : <Icon name="lock" size={20} />}
-                  </span>
-                  <span className="collect__name">{unlocked ? c.name : `${c.stars} ดาว`}</span>
+                <li key={c.id} className={`collect-strip__item${unlocked ? "" : " is-locked"}`} title={unlocked ? c.name : `${c.stars} ดาว`}>
+                  {unlocked ? <RenderImg name={`item-${c.id}`} fallback={<CollectibleIcon id={c.id} size={32} />} /> : <Icon name="lock" size={18} />}
+                  <span className="sr-only">{unlocked ? c.name : `ล็อก ${c.stars} ดาว`}</span>
                 </li>
               );
             })}
           </ul>
-          {next ? (
-            <div className="collect__next">
-              <div className="progress progress--star" aria-hidden="true">
-                <div className="progress__fill" style={{ transform: `scaleX(${Math.min(1, stars / next.stars)})` }} />
-              </div>
-              <span>
-                อีก {next.stars - stars} ดาว ปลดล็อก{next.name}
-              </span>
-            </div>
-          ) : (
-            <p className="collect__next">ปลดล็อกครบทุกชิ้นแล้ว</p>
-          )}
-          <p className="collect__note">
-            <span className="badge badge--sample">ตัวอย่าง</span> ดาวเริ่มต้นเป็นข้อมูลตัวอย่าง รวมกับดาวที่เก็บได้ในเดโม
-          </p>
+          <p className="collect-strip__note">ดาวเริ่มต้นเป็นข้อมูลตัวอย่าง รวมกับดาวที่เก็บได้ในเดโม</p>
         </section>
-
-        <button type="button" className="btn btn--secondary btn--lg btn--block" onClick={() => navigate("calibrate")}>
-          <Icon name="wave" size={20} /> ปรับเครื่องก่อนเล่น
-        </button>
 
         <Disclaimer />
       </div>
     </div>
   );
+}
+
+function PlayThumb({ play }: { play: Play }) {
+  if (play === "gate") return <GateThumb />;
+  return <RenderImg name={`thumb-${play}`} fallback={<GameThumb game={play} />} />;
 }

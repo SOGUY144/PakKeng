@@ -5,6 +5,7 @@ import { GAME_NAME } from "../data/copy";
 import { Icon } from "../components/Icon";
 import { showToast } from "../lib/toast";
 import { childSessions, REVIEW_RULES, reviewStatus, weeklyBuckets, type ReviewStatus, type RuleState, type WeekBucket } from "../data/analytics";
+import { CALL_WORDS, callGroupNasal, RESONANCE_LABEL } from "../data/callWords";
 import { fmtDayMonth, fmtDuration, fmtPct, fmtRange, fmtTime } from "../data/format";
 import { PLAN_LIMITS, planToDraft, validatePlan, wordError, type PlanDraft, type PlanErrors } from "../data/plan";
 import { GAME_LABEL, LEVEL_LABEL, type Child, type GameId, type Level } from "../data/schema";
@@ -278,7 +279,7 @@ function PlanForm({ child }: { child: Child }) {
           id="words"
           placeholder="พิมพ์คำ เช่น ปา"
           label="ชุดคำด้านปาก"
-          hint={`ใช้เป็นโจทย์ในวิ่งหนี บอลลูน และกบ (1–${L.words.max} คำ)`}
+          hint={`ใช้เป็นคำของแต่ละช่วงในเกมวิ่ง (ตามลำดับ) และบอลลูน (1–${L.words.max} คำ)`}
           words={draft.words}
           onChange={(w) => set("words", w)}
           error={errors.words}
@@ -295,7 +296,7 @@ function PlanForm({ child }: { child: Child }) {
         <NumberField
           id="oral-thr"
           label="เกณฑ์ด้านปาก: ออกปากอย่างน้อย (%)"
-          hint={`${L.oralThreshold.min}–${L.oralThreshold.max}% · ใช้ในวิ่งหนี บอลลูน กบ`}
+          hint={`${L.oralThreshold.min}–${L.oralThreshold.max}% ใช้กับบอลลูน และบันทึกผลให้ผู้ดูแลในเกมวิ่ง (ด่านเรียกเพื่อนไม่ใช้เกณฑ์)`}
           value={draft.oralThreshold}
           min={L.oralThreshold.min}
           max={L.oralThreshold.max}
@@ -356,12 +357,34 @@ function PlanForm({ child }: { child: Child }) {
             ))}
             <label className="check">
               <input type="checkbox" checked={draft.gateEnabled} onChange={(e) => set("gateEnabled", e.target.checked)} />
-              ด่านประตูเสียงนาสิก (หลังวิ่งหนี)
+              ด่านประตูเสียงนาสิก (เล่นเดี่ยวหรือต่อจากเกมวิ่ง)
             </label>
           </div>
           {errors.games ? (
             <span className="field__error" role="alert">
               {errors.games}
+            </span>
+          ) : null}
+        </fieldset>
+        <fieldset className="field games-field">
+          <legend className="field__label">คำเรียกเพื่อน (กบข้ามบึง · ด่านเรียกเพื่อน)</legend>
+          <div className="games-field__list">
+            {CALL_WORDS.map((w) => (
+              <label key={w.id} className="check">
+                <input
+                  type="checkbox"
+                  checked={draft.callWords.includes(w.id)}
+                  onChange={(e) => set("callWords", e.target.checked ? [...draft.callWords, w.id] : draft.callWords.filter((id) => id !== w.id))}
+                />
+                <span lang="th">{w.word}</span>
+                <small className={`call-table__type--${w.resonance}`}>· {RESONANCE_LABEL[w.resonance]}</small>
+              </label>
+            ))}
+          </div>
+          <span className="field__hint">เด็กเรียกชื่อสัตว์ทีละตัว เพื่อนหันมาเมื่อได้ยินเสียงเท่านั้น · สรุปค่าออกจมูกแยกคำปาก/คำมีเสียงนาสิก ไม่ใช้ตัดสิน</span>
+          {errors.callWords ? (
+            <span className="field__error" role="alert">
+              {errors.callWords}
             </span>
           ) : null}
         </fieldset>
@@ -660,18 +683,31 @@ export function DashboardScreen() {
                             {fmtDuration(s.durationSec)}
                             {s.rounds > 1 ? <small>{s.rounds} รอบ</small> : null}
                           </td>
-                          <td>
+                          <td className="wrap">
                             {GAME_LABEL[s.game]}
                             {s.gate ? " + ประตู" : ""}
+                            {s.call ? <small>ด่านเรียกเพื่อน · เพื่อนได้ยิน {s.call.heard}/{s.call.target}</small> : null}
+                            {!s.call && s.choice ? <small>เด็กเลือก: {s.choice.label}</small> : null}
                           </td>
                           <td>{s.words.join(" ")}</td>
-                          <td className="num">{s.attempts}</td>
                           <td className="num">
-                            {s.attempts > 0 ? `${Math.round((s.passed / s.attempts) * 100)}%` : "—"}
-                            <small>เกณฑ์ {s.oralThreshold}%</small>
+                            {s.attempts}
+                            {s.call ? <small>สัญญาณใช้ได้ {s.passed}</small> : null}
+                          </td>
+                          <td className="num">
+                            {s.call ? (
+                              <>
+                                —<small>ด่านนี้ไม่ใช้เกณฑ์</small>
+                              </>
+                            ) : (
+                              <>
+                                {s.attempts > 0 ? `${Math.round((s.passed / s.attempts) * 100)}%` : "—"}
+                                <small>เกณฑ์ {s.oralThreshold}%</small>
+                              </>
+                            )}
                           </td>
                           <td className="num t-nasal">{fmtPct(s.meanNasalOral)}</td>
-                          <td className="num t-nasal">{s.gate ? fmtPct(s.gate.meanNasal) : "—"}</td>
+                          <td className="num t-nasal">{s.call ? fmtPct(callGroupNasal(s.call, "nasal").mean) : s.gate ? fmtPct(s.gate.meanNasal) : "—"}</td>
                           <td>
                             <span className={`badge ${s.source === "sample" ? "badge--sample" : "badge--demo"}`}>{s.source === "sample" ? "ตัวอย่าง" : "เล่นในเดโม"}</span>
                             {s.endedEarly ? <span className="badge">จบก่อนครบ</span> : null}

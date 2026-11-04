@@ -12,5 +12,6 @@ export function signalProblem(frame: SignalFrame): MeterStatus | null {
   if (frame.status === "disconnected") return { kind: "warn", text: "อุปกรณ์หลุด (จำลอง) · เกมหยุดนับไว้ก่อน" };
   if (frame.status === "connecting") return { kind: "warn", text: "กำลังเชื่อมต่ออุปกรณ์… ยังไม่นับคะแนน" };
   if (frame.status === "stale") return { kind: "warn", text: "สัญญาณไม่พร้อม · รอสักครู่ ยังไม่นับคะแนน" };
+  if (frame.status === "channel") return { kind: "warn", text: "ไมค์ช่องหนึ่งไม่มีสัญญาณ · ให้ผู้ใหญ่ตรวจสายไมค์ ยังไม่นับคะแนน" };
   return null;
 }

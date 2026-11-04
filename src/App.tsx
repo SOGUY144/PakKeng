@@ -16,8 +16,8 @@ import { RunnerScreen } from "./screens/RunnerScreen";
 const TITLES: Record<Route, string> = {
   home: "หน้าหลัก",
   calibrate: "ปรับเครื่อง",
-  runner: "วิ่งหนี",
-  gate: "ด่านประตู",
+  runner: "กระต่ายวิ่ง",
+  gate: "เปิดประตู",
   result: "สรุปรอบ",
   balloon: "บอลลูน",
   frog: "กบข้ามบึง",
@@ -46,7 +46,7 @@ function Locked({ game }: { game: string }) {
 
 function Screen({ route }: { route: Route }) {
   const plan = useActiveChild().plan;
-  if (route === "runner" && !plan.games.runner) return <Locked game="เกมวิ่งหนี" />;
+  if (route === "runner" && !plan.games.runner) return <Locked game="เกมกระต่ายวิ่ง" />;
   if (route === "gate" && !plan.gateEnabled) return <Locked game="ด่านประตูเสียงนาสิก" />;
   if (route === "balloon" && !plan.games.balloon) return <Locked game="เกมบอลลูน" />;
   if (route === "frog" && !plan.games.frog) return <Locked game="เกมกบข้ามบึง" />;

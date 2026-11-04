@@ -564,3 +564,9 @@ fieldset.field legend {
     width: 100%;
   }
 }
+
+/* The chart's SVG has a measured pixel width: let its column shrink on rotate / narrower window,
+   so the width observer can redraw it at the new size (no sideways scroll after turning an iPad). */
+.chart > svg {
+  max-width: 100%;
+}

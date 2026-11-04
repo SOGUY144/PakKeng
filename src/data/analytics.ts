@@ -1,5 +1,24 @@
 import { DAY_MS, dayDiff, isSameDay, startOfDay } from "./format";
+import { callGroupNasal } from "./callWords";
 import type { Child, DemoDB, Plan, Session } from "./schema";
+
+/** Nasal % on oral-target words and its weight; call rounds weigh only their usable oral-word attempts. */
+function oralPair(s: Session): [number | null, number] {
+  if (s.call) {
+    const g = callGroupNasal(s.call, "oral");
+    return [g.mean, g.usable];
+  }
+  return [s.meanNasalOral, s.attempts];
+}
+
+/** Nasal % on nasal words: the gate, or the nasal words of a call round. */
+function nasalPair(s: Session): [number | null, number] {
+  if (s.call) {
+    const g = callGroupNasal(s.call, "nasal");
+    return [g.mean, g.usable];
+  }
+  return [s.gate?.meanNasal ?? null, s.gate?.attempts ?? 0];
+}
 
 export interface WeekBucket {
   /** 1 = oldest, n = the 7 days ending today. */
@@ -49,10 +68,11 @@ export function weeklyBuckets(sessions: Session[], now: Date, weeks = 8): WeekBu
       end,
       practiceDays: days.size,
       sessions: inWeek.length,
-      attempts: inWeek.reduce((n, s) => n + s.attempts, 0),
-      passed: inWeek.reduce((n, s) => n + s.passed, 0),
-      nasalOral: weightedMean(inWeek.map((s) => [s.meanNasalOral, s.attempts])),
-      nasalNasal: weightedMean(inWeek.map((s) => [s.gate?.meanNasal ?? null, s.gate?.attempts ?? 0])),
+      // Call rounds apply no oral criterion, so they stay out of the pass rate.
+      attempts: inWeek.reduce((n, s) => n + (s.call ? 0 : s.attempts), 0),
+      passed: inWeek.reduce((n, s) => n + (s.call ? 0 : s.passed), 0),
+      nasalOral: weightedMean(inWeek.map(oralPair)),
+      nasalNasal: weightedMean(inWeek.map(nasalPair)),
     });
   }
   return buckets;
