@@ -4,6 +4,8 @@
 ฉากเกมทั้ง 3 เกม + ด่านประตูเป็น 3D (three.js + React Three Fiber) เล่นได้จริง ยังใช้สัญญาณจำลองเหมือนเดิม;
 Home ใช้ภาพเรนเดอร์จากโมเดลจริง, หน้าสรุปมีฉากฉลอง 3D; ภาพ 2D เดิมเป็นทางเลือกสำรองเมื่อ WebGL ใช้ไม่ได้
 ย้ายโปรเจกต์ไป `D:\nasal-trainer-web` และเริ่ม git (commit แรกบน `master`)
+ขึ้น GitHub `Gupalmza/nasal-trainer-web` (private) และ deploy รุ่น 3D (commit `a78b1b0`) บน Vercel: https://nasal-trainer-web.vercel.app
+(Vercel CLI ยังไม่เชื่อม GitHub) — build บน Vercel ผ่าน ไฟล์ hash ตรงกับ build ในเครื่อง, 4 ฉาก 3D + แดชบอร์ดเปิดได้ ไม่มี console error
 
 ## Milestone 3 — ฉาก 3D (รายละเอียดการออกแบบ: `DECISIONS.md` หัวข้อ “อัปเกรดฉากเกมเป็น 3D”, assets: `ASSETS.md`)
 ### ทำแล้ว

@@ -5,6 +5,8 @@
 
 ค่าทั้งหมดในเดโมมาจาก **สัญญาณจำลอง** (MockSignalSource) — ยังไม่ได้ต่อ ESP32 จริง
 
+เว็บเดโมที่ deploy แล้ว (รุ่น 3D): https://nasal-trainer-web.vercel.app — วิธี deploy ใหม่ดู `HANDOFF.md`
+
 ## เริ่มใช้งาน
 ```bash
 npm install

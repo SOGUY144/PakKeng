@@ -12,6 +12,8 @@
 
 2) ตำแหน่งและไฟล์เริ่มอ่าน
 - โฟลเดอร์โปรเจกต์: D:\nasal-trainer-web · git: master = รุ่น 2D (commit แรก), branch feat/3d-games = งาน 3D (commit แล้ว ยังไม่ merge เข้า master)
+- GitHub: https://github.com/Gupalmza/nasal-trainer-web (private, default branch = feat/3d-games) · เว็บ: https://nasal-trainer-web.vercel.app
+  (deploy ด้วย Vercel CLI ยังไม่เชื่อม GitHub — push แล้วเว็บไม่อัปเดตเอง; วิธี deploy ใหม่อยู่ใน HANDOFF.md หัวข้อ “Deploy (Vercel)”)
 - อ่านตามลำดับ: HANDOFF.md → PROJECT_BRIEF.md → DECISIONS.md (หัวข้อ “อัปเกรดฉากเกมเป็น 3D”) → ASSETS.md → TODO.md → PROGRESS.md
 - brief ฉบับเต็ม: C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt
 - โค้ด 3D: src/three/* (gfx, World3D, WorldCanvas, kit, parts, shapes, models/*, worlds/*); logic: src/logic/*; screens: src/screens/*
@@ -19,7 +21,7 @@
 3) สิ่งที่ทำแล้ว / ยังไม่ทำ
 - ทำแล้ว: 8 หน้าจอ; ฉาก 3D วิ่งหนี/ประตู/บอลลูน/กบ + ฉากฉลองหน้าสรุป + ภาพเรนเดอร์จากโมเดลบน Home; ระดับคุณภาพ สูง/กลาง/ประหยัด (เลือกอัตโนมัติ + ลดเองเมื่อช้า);
   fallback 2D เมื่อ WebGL ใช้ไม่ได้/หลุด พร้อมปุ่มลองใหม่; ลดการเคลื่อนไหว (ตามระบบ หรือเลือกในเครื่องมือเดโม); dispose ทรัพยากรเมื่อเปลี่ยนหน้า;
-  ตรรกะวิ่งหนีแบบต่อเนื่องตามค่าออกปาก; MockSignalSource + เครื่องมือเดโมครบ; แดชบอร์ดครู
+  ตรรกะวิ่งหนีแบบต่อเนื่องตามค่าออกปาก; MockSignalSource + เครื่องมือเดโมครบ; แดชบอร์ดครู; ขึ้น GitHub (private) และ deploy รุ่น 3D บน Vercel
 - ยังไม่ทำ: ทดสอบบนมือถือจริง, ต่อ ESP32 จริง (มีโครง WebSocketSignalSource), เสียงตัวอย่าง/เสียงประกอบ, dark mode, ลด lint warnings ของฉาก 3D
 
 4) ผลตรวจที่รันจริงล่าสุด
@@ -28,6 +30,7 @@
   context lost → 2D → ลองใหม่ได้; เปลี่ยนหน้า 24 ครั้ง canvas ≤ 1 heap คงที่
 - ประสิทธิภาพ (ระดับกลาง จำลองจอ 375): วิ่งหนี 67 draw calls/81.8k สามเหลี่ยม, ประตู 96/65.8k, บอลลูน 52/36k, กบ 44/37.8k, 120 fps (เพดานจอเครื่องพัฒนา ไม่ใช่ตัวเลขมือถือ)
 - ข้อผิดพลาดที่เหลือ: ไม่พบ; คำเตือน THREE.Clock มาจาก R3F; ยังไม่ทดสอบ screen reader
+- เว็บบน Vercel (4 พ.ย.): build ผ่าน ไฟล์ hash ตรงกับ build ในเครื่อง; วิ่งหนี/ประตู/บอลลูน/กบ เปิดเป็น 3D (WebGL 2) และแดชบอร์ดเปิดได้ ไม่มี console error
 
 5) งานถัดไป (เรียงลำดับ)
 1. แตก branch ใหม่จาก feat/3d-games (หรือ master ถ้า merge แล้ว) แล้วรัน npm install && npm run typecheck && npm test ให้ผ่านก่อนแก้อะไร
@@ -41,6 +44,7 @@
 - ตรวจด้วยมือตาม HANDOFF.md หัวข้อ “วิธีตรวจ”; เครื่องมือเดโม → ตัวเลือกทดสอบเพิ่ม → “ภาพฉากเกม” (ตัวนับ fps/draw calls) และ “ภาพเคลื่อนไหว”
 - เครื่องพัฒนาเดิมตั้งค่าลดการเคลื่อนไหวไว้ → เลือก “เต็ม” เพื่อดู animation ครบ
 - แก้โมเดลแล้วต้องการภาพ Home ใหม่: npm run dev → เปิด /?studio
+- deploy ใหม่หลังแก้: npx vercel@65.2.0 deploy --prod --scope gupalmzas-projects (รายละเอียด/ปัญหา npx บนเครื่องนี้ ดู HANDOFF.md)
 - ถ้าตรวจใน Claude Browser pane ให้เปิด pane ให้เห็นก่อน (pane ที่ซ่อนลดเฟรมเหลือ ~2 fps)
 
 7) ข้อสมมติที่ยังต้องตรวจ และสิ่งที่ห้ามรายงานว่าเสร็จ

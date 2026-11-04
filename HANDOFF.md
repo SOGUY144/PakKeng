@@ -9,6 +9,8 @@ Home ใช้ภาพที่เรนเดอร์จากโมเดล
 ## ตำแหน่ง
 - โฟลเดอร์โปรเจกต์: `D:\nasal-trainer-web` · git: `master` = commit แรก (รุ่น 2D), งาน 3D commit แล้วบน branch `feat/3d-games`
   (ยังไม่ merge เข้า `master`)
+- GitHub: https://github.com/Gupalmza/nasal-trainer-web (**private**) · push ทั้ง 2 branch แล้ว · default branch ตั้งเป็น `feat/3d-games` ไว้ก่อน (รุ่น 3D เป็นรุ่นหลัก)
+- เว็บที่ deploy: https://nasal-trainer-web.vercel.app (รุ่น 3D จาก commit `a78b1b0`, ใครมีลิงก์ก็เปิดได้, ข้อมูลจำลองทั้งหมด) — วิธี deploy ใหม่ดูหัวข้อ “Deploy (Vercel)”
 - เอกสาร: `PROJECT_BRIEF.md` (ข้อกำหนด รวมคำสั่งเพิ่มเติมเรื่อง 3D) · `DECISIONS.md` · `PROGRESS.md` · `TODO.md` · `ASSETS.md` (โมเดล/ภาพ/license)
 - brief หลัก: `C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt`
 
@@ -19,6 +21,15 @@ npm run dev          # http://localhost:5173/#/home  และ  http://localhost
 ```
 - ใน Claude desktop: `.claude/launch.json` มีชื่อ `web` (npm run dev --port 5173 --strictPort) ใช้ได้เมื่อเปิดเซสชันใหม่ในโฟลเดอร์นี้
 - หมายเหตุเซสชันที่ทำงานนี้: ระบบ preview ของแอปยังผูกกับโฟลเดอร์ชั่วคราวเดิม จึงรัน Vite จาก `D:\nasal-trainer-web` เป็นงานเบื้องหลังของเซสชันแทน (หยุดเมื่อเซสชันจบ)
+
+## Deploy (Vercel)
+- Vercel project `gupalmzas-projects/nasal-trainer-web` deploy ด้วย Vercel CLI จากเครื่องนี้ — **ยังไม่ได้เชื่อมกับ GitHub**
+  (บัญชี GitHub ยังไม่ได้ติดตั้ง Vercel GitHub App) ดังนั้น push แล้วเว็บไม่อัปเดตเอง
+- deploy ใหม่ (รันในโฟลเดอร์โปรเจกต์; ถ้า CLI ยังไม่ได้ล็อกอิน ให้รัน `npx vercel@65.2.0 login` แล้วกด Allow Access ในเบราว์เซอร์):
+  `npx vercel@65.2.0 deploy --prod --scope gupalmzas-projects`
+- เครื่องนี้ npx ที่ใช้ cache `D:\npm-cache` ล้มด้วย `ECOMPROMISED Lock compromised` → ใน Git Bash ใส่ `npm_config_cache="C:/Users/TCcomputer/AppData/Local/npm-cache"` นำหน้าคำสั่ง
+- ให้ deploy อัตโนมัติทุก push: ติดตั้ง Vercel GitHub App แบบเลือกเฉพาะ repo นี้ แล้วรัน `npx vercel@65.2.0 git connect --scope gupalmzas-projects`
+- URL เฉพาะของแต่ละ deployment (`nasal-trainer-<id>-gupalmzas-projects.vercel.app`) ต้องล็อกอิน Vercel; โดเมนหลักเปิดได้ทุกคน · `.vercel/` อยู่ใน `.gitignore`
 
 ## วิธีตรวจ
 ```bash
