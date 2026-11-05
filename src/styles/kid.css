@@ -632,29 +632,6 @@
 }
 
 /* result: short celebration with the character of the game just played */
-.result__scene {
-  position: relative;
-  height: 200px;
-  border-radius: var(--r-xl);
-  overflow: hidden;
-  background: radial-gradient(90% 70% at 50% 100%, #ffffff 0%, var(--candy-lemon-soft) 70%);
-  box-shadow: var(--shadow-clay);
-}
-
-.result__scene--frog {
-  background: radial-gradient(90% 70% at 50% 100%, #ffffff 0%, var(--candy-mint-soft) 70%);
-}
-
-.result__scene--balloon {
-  background: radial-gradient(90% 70% at 50% 100%, #ffffff 0%, var(--candy-pink-soft) 70%);
-}
-
-.result__scene > img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
 
 /* balloon: a cream sky (no pink) so the blue target zone reads as blue */
 .stage.stage--3d.stage--balloon {
@@ -1788,20 +1765,6 @@
 /* ---------- Calibrate ---------- (see calibrate.css) */
 
 /* ---------- Result ---------- */
-.result__head {
-  text-align: center;
-}
-
-.result__head h1 {
-  font-size: clamp(1.9rem, 7.5vw, 2.6rem);
-  line-height: 1.35;
-  text-wrap: balance;
-}
-
-.result__sub {
-  font-size: 1rem;
-  color: var(--ink-2);
-}
 
 /* the numbers belong to the adult: folded under the child's moment */
 .result__care {
@@ -1822,46 +1785,6 @@
   margin: 0;
   color: var(--ink-3);
   font-size: var(--fs-small);
-}
-
-.met--result .met__friend {
-  width: 72px;
-  font-size: 1.1rem;
-}
-
-.result__stars {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.result__star.is-on {
-  animation: star-pop 520ms var(--ease-spring) both;
-}
-
-@keyframes star-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.3) rotate(-20deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.result__praise {
-  font-size: 1.125rem;
-  font-family: var(--font-display);
-  font-weight: 600;
-  text-align: center;
-}
-
-.result__hint {
-  margin-top: -10px;
-  font-size: var(--fs-small);
-  color: var(--ink-2);
-  text-align: center;
 }
 
 .tiles {
@@ -1973,52 +1896,6 @@
 .legend__swatch--sample {
   border: var(--bw) solid var(--oral-tint);
   background: repeating-linear-gradient(45deg, var(--oral-soft) 0 3px, var(--oral-tint) 3px 5px);
-}
-
-.unlock {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: 12px 16px 12px 12px;
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-clay);
-  font-size: var(--fs-small);
-}
-
-.unlock.is-new {
-  background: var(--candy-lemon-soft);
-}
-
-.unlock strong {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.unlock__icon {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--candy-lemon-soft);
-  color: var(--candy-lemon-ink);
-}
-
-.result__saved {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.result__saved svg {
-  flex: none;
-  margin-top: 2px;
-  color: var(--ok);
 }
 
 .empty {
@@ -3331,37 +3208,6 @@ button.side-item .side-item__state {
 }
 
 /* Result on iPad landscape / desktop: the celebration scene gets the big side, the child's moment and actions sit beside it */
-@media (min-width: 700px) and (orientation: portrait) {
-  .kid-frame.result {
-    max-width: 760px;
-  }
-  .result__scene {
-    height: min(34dvh, 360px);
-  }
-}
-
-@media (min-width: 900px) and (orientation: landscape) {
-  .kid-frame.result {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(340px, 1fr);
-    column-gap: var(--sp-8);
-    align-items: start;
-    max-width: 1240px;
-  }
-  .result > * {
-    grid-column: 2;
-  }
-  .result > .result__scene {
-    grid-column: 1;
-    grid-row: 1 / span 12;
-    position: sticky;
-    top: var(--sp-6);
-    height: min(calc(100dvh - 2 * var(--sp-8)), 640px);
-  }
-  .result > .disclaimer {
-    grid-column: 1 / -1;
-  }
-}
 
 /* Landscape: the scene fills the height, so the 2D / 3D note floats on it (under the top bar) instead of below the fold */
 @media (min-width: 900px) and (orientation: landscape) {

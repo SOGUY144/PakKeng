@@ -8,7 +8,8 @@ import { COLLECTIBLES, nextCollectible, outfitFor, totalStars } from "../data/an
 import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
-import { fmtDayMonth, fmtPct, isSameDay } from "../data/format";
+import { fmtClock, fmtDayMonth, fmtPct, isSameDay } from "../data/format";
+import { roundDid } from "../data/resultCards";
 import { getLastResultId } from "../data/rounds";
 import type { FriendId } from "../data/callWords";
 import { doorById } from "../data/doors";
@@ -17,6 +18,7 @@ import { GAME_LABEL, LEVEL_LABEL, type Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
 import { navigate, type Route } from "../lib/router";
 import { nextStarHint, roundStars } from "../logic/scoring";
+import "../styles/result.css";
 
 function rating(s: Session): { got: number; of: number } {
   if (s.call) return { got: s.call.heard, of: s.call.target };
@@ -125,21 +127,20 @@ export function ResultScreen() {
 
   const call = session.call ?? null;
   const event = achieved(session);
+  const did = roundDid(session);
+  // colour of the game this round belongs to (a door round is the door's lilac)
+  const tone = session.gate ? "gate" : session.game;
+  const didIcon = session.call ? "ear" : session.game === "balloon" ? "target" : session.gate ? (session.gate.opened ? "check" : "lock") : "flag";
   const met = call ? call.words.filter((w) => w.heard) : [];
   const again: Route = isGateRound(session) ? "gate" : session.game;
 
   return (
     <div className="kid-screen">
       <div className="kid-frame kid-frame--page result">
-        <header className="result__head">
-          <h1>{event.title}</h1>
-          <p className="result__sub">
-            {event.sub}
-            {roundToday > 0 ? ` (รอบที่ ${roundToday} ของวันนี้)` : ""}
-          </p>
-        </header>
-
-        <div className={`result__scene result__scene--${session.game}`} aria-hidden="true">
+        <div className={`result__scene result__scene--${tone}`} aria-hidden="true">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <span key={i} className={`result__spark result__spark--${i}`} />
+          ))}
           {mode.kind === "3d" ? (
             <World3D kind="celebrate" game={session.game} outfit={outfitFor(totalNow)} tier={mode.tier} active reduced={reduced} />
           ) : (
@@ -147,6 +148,13 @@ export function ResultScreen() {
           )}
         </div>
 
+        <header className={`result__head result__head--${tone}`}>
+          <h1>{event.title}</h1>
+          <p className="result__sub">
+            {event.sub}
+            {roundToday > 0 ? ` · รอบที่ ${roundToday} ของวันนี้` : ""}
+          </p>
+        </header>
         <div className="result__stars" role="img" aria-label={`ได้ ${stars} ดาวจาก 3`}>
           {[1, 2, 3].map((i) => (
             <span key={i} className={`result__star${i <= stars ? " is-on" : ""}`} style={{ animationDelay: `${i * 120}ms` }}>
@@ -165,6 +173,61 @@ export function ResultScreen() {
           </ul>
         ) : null}
         {hint ? <p className="result__hint">{hint}</p> : stars === 3 ? <p className="result__hint">ได้ครบ 3 ดาวแล้ว!</p> : null}
+        <ul className="result-cards" aria-label="รอบนี้">
+          <li className="result-card result-card--star">
+            <span className="result-card__band">ดาว</span>
+            <span className="result-card__body">
+              <Icon name="star" size={22} /> +{session.stars}
+            </span>
+          </li>
+          <li className={`result-card result-card--${tone}`}>
+            <span className="result-card__band">{did.label}</span>
+            <span className="result-card__body">
+              <Icon name={didIcon} size={22} /> {did.value}
+            </span>
+          </li>
+          <li className="result-card result-card--time">
+            <span className="result-card__band">เวลาฝึก</span>
+            <span className="result-card__body">
+              <Icon name="clock" size={22} /> {fmtClock(session.durationSec)}
+            </span>
+          </li>
+        </ul>
+        <section className={`unlock${newly ? " is-new" : ""}`} aria-live="polite">
+          {newly ? (
+            <>
+              <span className="unlock__icon">
+                <RenderImg name={`item-${newly.id}`} fallback={<CollectibleIcon id={newly.id} size={40} />} />
+              </span>
+              <span>
+                <strong>ปลดล็อกของใหม่: {newly.name}!</strong>
+                <br />
+                ดาวรวมตอนนี้ {totalNow} ดวง
+              </span>
+            </>
+          ) : next ? (
+            <>
+              <span className="unlock__icon unlock__icon--locked">
+                <Icon name="lock" size={22} />
+              </span>
+              <span>
+                <strong>ของชิ้นต่อไป: {next.name}</strong>
+                <br />
+                อีก {next.stars - totalNow} ดาว · รอบนี้ได้ +{session.stars}
+              </span>
+            </>
+          ) : (
+            <span>ปลดล็อกของครบทุกชิ้นแล้ว</span>
+          )}
+        </section>
+        <div className="result__actions">
+          <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => navigate(again)}>
+            <Icon name="refresh" size={20} /> เล่นอีกรอบ
+          </button>
+          <button type="button" className="link-btn result__home" onClick={() => navigate("home")}>
+            กลับหน้าหลัก
+          </button>
+        </div>
 
         <details className="card result__care">
           <CareSummary sub="ตัวเลขของรอบนี้" />
@@ -293,43 +356,6 @@ export function ResultScreen() {
         )}
           </div>
         </details>
-
-        <section className={`unlock${newly ? " is-new" : ""}`} aria-live="polite">
-          {newly ? (
-            <>
-              <span className="unlock__icon">
-                <RenderImg name={`item-${newly.id}`} fallback={<CollectibleIcon id={newly.id} size={40} />} />
-              </span>
-              <span>
-                <strong>ปลดล็อกของใหม่: {newly.name}!</strong>
-                <br />
-                ดาวรวมตอนนี้ {totalNow} ดวง
-              </span>
-            </>
-          ) : next ? (
-            <>
-              <span className="unlock__icon unlock__icon--locked">
-                <Icon name="lock" size={22} />
-              </span>
-              <span>
-                <strong>ของชิ้นต่อไป: {next.name}</strong>
-                <br />
-                อีก {next.stars - totalNow} ดาว · รอบนี้ได้ +{session.stars}
-              </span>
-            </>
-          ) : (
-            <span>ปลดล็อกของครบทุกชิ้นแล้ว</span>
-          )}
-        </section>
-
-        <div className="kid-actions">
-          <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => navigate(again)}>
-            <Icon name="refresh" size={20} /> เล่นอีกรอบ
-          </button>
-          <button type="button" className="btn btn--secondary btn--block" onClick={() => navigate("home")}>
-            กลับหน้าหลัก
-          </button>
-        </div>
         <p className="result__saved">
           <Icon name="check" size={16} /> บันทึกแล้ว ครูดูได้ในแดชบอร์ด (เดโม) · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
         </p>

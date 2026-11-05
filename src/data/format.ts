@@ -37,6 +37,12 @@ export function fmtDuration(totalSec: number): string {
   return r === 0 ? `${m} นาที` : `${m} นาที ${r} วินาที`;
 }
 
+/** Compact practice time for a small card: "0:58", "10:00". */
+export function fmtClock(totalSec: number): string {
+  const s = Math.max(0, Math.round(totalSec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 export function fmtPct(n: number | null | undefined): string {
   return n === null || n === undefined || !Number.isFinite(n) ? "—" : `${Math.round(n)}%`;
 }

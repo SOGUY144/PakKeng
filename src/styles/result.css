@@ -1,0 +1,390 @@
+/* ---------- Result (สรุปรอบ) — the child's moment ----------
+   One celebration: the game's character big on its own colour with a few sparkles, the event as a bold title,
+   three small stat cards with a coloured band (stars · what you did · time), one big "play again".
+   The numbers for the adult stay folded below (tiles / chart / table styles live in kid.css). */
+
+.result {
+  gap: var(--sp-4);
+}
+
+/* celebration scene */
+.result__scene {
+  --scene-bg: var(--candy-lemon-soft);
+  --spark: var(--candy-lemon);
+  position: relative;
+  height: clamp(240px, 36dvh, 320px);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: radial-gradient(90% 70% at 50% 100%, #ffffff 0%, var(--scene-bg) 72%);
+  box-shadow: var(--shadow-clay);
+}
+
+.result__scene--frog {
+  --scene-bg: var(--candy-mint-soft);
+  --spark: var(--candy-mint);
+}
+
+.result__scene--balloon {
+  --scene-bg: var(--candy-pink-soft);
+  --spark: var(--candy-pink);
+}
+
+.result__scene--runner {
+  --scene-bg: var(--candy-mint-soft);
+  --spark: #a6e3a0;
+}
+
+.result__scene--gate {
+  --scene-bg: var(--candy-lilac-soft);
+  --spark: var(--candy-lilac);
+}
+
+.result__scene > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* four-point sparkles around the character (decorative) */
+.result__spark {
+  position: absolute;
+  z-index: 2;
+  width: 22px;
+  aspect-ratio: 1;
+  background: var(--spark);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  pointer-events: none;
+  animation: spark-twinkle 2.4s ease-in-out infinite;
+}
+
+.result__spark--1 {
+  top: 14%;
+  left: 14%;
+}
+
+.result__spark--2 {
+  top: 9%;
+  right: 22%;
+  width: 16px;
+  animation-delay: 0.5s;
+}
+
+.result__spark--3 {
+  top: 34%;
+  right: 9%;
+  width: 26px;
+  animation-delay: 1s;
+}
+
+.result__spark--4 {
+  bottom: 22%;
+  left: 8%;
+  width: 28px;
+  animation-delay: 1.4s;
+}
+
+.result__spark--5 {
+  bottom: 12%;
+  right: 18%;
+  width: 18px;
+  animation-delay: 0.8s;
+}
+
+@keyframes spark-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.65) rotate(20deg);
+    opacity: 0.7;
+  }
+}
+
+/* title in the game's own colour, one short line under it */
+.result__head {
+  --title: var(--candy-lemon-ink);
+  text-align: center;
+}
+
+.result__head--frog,
+.result__head--runner {
+  --title: var(--candy-mint-ink);
+}
+
+.result__head--balloon {
+  --title: var(--candy-pink-ink);
+}
+
+.result__head--gate {
+  --title: var(--candy-lilac-ink);
+}
+
+.result__head h1 {
+  color: var(--title);
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.result__sub {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: 1.05rem;
+}
+
+.result__stars {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.result__star.is-on {
+  animation: star-pop 520ms var(--ease-spring) both;
+}
+
+@keyframes star-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.result__hint {
+  margin-top: -8px;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  text-align: center;
+}
+
+.met--result .met__friend {
+  width: 72px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+/* three stat cards: a coloured band with the label, the value in a white well */
+.result-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-card {
+  --band: var(--candy-lemon);
+  --band-ink: var(--candy-lemon-ink);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 0 4px 4px;
+  border-radius: var(--r-lg);
+  background: var(--band);
+  box-shadow: var(--shadow-clay);
+  text-align: center;
+}
+
+.result-card--star {
+  --band: var(--star);
+  --band-ink: #5c4300;
+}
+
+.result-card--frog,
+.result-card--runner {
+  --band: var(--candy-mint);
+  --band-ink: var(--candy-mint-ink);
+}
+
+.result-card--balloon {
+  --band: var(--candy-pink);
+  --band-ink: var(--candy-pink-ink);
+}
+
+.result-card--gate {
+  --band: var(--candy-lilac);
+  --band-ink: var(--candy-lilac-ink);
+}
+
+.result-card--time {
+  --band: var(--primary);
+  --band-ink: var(--primary-ink);
+}
+
+.result-card__band {
+  padding: 6px 4px 5px;
+  color: var(--band-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.result-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 72px;
+  padding: 8px 6px;
+  border-radius: calc(var(--r-lg) - 4px);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 4.6vw, 1.35rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.result-card__body svg {
+  flex: none;
+}
+
+.result-card--star .result-card__body svg {
+  color: #d99500;
+}
+
+.result-card--frog .result-card__body svg,
+.result-card--runner .result-card__body svg {
+  color: var(--candy-mint-ink);
+}
+
+.result-card--balloon .result-card__body svg {
+  color: var(--candy-pink-ink);
+}
+
+.result-card--gate .result-card__body svg {
+  color: var(--candy-lilac-ink);
+}
+
+.result-card--time .result-card__body svg {
+  color: var(--primary-text);
+}
+
+/* collectibles: one compact strip */
+.unlock {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px 16px 10px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-clay);
+  font-size: var(--fs-small);
+  line-height: 1.4;
+}
+
+.unlock.is-new {
+  background: var(--candy-lemon-soft);
+}
+
+.unlock strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.unlock__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--candy-lemon-soft);
+  color: var(--candy-lemon-ink);
+}
+
+/* one big button in thumb reach; going home is a quiet link */
+.result__actions {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-top: var(--sp-2);
+}
+
+.result__home {
+  min-height: 48px;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.result__home:hover {
+  color: var(--primary-text);
+  text-decoration: underline;
+}
+
+.result__saved {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.result__saved svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ok);
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .kid-frame.result {
+    max-width: 760px;
+  }
+  .result__scene {
+    height: min(38dvh, 400px);
+  }
+  .result-card__body {
+    min-height: 76px;
+    font-size: 1.5rem;
+  }
+}
+
+/* iPad landscape / desktop: the celebration takes the big side, the child's moment and actions sit beside it */
+@media (min-width: 900px) and (orientation: landscape) {
+  .kid-frame.result {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(360px, 1fr);
+    column-gap: var(--sp-8);
+    align-items: start;
+    max-width: 1240px;
+  }
+  .result > * {
+    grid-column: 2;
+  }
+  .result > .result__scene {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    position: sticky;
+    top: var(--sp-6);
+    height: min(calc(100dvh - 2 * var(--sp-8)), 660px);
+  }
+  .result > .disclaimer {
+    grid-column: 1 / -1;
+  }
+  .result__head {
+    text-align: start;
+  }
+  .result__stars {
+    justify-content: flex-start;
+  }
+  .result__hint {
+    text-align: start;
+  }
+  .result-card__body {
+    min-height: 72px;
+  }
+}
+
+[data-motion="reduce"] .result__spark {
+  animation: none;
+}
