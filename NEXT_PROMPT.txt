@@ -1,5 +1,5 @@
 (อัปเดต 5 พ.ย. 2569 02:20 น.) สถานะล่าสุดอยู่ที่ docs/OVERNIGHT_HANDOFF.md — 4 เกม: เรียกเพื่อน (#/frog), เลือกทางวิ่ง (#/runner), พาบอลลูนไปส่ง (#/balloon), เปิดประตู (#/gate);
-งานทั้งหมดยังไม่ commit บน branch feat/call-friend · เกมวิ่งไม่ใช่ “วิ่งหนี” แบบไล่อีกต่อไป (1 คำ = 1 ช่วงบนทางที่เด็กเลือก) · เครื่องมือสาธิตอยู่ในมุมผู้ดูแลของแต่ละเกม
+งานทั้งหมด commit แล้ว (30a11f8) บน branch feat/call-friend และอยู่บน GitHub repo ใหม่ SOGUY144/PakKeng · เกมวิ่งไม่ใช่ “วิ่งหนี” แบบไล่อีกต่อไป (1 คำ = 1 ช่วงบนทางที่เด็กเลือก) · เครื่องมือสาธิตอยู่ในมุมผู้ดูแลของแต่ละเกม
 
 ทำงานต่อกับเว็บต้นแบบเกมฝึกพูด (แผ่นกั้นใต้จมูก + ไมค์ 2 ตัว, ESP32 ส่ง nasalPercent และ speechDetected) ซึ่งตอนนี้ฉากเกมเป็น 3D แล้ว
 
@@ -14,8 +14,8 @@
 - ใช้รหัสเด็ก ไม่มีชื่อจริง ไม่มีเสียงดิบ ไม่ขอไมโครโฟน; ไม่ใช้ asset ภายนอก (ถ้าจะเพิ่ม ต้องตรวจ license และบันทึกใน ASSETS.md)
 
 2) ตำแหน่งและไฟล์เริ่มอ่าน
-- โฟลเดอร์โปรเจกต์: D:\nasal-trainer-web · git: master = รุ่น 2D (commit แรก), branch feat/3d-games = งาน 3D (commit แล้ว ยังไม่ merge เข้า master)
-- GitHub: https://github.com/Gupalmza/nasal-trainer-web (private, default branch = feat/3d-games) · เว็บ: https://nasal-trainer-web.vercel.app
+- โฟลเดอร์โปรเจกต์: D:\nasal-trainer-web · git: master = รุ่น 2D (commit แรก), branch feat/3d-games = งาน 3D, branch feat/call-friend = งานล่าสุด 4 เกม (ยังไม่ merge เข้า master)
+- GitHub: https://github.com/SOGUY144/PakKeng (public, default branch = feat/call-friend; repo เก่า Gupalmza/nasal-trainer-web เลิกใช้แล้ว) · เว็บ: https://nasal-trainer-web.vercel.app
   (deploy ด้วย Vercel CLI ยังไม่เชื่อม GitHub — push แล้วเว็บไม่อัปเดตเอง; วิธี deploy ใหม่อยู่ใน HANDOFF.md หัวข้อ “Deploy (Vercel)”)
 - อ่านตามลำดับ: HANDOFF.md → PROJECT_BRIEF.md → DECISIONS.md (หัวข้อ “อัปเกรดฉากเกมเป็น 3D”) → ASSETS.md → TODO.md → PROGRESS.md
 - brief ฉบับเต็ม: C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt
@@ -30,7 +30,7 @@
 3) สิ่งที่ทำแล้ว / ยังไม่ทำ
 - ทำแล้ว: 8 หน้าจอ; ฉาก 3D วิ่งหนี/ประตู/บอลลูน/กบ + ฉากฉลองหน้าสรุป + ภาพเรนเดอร์จากโมเดลบน Home; ระดับคุณภาพ สูง/กลาง/ประหยัด (เลือกอัตโนมัติ + ลดเองเมื่อช้า);
   fallback 2D เมื่อ WebGL ใช้ไม่ได้/หลุด พร้อมปุ่มลองใหม่; ลดการเคลื่อนไหว (ตามระบบ หรือเลือกในเครื่องมือเดโม); dispose ทรัพยากรเมื่อเปลี่ยนหน้า;
-  ตรรกะวิ่งหนีแบบต่อเนื่องตามค่าออกปาก; MockSignalSource + เครื่องมือเดโมครบ; แดชบอร์ดครู; ขึ้น GitHub (private) และ deploy รุ่น 3D บน Vercel
+  ตรรกะวิ่งหนีแบบต่อเนื่องตามค่าออกปาก; MockSignalSource + เครื่องมือเดโมครบ; แดชบอร์ดครู; ขึ้น GitHub (ตอนนี้อยู่ที่ SOGUY144/PakKeng) และ deploy รุ่น 3D บน Vercel
 - ยังไม่ทำ: ทดสอบบนมือถือจริง, ต่อ ESP32 จริง (มีโครง WebSocketSignalSource), เสียงตัวอย่าง/เสียงประกอบ, dark mode, ลด lint warnings ของฉาก 3D
 
 4) ผลตรวจที่รันจริงล่าสุด

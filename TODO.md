@@ -21,8 +21,8 @@
 - [ ] ทดสอบทั้งแอปบน iPad จริง (แนวตั้ง/แนวนอน, หมุนกลางรอบ, Split View, แตะค้าง “กดค้างเพื่อพูด”) — คืน 5 พ.ย. ทดสอบด้วย viewport จำลองเท่านั้น (ตารางใน `docs/OVERNIGHT_HANDOFF.md`)
 
 ## P2
-- [ ] เชื่อม Vercel กับ GitHub ให้ deploy อัตโนมัติทุก push — ติดตั้ง Vercel GitHub App (เลือกเฉพาะ repo นี้) แล้ว `vercel git connect`; ตอนนี้ deploy ด้วย CLI (ดู `HANDOFF.md`)
-- [ ] merge `feat/3d-games` เข้า `master` เมื่อรับรุ่น 3D แล้ว และตั้ง default branch บน GitHub กลับเป็น `master`
+- [ ] เชื่อม Vercel กับ GitHub ให้ deploy อัตโนมัติทุก push — เจ้าของ repo (`SOGUY144`) ติดตั้ง Vercel GitHub App (เลือกเฉพาะ `PakKeng`) แล้ว `vercel git connect`; ตอนนี้ deploy ด้วย CLI (ดู `HANDOFF.md`)
+- [ ] merge `feat/call-friend` (รวม `feat/3d-games` อยู่แล้ว) เข้า `master` เมื่อรับรุ่นนี้แล้ว และให้เจ้าของ repo (`SOGUY144`) ตั้ง default branch บน GitHub เป็น `master`
 - [ ] ลด lint warnings (50 รายการ ณ 5 พ.ย. 02:19 น.): ส่วนใหญ่ react(immutability) จากการแก้ค่า three.js ใน `useFrame` และ react(refs)/purity ในหน้าจอเกม
 - [ ] ลบ CSS ฉาก 2D รุ่นเก่าที่ไม่มีที่ใช้แล้วใน `kid.css` (`.gate__*`, `.runner__*`, `.balloon__*`, `.frog__*`, `.stage__pill/pop/frozen`) แล้วถ่ายภาพเทียบทุกหน้าอีกรอบ
 - [ ] chunk 3D 262 KB gzip — ถ้าโหลดช้าบนเน็ตมือถือ ให้ preload ตอนอยู่หน้า Home (หลังหน้าแสดงแล้ว) หรือแยกฉากเป็น chunk ย่อย

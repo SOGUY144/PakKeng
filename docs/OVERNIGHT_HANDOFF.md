@@ -22,7 +22,7 @@
 **ยังไม่ผ่าน**: — (ไม่พบรายการในบรีฟที่ลองแล้วไม่ผ่าน)
 
 **ยังไม่ได้ลอง**: iPad/มือถือจริง (นิ้วจริง, Safari, หมุนเครื่องจริง, Split View จริง), ESP32 จริง, เด็กจริง, screen reader, เสียงไทยของ iPadOS
-— ข้อสังเกตที่เหลือ: CSS ของฉาก 2D รุ่นเก่า (`.gate__*`, `.runner__*`, `.balloon__*`, `.frog__*` ใน `kid.css`) ไม่มีที่ใช้แล้ว ลบได้ภายหลัง · ทั้งหมดยังไม่ commit (branch `feat/call-friend`)
+— ข้อสังเกตที่เหลือ: CSS ของฉาก 2D รุ่นเก่า (`.gate__*`, `.runner__*`, `.balloon__*`, `.frog__*` ใน `kid.css`) ไม่มีที่ใช้แล้ว ลบได้ภายหลัง · commit แล้วเป็น `30a11f8` (branch `feat/call-friend`) และ push ขึ้น https://github.com/SOGUY144/PakKeng แล้ว (5 พ.ย. 19:30 น. หลังส่งงาน)
 
 **ภาพก่อน–หลัง (ขนาดเดียวกัน, `docs/screenshots/overnight/`)**: `app-before-*` ↔ `app-after-*` — home 390/820/1440 (+1180), runner 390/820/1180 (+1440),
 gate 390/820/1180 (+1440), balloon 390/820/1180/1440, frog 390/820 (+1180/1440, Split View 375/590); หน้าผล/เช็กไมค์/แดชบอร์ดหลังแก้ทุกขนาด;
@@ -135,7 +135,7 @@ npm run dev
 (ด้านล่างคือบันทึกรอบแรกที่ทำเฉพาะด่านกบ 00:54–01:15 น.)
 
 บรีฟ: `.claude/skills/pakkeng-overnight/SKILL.md` · สกิลที่ใช้: `frontend-design`, `cleft-speech-game` (+ `references/evidence-th.md`)
-นอกงานคืนนี้: deploy, push, เก็บเสียงเด็ก (การ push ขึ้น `SOGUY144/PakKeng` ที่ขอไว้ก่อนหน้าค้างอยู่ — บัญชี `Gupalmza` ไม่มีสิทธิ์เขียน repo นั้น)
+นอกงานคืนนี้: deploy, push, เก็บเสียงเด็ก (ตอนนั้นบัญชี `Gupalmza` ยังไม่มีสิทธิ์เขียน `SOGUY144/PakKeng` — push ขึ้นได้แล้วเมื่อ 5 พ.ย. 19:30 น.)
 
 ## จุดเริ่มต้น
 - โฟลเดอร์ `D:\nasal-trainer-web` · branch `feat/call-friend` (แตกจาก `feat/3d-games` @ `4b783a0`) · งานด่านเรียกเพื่อนรอบก่อนยังไม่ commit (39 ไฟล์) และใช้เป็นฐาน

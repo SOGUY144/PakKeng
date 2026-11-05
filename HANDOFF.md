@@ -1,10 +1,10 @@
 # HANDOFF
 
 ## จุดปัจจุบัน
-**ล่าสุด (5 พ.ย. 2569 02:20 น., branch `feat/call-friend`, ยังไม่ commit):** ปรับทั้งแอปให้ 4 เกมเล่นต่างกันจริง (เรียกเพื่อน · เลือกทางวิ่ง · พาบอลลูนไปส่ง · เปิดประตู)
+**ล่าสุด (5 พ.ย. 2569 02:20 น., branch `feat/call-friend`, commit `30a11f8`):** ปรับทั้งแอปให้ 4 เกมเล่นต่างกันจริง (เรียกเพื่อน · เลือกทางวิ่ง · พาบอลลูนไปส่ง · เปิดประตู)
 พร้อมเลย์เอาต์มือถือ / iPad แนวตั้ง-แนวนอน / คอม — สรุป วิธีเปิด และผลทดสอบทั้งหมดอยู่ใน **`docs/OVERNIGHT_HANDOFF.md`** (อ่านก่อนไฟล์นี้)
 
-**ล่าสุด (5 พ.ย. 2569, branch `feat/call-friend`, ยังไม่ commit):** กบข้ามบึงถูกปรับเป็น **ด่านเรียกเพื่อน** ตามหลักฐานใน skill `cleft-speech-game`
+**ล่าสุด (5 พ.ย. 2569, branch `feat/call-friend`, อยู่ใน commit `30a11f8`):** กบข้ามบึงถูกปรับเป็น **ด่านเรียกเพื่อน** ตามหลักฐานใน skill `cleft-speech-game`
 — ฟังคำ (ไม่ฟังไมค์ระหว่างเล่น) → “ลองเรียกเพื่อนดูสิ” → เพื่อนหันมาตอบ “ได้ยินแล้ว” เมื่อได้ยินเสียงที่สัญญาณใช้ได้ (ไม่ได้ตัดสินว่าออกเสียงถูก),
 ฟังซ้ำ/ลองใหม่/ข้าม/พัก, เสียงเบา-ล้น-ไมค์ช่องหาย-หลุด = “ขอลองฟังใหม่” ไม่หักดาว, มุมผู้ดูแลมีตารางรายคำ (ไม่มีกติกา “ยิ่งต่ำยิ่งดี”),
 ส่วนรับข้อมูลแยกจากเกม (โหมดสาธิต / WebSocket) — การออกแบบและหลักฐาน: `DECISIONS.md` หัวข้อ “ด่านเรียกเพื่อน”, รูปแบบข้อมูล ESP32: `docs/DEVICE_PROTOCOL.md`
@@ -17,9 +17,11 @@ Home ใช้ภาพที่เรนเดอร์จากโมเดล
 ผลตรวจล่าสุด: typecheck ผ่าน · tests 46/46 · lint 0 error / 58 warning · build ผ่าน · เดิน flow ครบในเบราว์เซอร์ (รายละเอียด `PROGRESS.md`)
 
 ## ตำแหน่ง
-- โฟลเดอร์โปรเจกต์: `D:\nasal-trainer-web` · git: `master` = commit แรก (รุ่น 2D), งาน 3D commit แล้วบน branch `feat/3d-games`
-  (ยังไม่ merge เข้า `master`)
-- GitHub: https://github.com/Gupalmza/nasal-trainer-web (**private**) · push ทั้ง 2 branch แล้ว · default branch ตั้งเป็น `feat/3d-games` ไว้ก่อน (รุ่น 3D เป็นรุ่นหลัก)
+- โฟลเดอร์โปรเจกต์: `D:\nasal-trainer-web` · git: `master` = commit แรก (รุ่น 2D), งาน 3D อยู่บน branch `feat/3d-games`,
+  งานล่าสุด (4 เกม) อยู่บน `feat/call-friend` ที่แตกจาก `feat/3d-games` (ยังไม่ merge เข้า `master`)
+- GitHub (repo หลักตั้งแต่ 5 พ.ย. 2569): https://github.com/SOGUY144/PakKeng (**public**) · push ครบ 3 branch · default branch = `feat/call-friend`
+  · บัญชี `Gupalmza` เขียนได้แต่ไม่ใช่ admin — ตั้งค่า repo, เพิ่มคนร่วมงาน, เปลี่ยน default branch ต้องใช้บัญชีเจ้าของ `SOGUY144`
+  · repo เก่า `Gupalmza/nasal-trainer-web` (private) เลิกใช้แล้ว ถอดออกจาก remote ของเครื่องนี้ แต่ยังไม่ได้ลบบน GitHub
 - เว็บที่ deploy: https://nasal-trainer-web.vercel.app (รุ่น 3D จาก commit `a78b1b0`, ใครมีลิงก์ก็เปิดได้, ข้อมูลจำลองทั้งหมด) — วิธี deploy ใหม่ดูหัวข้อ “Deploy (Vercel)”
 - เอกสาร: `PROJECT_BRIEF.md` (ข้อกำหนด รวมคำสั่งเพิ่มเติมเรื่อง 3D) · `DECISIONS.md` · `PROGRESS.md` · `TODO.md` · `ASSETS.md` (โมเดล/ภาพ/license)
 - brief หลัก: `C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt`
@@ -38,7 +40,7 @@ npm run dev          # http://localhost:5173/#/home  และ  http://localhost
 - deploy ใหม่ (รันในโฟลเดอร์โปรเจกต์; ถ้า CLI ยังไม่ได้ล็อกอิน ให้รัน `npx vercel@65.2.0 login` แล้วกด Allow Access ในเบราว์เซอร์):
   `npx vercel@65.2.0 deploy --prod --scope gupalmzas-projects`
 - เครื่องนี้ npx ที่ใช้ cache `D:\npm-cache` ล้มด้วย `ECOMPROMISED Lock compromised` → ใน Git Bash ใส่ `npm_config_cache="C:/Users/TCcomputer/AppData/Local/npm-cache"` นำหน้าคำสั่ง
-- ให้ deploy อัตโนมัติทุก push: ติดตั้ง Vercel GitHub App แบบเลือกเฉพาะ repo นี้ แล้วรัน `npx vercel@65.2.0 git connect --scope gupalmzas-projects`
+- ให้ deploy อัตโนมัติทุก push: เจ้าของ repo (`SOGUY144`) ติดตั้ง Vercel GitHub App แบบเลือกเฉพาะ `PakKeng` แล้วรัน `npx vercel@65.2.0 git connect --scope gupalmzas-projects`
 - URL เฉพาะของแต่ละ deployment (`nasal-trainer-<id>-gupalmzas-projects.vercel.app`) ต้องล็อกอิน Vercel; โดเมนหลักเปิดได้ทุกคน · `.vercel/` อยู่ใน `.gitignore`
 
 ## วิธีตรวจ
