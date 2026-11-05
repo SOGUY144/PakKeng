@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { Bunny, CollectibleIcon, DoorPanel, GameThumb } from "../components/Art";
 import { Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
-import { childSessions, COLLECTIBLES, nextCollectible, practiceSecToday, totalStars } from "../data/analytics";
-import { fmtDuration, isSameDay } from "../data/format";
+import { childSessions, COLLECTIBLES, nextCollectible, totalStars } from "../data/analytics";
+import { isSameDay } from "../data/format";
 import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
+import { practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
 import { hrefFor, navigate, type Route } from "../lib/router";
 import { useConnection, useSignalSource } from "../signal/mock";
 import "../styles/home.css";
 
-type Play = "frog" | "balloon" | "runner" | "gate";
+type Play = PathPlay;
 
 /** What each game invites the child to do — the verb is the label, the game's name comes second. */
 const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean }[] = [
@@ -20,6 +21,13 @@ const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean 
   { id: "runner", verb: "เลือกทางวิ่ง", name: "กระต่ายวิ่ง", open: (p) => p.games.runner },
   { id: "gate", verb: "เปิดประตู", name: "ประตูเสียงก้องจมูก", open: (p) => p.gateEnabled },
 ];
+const VERB: Record<Play, string> = Object.fromEntries(PLAYS.map((p) => [p.id, p.verb])) as Record<Play, string>;
+
+/** Zig-zag of the path, in steps of the node offset (×42px): down the middle, out right, back, out left… */
+const ZIG = [0, 1, 1.6, 1, 0, -1, -1.6, -1];
+
+/** Phone / portrait: game choice slides up in a sheet. Wide landscape: the cards already sit beside the path. */
+const WIDE = "(min-width: 900px) and (orientation: landscape)";
 
 function GateThumb() {
   return (
@@ -38,21 +46,131 @@ function GateThumb() {
   );
 }
 
-/** The last round played in this demo, if its game is still in the plan: "play on" from there. */
-function lastRound(sessions: Session[], plan: Plan): { play: Play; text: string } | null {
+function PlayThumb({ play }: { play: Play }) {
+  if (play === "gate") return <GateThumb />;
+  return <RenderImg name={`thumb-${play}`} fallback={<GameThumb game={play} />} />;
+}
+
+/** A small clay chest for the end of the path (lid lifted once the day's rounds are done). */
+function ChestArt({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 64 56" width="100%" aria-hidden="true">
+      <rect x="6" y="26" width="52" height="26" rx="6" fill={open ? "#e8a33a" : "#c9c3d8"} />
+      <rect x="6" y="26" width="52" height="7" fill={open ? "#c9832a" : "#b3acc6"} />
+      {open ? (
+        <>
+          <ellipse cx="32" cy="24" rx="20" ry="6" fill="#fff3b0" />
+          <path d="M8 22 Q32 -2 56 22 L56 18 Q32 -8 8 18Z" fill="#f2b84b" />
+        </>
+      ) : (
+        <path d="M6 28 Q32 4 58 28Z" fill="#d6d0e3" />
+      )}
+      <rect x="27" y="30" width="10" height="12" rx="3" fill={open ? "#fff3b0" : "#e9e5f5"} />
+    </svg>
+  );
+}
+
+/** The last round played in this demo, if its game is still in the plan: marked "play on" among the choices. */
+function lastPlay(sessions: Session[], plan: Plan): Play | null {
   const last = sessions.filter((s) => s.source === "demo").at(-1);
   if (!last) return null;
   const play: Play = last.gate && last.attempts === 0 ? "gate" : last.game;
-  if (!PLAYS.find((p) => p.id === play)?.open(plan)) return null;
-  const c = last.choice;
-  let text: string;
-  if (last.call) text = `รอบที่แล้ว เพื่อนได้ยินหนู ${last.call.heard} ตัว`;
-  else if (c?.kind === "route") text = `รอบที่แล้ว ${c.label}`;
-  else if (c?.kind === "trip") text = `รอบที่แล้ว ส่งบอลลูนไป${c.label}`;
-  else if (c?.kind === "door") text = `รอบที่แล้ว เปิด${c.label}`;
-  else if (last.balloon) text = `รอบที่แล้ว ส่งบอลลูนได้ ${last.balloon.completed} ลูก`;
-  else text = "รอบที่แล้ว";
-  return { play, text };
+  return PLAYS.find((p) => p.id === play)?.open(plan) ? play : null;
+}
+
+function GameCards({ plays, again, listRef }: { plays: typeof PLAYS; again: Play | null; listRef?: RefObject<HTMLUListElement | null> }) {
+  return (
+    <ul className="plays" ref={listRef}>
+      {plays.map((p) => (
+        <li key={p.id}>
+          <button type="button" className={`play-card play-card--${p.id}`} onClick={() => navigate(p.id as Route)}>
+            {again === p.id ? <span className="play-card__again">เล่นต่อ</span> : null}
+            <span className="play-card__pic">
+              <PlayThumb play={p.id} />
+            </span>
+            <span className="play-card__verb">{p.verb}</span>
+            <span className="sr-only">{p.name}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Modal layer shared by the game sheet and the chest: Esc / backdrop closes, focus moves in and back out. */
+function useDialog(onClose: () => void, firstRef: RefObject<HTMLElement | null>, returnTo: RefObject<HTMLElement | null>) {
+  // the latest onClose without re-running the open/close effect on every Home render (focus must not jump)
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
+  useEffect(() => {
+    const back = returnTo.current;
+    (firstRef.current?.querySelector("button") ?? firstRef.current)?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close.current();
+    };
+    window.addEventListener("keydown", key);
+    return () => {
+      window.removeEventListener("keydown", key);
+      back?.focus();
+    };
+  }, [firstRef, returnTo]);
+}
+
+function GameSheet({ plays, again, onClose, returnTo }: { plays: typeof PLAYS; again: Play | null; onClose: () => void; returnTo: RefObject<HTMLElement | null> }) {
+  const list = useRef<HTMLUListElement>(null);
+  useDialog(onClose, list, returnTo);
+  return (
+    <div className="home-sheet" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="home-sheet__card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div className="home-sheet__head">
+          <h2 id="sheet-title">รอบนี้เล่นอะไรดี?</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="ปิด">
+            <Icon name="close" size={20} />
+          </button>
+        </div>
+        <GameCards plays={plays} again={again} listRef={list} />
+      </div>
+    </div>
+  );
+}
+
+function ChestDialog({ starsToday, nextText, onMore, onClose, returnTo }: { starsToday: number; nextText: string; onMore: (() => void) | null; onClose: () => void; returnTo: RefObject<HTMLElement | null> }) {
+  const card = useRef<HTMLDivElement>(null);
+  useDialog(onClose, card, returnTo);
+  return (
+    <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={card} className="overlay__card home-chest" role="dialog" aria-modal="true" aria-labelledby="chest-title">
+        <span className="home-chest__bunny" aria-hidden="true">
+          <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+        </span>
+        <h2 id="chest-title">ครบแล้ววันนี้!</h2>
+        <p className="home-chest__stars">
+          <Icon name="star" size={22} /> วันนี้ได้ {starsToday} ดาว
+        </p>
+        <p className="overlay__text">{nextText}</p>
+        <div className="overlay__actions">
+          {onMore ? (
+            <button type="button" className="btn btn--primary btn--lg btn--block" onClick={onMore}>
+              <Icon name="play" size={20} /> เล่นเพิ่ม
+            </button>
+          ) : null}
+          <button type="button" className="link-btn" onClick={onClose}>
+            ปิด
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function nodeLabel(n: PathNode): string {
+  if (n.kind === "mic") return n.state === "done" ? "เช็กไมค์แล้ววันนี้" : "เช็กไมค์";
+  if (n.kind === "chest") return n.state === "open" ? "หีบรางวัล เปิดแล้ว" : "หีบรางวัล ยังไม่เปิด";
+  if (n.state === "done") return `รอบที่ ${n.round} ${n.play ? VERB[n.play] : ""}แล้ว`;
+  if (n.state === "current") return `รอบที่ ${n.round} เริ่มเลย`;
+  return `รอบที่ ${n.round} ยังไม่ถึง`;
 }
 
 export function HomeScreen() {
@@ -62,22 +180,45 @@ export function HomeScreen() {
   const conn = useConnection();
   const src = useSignalSource();
   const [deviceInfo, setDeviceInfo] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [chest, setChest] = useState(false);
+  const startRef = useRef<HTMLButtonElement>(null);
+  const chestRef = useRef<HTMLButtonElement>(null);
+  const chooseRef = useRef<HTMLUListElement>(null);
+
   const now = new Date();
-  const doneSec = practiceSecToday(db, child.id, now);
-  const targetSec = plan.dailyMinutes * 60;
-  const progress = Math.min(1, doneSec / targetSec);
-  const stars = totalStars(db, child);
-  const next = nextCollectible(stars);
+  const sessions = childSessions(db, child.id);
   const cal = db.calibrations[child.id];
   const calToday = cal ? isSameDay(new Date(cal.at), now) : false;
+  const path = todayPath({ dailyMinutes: plan.dailyMinutes, sessions, calibratedToday: calToday, now });
+  const weekDays = practiceDaysThisWeek(sessions, now);
+  const stars = totalStars(db, child);
+  const next = nextCollectible(stars);
   const plays = PLAYS.filter((p) => p.open(plan));
   const closed = PLAYS.length - plays.length;
-  const again = lastRound(childSessions(db, child.id), plan);
+  const again = lastPlay(sessions, plan);
   const demo = src.kind === "mock";
   // the seed keeps a placeholder (child codes only, no real names): greet without it until an adult sets one
   const named = child.nickname.trim() !== "" && !child.nickname.startsWith("[");
-
   const deviceText = conn === "connected" ? (demo ? "สัญญาณจำลอง" : "ต่ออุปกรณ์แล้ว") : conn === "connecting" ? "กำลังเชื่อมต่อ…" : "อุปกรณ์หลุด";
+  const nextText = next ? `อีก ${next.stars - stars} ดาว ได้${next.name}` : "สะสมของครบทุกชิ้นแล้ว";
+
+  /** Start a round: one game → straight in; wide screens → the cards beside the path; otherwise the sheet. */
+  const start = () => {
+    if (plays.length === 0) return;
+    if (plays.length === 1) {
+      navigate(plays[0].id as Route);
+      return;
+    }
+    if (window.matchMedia(WIDE).matches && chooseRef.current) {
+      chooseRef.current.scrollIntoView({ block: "nearest" });
+      chooseRef.current.querySelector("button")?.focus();
+      return;
+    }
+    setSheet(true);
+  };
+  const closeSheet = () => setSheet(false);
+  const closeChest = () => setChest(false);
 
   return (
     <div className="kid-screen">
@@ -117,67 +258,111 @@ export function HomeScreen() {
             {named ? <p className="home-head__hello">สวัสดี</p> : null}
             <h1 className="home-head__name">{named ? `น้อง${child.nickname}` : "สวัสดีจ้า!"}</h1>
           </div>
-          <span className="home-stars" aria-label={`ดาว ${stars} ดวง`}>
-            <Icon name="star" size={20} /> {stars}
-          </span>
+          <div className="home-head__stats">
+            <span className="home-stat home-stat--stars" aria-label={`ดาว ${stars} ดวง`}>
+              <Icon name="star" size={18} /> {stars}
+            </span>
+            <span className="home-stat home-stat--days" aria-label={`สัปดาห์นี้ฝึกแล้ว ${weekDays} จาก 7 วัน`}>
+              <Icon name="flag" size={16} /> ฝึก {weekDays}/7 วัน
+            </span>
+          </div>
         </header>
 
-        <section className="home-today" aria-label="เวลาฝึกวันนี้">
-          <span className="home-today__icon" aria-hidden="true">
-            <Icon name="clock" size={22} />
-          </span>
+        <section className={`home-today${path.complete ? " is-complete" : ""}`} aria-label="วันนี้">
           <p className="home-today__text">
-            <small>วันนี้</small>
             <strong>
-              {doneSec > 0 ? fmtDuration(doneSec) : "0"} / {plan.dailyMinutes} นาที
+              วันนี้ {Math.floor(path.practiceSec / 60)} / {plan.dailyMinutes} นาที
             </strong>
+            <span>{path.complete ? "ครบแล้ววันนี้!" : `อีก ${path.rounds - path.played} รอบ`}</span>
           </p>
-          <div className="progress home-today__bar" role="progressbar" aria-label="เวลาฝึกวันนี้" aria-valuemin={0} aria-valuemax={targetSec} aria-valuenow={Math.round(doneSec)}>
-            <div className="progress__fill" style={{ transform: `scaleX(${progress})` }} />
+          <div className="progress home-today__bar" role="progressbar" aria-label="เวลาฝึกวันนี้" aria-valuemin={0} aria-valuemax={path.targetSec} aria-valuenow={Math.round(path.practiceSec)}>
+            <div className="progress__fill" style={{ transform: `scaleX(${path.progress})` }} />
           </div>
         </section>
 
-        {again ? (
-          <button type="button" className={`home-again home-again--${again.play}`} onClick={() => navigate(again.play as Route)}>
-            <span className="home-again__pic">
-              <PlayThumb play={again.play} />
-            </span>
-            <span className="home-again__text">
-              <strong>เล่นต่อ: {PLAYS.find((p) => p.id === again.play)?.verb}</strong>
-              <small>{again.text}</small>
-            </span>
-            <span className="home-again__go" aria-hidden="true">
-              <Icon name="play" size={18} />
-            </span>
-          </button>
-        ) : null}
-
-        <section className="home-plays" aria-labelledby="plays-title">
-          <h2 id="plays-title" className="home-plays__title">
-            วันนี้อยากเล่นอะไร?
+        <section className="home-path" aria-labelledby="path-title">
+          <h2 id="path-title" className="sr-only">
+            เส้นทางวันนี้
           </h2>
-          {plays.length > 0 ? (
-            <ul className="plays">
-              {plays.map((p) => (
-                <li key={p.id}>
-                  <button type="button" className={`play-card play-card--${p.id}`} onClick={() => navigate(p.id)}>
-                    <span className="play-card__pic">
-                      <PlayThumb play={p.id} />
+          <ol className="trail">
+            {path.nodes.map((n, i) => {
+              const x = ZIG[i % ZIG.length];
+              const style = { "--x": x } as CSSProperties;
+              const label = nodeLabel(n);
+              const cls = `trail__node trail__node--${n.kind} is-${n.state}${n.play ? ` trail__node--${n.play}` : ""}`;
+              return (
+                <li key={`${n.kind}-${n.round ?? i}`} className="trail__step" style={style} aria-current={n.state === "current" ? "step" : undefined}>
+                  {n.kind === "mic" ? (
+                    <button type="button" className={cls} onClick={() => navigate("calibrate")} aria-label={label}>
+                      <Icon name={n.state === "done" ? "check" : "mic"} size={28} />
+                    </button>
+                  ) : null}
+
+                  {n.kind === "round" && n.state === "current" ? (
+                    <>
+                      <span className="trail__bubble" aria-hidden="true">
+                        {plays.length === 0 ? "รอครูเปิดเกม" : "เริ่ม!"}
+                      </span>
+                      <button ref={startRef} type="button" className={cls} onClick={start} disabled={plays.length === 0} aria-label={label}>
+                        <svg className="trail__ring" viewBox="0 0 100 100" aria-hidden="true">
+                          <circle cx="50" cy="50" r="46" className="trail__ring-track" />
+                          <circle cx="50" cy="50" r="46" className="trail__ring-fill" strokeDasharray={`${path.progress * 289} 289`} transform="rotate(-90 50 50)" />
+                        </svg>
+                        <Icon name="play" size={34} />
+                      </button>
+                      <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
+                        <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+                      </span>
+                    </>
+                  ) : null}
+
+                  {n.kind === "round" && n.state !== "current" ? (
+                    <span className={cls} role="img" aria-label={label}>
+                      <Icon name={n.state === "done" ? "check" : "lock"} size={n.state === "done" ? 30 : 22} />
                     </span>
-                    <span className="play-card__verb">{p.verb}</span>
-                    <span className="sr-only">{p.name}</span>
-                  </button>
+                  ) : null}
+
+                  {n.kind === "chest" ? (
+                    n.state === "open" ? (
+                      <>
+                        <button ref={chestRef} type="button" className={cls} onClick={() => setChest(true)} aria-label={label}>
+                          <ChestArt open />
+                        </button>
+                        {/* the day is done: the bunny comes to stand by the chest */}
+                        <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
+                          <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+                        </span>
+                      </>
+                    ) : (
+                      <span className={cls} role="img" aria-label={label}>
+                        <ChestArt open={false} />
+                      </span>
+                    )
+                  ) : null}
+
+                  <span className="trail__label" aria-hidden="true">
+                    {n.kind === "mic" ? "เช็กไมค์" : n.kind === "chest" ? "หีบรางวัล" : `รอบ ${n.round}`}
+                  </span>
                 </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="home-plays__none">ครูยังไม่ได้เปิดเกม ให้ผู้ใหญ่ช่วยดูแผนการฝึกนะ</p>
-          )}
+              );
+            })}
+          </ol>
+          {plays.length === 0 ? <p className="home-path__note">ครูยังไม่ได้เปิดเกม ให้ผู้ใหญ่ช่วยดูแผนการฝึกนะ</p> : null}
+          {path.complete && plays.length > 0 ? (
+            <button type="button" className="btn btn--secondary home-more" onClick={start}>
+              <Icon name="play" size={18} /> เล่นเพิ่ม
+            </button>
+          ) : null}
         </section>
 
-        <button type="button" className={`btn btn--lg btn--block home-check${calToday ? " btn--secondary is-done" : " btn--secondary"}`} onClick={() => navigate("calibrate")}>
-          <Icon name={calToday ? "check" : "wave"} size={20} /> {calToday ? "เช็กไมค์แล้ววันนี้" : "เช็กไมค์ก่อนเล่น"}
-        </button>
+        {plays.length > 0 ? (
+          <section className="home-choose" aria-labelledby="choose-title">
+            <h2 id="choose-title" className="home-choose__title">
+              รอบนี้เล่นอะไรดี?
+            </h2>
+            <GameCards plays={plays} again={again} listRef={chooseRef} />
+          </section>
+        ) : null}
 
         <section className="collect-strip" aria-labelledby="collect-title">
           <h2 id="collect-title" className="collect-strip__title">
@@ -199,15 +384,30 @@ export function HomeScreen() {
 
         <footer className="home-foot">
           {closed > 0 && plays.length > 0 ? <p>เกมอื่นจะเปิดเมื่อครูตั้งไว้ในแผน</p> : null}
-          <p>รหัสเด็ก {child.id} · ดาวเริ่มต้นเป็นข้อมูลตัวอย่าง รวมกับดาวที่เก็บได้ในเดโม</p>
+          <p>
+            รหัสเด็ก {child.id} · เส้นทางวันนี้มี {path.rounds} รอบ ตามเวลาฝึก {plan.dailyMinutes} นาทีที่ครูตั้ง · ดาวเริ่มต้นเป็นข้อมูลตัวอย่าง
+          </p>
           <Disclaimer />
         </footer>
       </div>
+
+      {sheet ? <GameSheet plays={plays} again={again} onClose={closeSheet} returnTo={startRef} /> : null}
+      {chest ? (
+        <ChestDialog
+          starsToday={path.starsToday}
+          nextText={nextText}
+          onMore={
+            plays.length > 0
+              ? () => {
+                  setChest(false);
+                  start();
+                }
+              : null
+          }
+          onClose={closeChest}
+          returnTo={chestRef}
+        />
+      ) : null}
     </div>
   );
-}
-
-function PlayThumb({ play }: { play: Play }) {
-  if (play === "gate") return <GateThumb />;
-  return <RenderImg name={`thumb-${play}`} fallback={<GameThumb game={play} />} />;
 }
