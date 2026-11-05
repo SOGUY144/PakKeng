@@ -1,7 +1,11 @@
 # HANDOFF
 
 ## จุดปัจจุบัน
-**ล่าสุด (5 พ.ย. 2569 02:20 น., branch `feat/call-friend`, commit `30a11f8`):** ปรับทั้งแอปให้ 4 เกมเล่นต่างกันจริง (เรียกเพื่อน · เลือกทางวิ่ง · พาบอลลูนไปส่ง · เปิดประตู)
+**ล่าสุด (5 พ.ย. 2569 ช่วง 22 น., branch `feat/call-friend`):** เพิ่มหน้าอธิบายหลักการแบบมีภาพเคลื่อนไหว `public/how-it-works.html`
+(ลิงก์อยู่ท้ายหน้า Home และแดชบอร์ด, commit `5a74dac`), deploy รุ่นนี้ขึ้น https://nasal-trainer-web.vercel.app แล้ว,
+และเขียน `README.md` ใหม่เป็นรายละเอียดโปรเจกต์ (commit `3cec7af`)
+
+**ก่อนหน้า (5 พ.ย. 2569 02:20 น., branch `feat/call-friend`, commit `30a11f8`):** ปรับทั้งแอปให้ 4 เกมเล่นต่างกันจริง (เรียกเพื่อน · เลือกทางวิ่ง · พาบอลลูนไปส่ง · เปิดประตู)
 พร้อมเลย์เอาต์มือถือ / iPad แนวตั้ง-แนวนอน / คอม — สรุป วิธีเปิด และผลทดสอบทั้งหมดอยู่ใน **`docs/OVERNIGHT_HANDOFF.md`** (อ่านก่อนไฟล์นี้)
 
 **ล่าสุด (5 พ.ย. 2569, branch `feat/call-friend`, อยู่ใน commit `30a11f8`):** กบข้ามบึงถูกปรับเป็น **ด่านเรียกเพื่อน** ตามหลักฐานใน skill `cleft-speech-game`
@@ -22,7 +26,8 @@ Home ใช้ภาพที่เรนเดอร์จากโมเดล
 - GitHub (repo หลักตั้งแต่ 5 พ.ย. 2569): https://github.com/SOGUY144/PakKeng (**public**) · push ครบ 3 branch · default branch = `feat/call-friend`
   · บัญชี `Gupalmza` เขียนได้แต่ไม่ใช่ admin — ตั้งค่า repo, เพิ่มคนร่วมงาน, เปลี่ยน default branch ต้องใช้บัญชีเจ้าของ `SOGUY144`
   · repo เก่า `Gupalmza/nasal-trainer-web` (private) เลิกใช้แล้ว ถอดออกจาก remote ของเครื่องนี้ แต่ยังไม่ได้ลบบน GitHub
-- เว็บที่ deploy: https://nasal-trainer-web.vercel.app (รุ่น 3D จาก commit `a78b1b0`, ใครมีลิงก์ก็เปิดได้, ข้อมูลจำลองทั้งหมด) — วิธี deploy ใหม่ดูหัวข้อ “Deploy (Vercel)”
+- เว็บที่ deploy: https://nasal-trainer-web.vercel.app (รุ่น 4 เกม + หน้าอธิบายหลักการ `/how-it-works.html` จาก commit `5a74dac`, deploy 5 พ.ย. 2569,
+  ใครมีลิงก์ก็เปิดได้, ข้อมูลจำลองทั้งหมด) — วิธี deploy ใหม่ดูหัวข้อ “Deploy (Vercel)” · ก่อนหน้านี้เป็นรุ่น 3D จาก commit `a78b1b0` (4 พ.ย.)
 - เอกสาร: `PROJECT_BRIEF.md` (ข้อกำหนด รวมคำสั่งเพิ่มเติมเรื่อง 3D) · `DECISIONS.md` · `PROGRESS.md` · `TODO.md` · `ASSETS.md` (โมเดล/ภาพ/license)
 - brief หลัก: `C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt`
 
