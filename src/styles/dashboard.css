@@ -1,7 +1,7 @@
 /* ===================== Therapist dashboard ===================== */
 .app--teacher {
   min-height: 100dvh;
-  background: #f3f0e9;
+  background: var(--paper);
 }
 
 .dash {
@@ -26,7 +26,8 @@
 }
 
 .dash-title {
-  font-size: 1.75rem;
+  font-size: 2.1rem;
+  line-height: 1.25;
 }
 
 .dash-head__right {
@@ -54,8 +55,9 @@
   gap: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
   border-radius: var(--r-lg);
-  border: var(--bw) solid #f1d798;
+  border: none;
   background: var(--warn-soft);
+  box-shadow: inset 6px 0 0 var(--warn);
 }
 
 .dash-alert__icon {
@@ -170,7 +172,7 @@
   display: grid;
   align-content: start;
   gap: 4px;
-  padding: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
 }
 
 .kpi__label {
@@ -180,8 +182,9 @@
 }
 
 .kpi__value {
-  font-size: 1.875rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 600;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }

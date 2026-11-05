@@ -5,6 +5,7 @@ import type { SignalFrame } from "../signal/SignalProcessor";
 import type { ConnectionState } from "../signal/types";
 import type { CallIssue } from "../logic/call";
 import { DeviceStatus, SourceSwitch } from "./CallParts";
+import { CareSummary } from "./Chrome";
 import { DemoPanel } from "./DemoPanel";
 import { Icon } from "./Icon";
 
@@ -75,9 +76,7 @@ export function CareDrawer({ careRef, frame, conn, issue = null, children, demo 
   const [initialOpen] = useState(readOpen);
   return (
     <details ref={careRef} id="caregiver" className="card care" open={initialOpen} onToggle={(e) => writeOpen(e.currentTarget.open)}>
-      <summary className="care__summary">
-        <Icon name="user" size={18} /> สำหรับผู้ดูแล: อุปกรณ์ เครื่องมือสาธิต และผลรอบนี้
-      </summary>
+      <CareSummary sub="อุปกรณ์ · เครื่องมือสาธิต · ผลรอบนี้" />
       <div className="care__body">
         <h3 className="care__title">สถานะอุปกรณ์</h3>
         <DeviceStatus frame={frame} conn={conn} issue={issue} />

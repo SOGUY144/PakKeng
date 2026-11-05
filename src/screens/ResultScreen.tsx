@@ -1,7 +1,7 @@
 import { CollectibleIcon, StarShape } from "../components/Art";
 import { BarChart, type ChartBar } from "../components/BarChart";
 import { FriendPicture, WordTable, WordTableNote } from "../components/CallParts";
-import { Disclaimer } from "../components/Chrome";
+import { CareSummary, Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
 import { COLLECTIBLES, nextCollectible, outfitFor, totalStars } from "../data/analytics";
@@ -167,9 +167,7 @@ export function ResultScreen() {
         {hint ? <p className="result__hint">{hint}</p> : stars === 3 ? <p className="result__hint">ได้ครบ 3 ดาวแล้ว!</p> : null}
 
         <details className="card result__care">
-          <summary className="care__summary">
-            <Icon name="user" size={18} /> สำหรับผู้ดูแล: ตัวเลขของรอบนี้
-          </summary>
+          <CareSummary sub="ตัวเลขของรอบนี้" />
           <div className="care__body">
         <p className="result__meta">
           {GAME_LABEL[session.game]} {session.call ? "(ด่านเรียกเพื่อน)" : `ด่านที่ ${session.level} ${LEVEL_LABEL[session.level]}`}
@@ -316,7 +314,7 @@ export function ResultScreen() {
               <span>
                 <strong>ของชิ้นต่อไป: {next.name}</strong>
                 <br />
-                สะสมดาวอีก {next.stars - totalNow} ดวง ({totalNow}/{next.stars}) · รอบนี้ได้ +{session.stars}
+                อีก {next.stars - totalNow} ดาว · รอบนี้ได้ +{session.stars}
               </span>
             </>
           ) : (
@@ -333,7 +331,7 @@ export function ResultScreen() {
           </button>
         </div>
         <p className="result__saved">
-          <Icon name="check" size={16} /> บันทึกรอบนี้แล้ว นักแก้ไขการพูดเห็นได้ในแดชบอร์ด (เดโม) ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
+          <Icon name="check" size={16} /> บันทึกแล้ว ครูดูได้ในแดชบอร์ด (เดโม) · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
         </p>
         <Disclaimer compact />
       </div>

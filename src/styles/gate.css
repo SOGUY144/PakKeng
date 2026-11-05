@@ -85,15 +85,9 @@
 
 /* ---------- Picker: three doors side by side, standing in the garden ---------- */
 .pick.pick--gate {
-  --gate-ink: #24452f;
-  background:
-    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.32) 0 2px, transparent 3px) 0 0 / 64px 64px,
-    linear-gradient(#fdf3e7 0%, #f6eedd 34%, #d9edc3 66%, #b9dc99 100%);
-}
-
-.pick--gate .pick__title,
-.pick--gate .pick__note {
-  color: var(--gate-ink);
+  --pick-bg: var(--candy-lilac-soft);
+  --pick-blob: var(--candy-lilac);
+  --pick-ink: var(--candy-lilac-ink);
 }
 
 .pick--gate .pick__list {
@@ -116,12 +110,12 @@
   gap: 6px;
   width: 100%;
   padding: 10px 6px 12px;
-  border: 2px solid rgba(255, 255, 255, 0.95);
+  border: 3px solid var(--surface);
   /* arched like the doorway it holds */
-  border-radius: 50% 50% 18px 18px / 30% 30% 18px 18px;
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 6px 0 rgba(36, 69, 47, 0.14);
-  color: var(--gate-ink);
+  border-radius: 50% 50% 24px 24px / 30% 30% 24px 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow-clay);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
   transition:
@@ -132,7 +126,7 @@
 .pick-door:hover,
 .pick-door:focus-visible {
   transform: translateY(-3px);
-  background: rgba(255, 255, 255, 0.88);
+  border-color: var(--ink);
 }
 
 .pick-door__pic {
@@ -143,8 +137,9 @@
 
 .pick-door__name {
   max-width: 100%;
+  font-family: var(--font-display);
   font-size: clamp(1.05rem, 4.4vw, 1.5rem);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.5;
   text-align: center;
   overflow-wrap: anywhere;
@@ -161,7 +156,8 @@
   background: var(--ok-soft);
   color: var(--ok-text);
   font-size: var(--fs-xs);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 600;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -254,7 +250,8 @@
   background: var(--surface);
   color: var(--ink-3);
   font-size: 1.5rem;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 600;
   line-height: 1;
 }
 

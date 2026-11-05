@@ -1,54 +1,257 @@
 /* ---------- Home: what each game invites the child to do ----------
-   Phone: one column, the four games as a 2×2 grid of big picture buttons.
-   iPad portrait: wider column, bigger pictures. Landscape / desktop: greeting + today on the left, games on the right. */
+   One job: pick a game. Big candy cards with the clay characters, one bold question, numbers kept to a glance.
+   Adult things (demo source, teacher link, sample-data note, positioning) sit in a slim top bar and the footer.
+   Phone: one column, the four games as a 2×2 grid. iPad portrait: wider column.
+   Landscape / desktop: greeting + today on the left, games on the right. */
 
 .home {
   gap: var(--sp-4);
 }
 
-.home-today {
-  display: grid;
-  gap: var(--sp-3);
+/* slim utility bar: data source (honest demo label) + teacher link */
+.home-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
 }
 
-.home-today__time {
+.device {
   display: grid;
+  justify-items: start;
   gap: 6px;
 }
 
+.device__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--info-soft);
+  color: #4c3a99;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.device__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7c66d9;
+}
+
+.device__pill--connecting .device__dot {
+  background: var(--warn);
+}
+
+.device__pill--disconnected {
+  background: #fde8e8;
+  color: #8f2424;
+}
+
+.device__pill--disconnected .device__dot {
+  background: #c24141;
+}
+
+.device__info {
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+}
+
+.home-top__adult {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-top__adult:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* greeting */
+.home-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--candy-mint-soft);
+  box-shadow: var(--shadow-clay);
+  overflow: hidden;
+}
+
+.avatar svg {
+  margin-top: 8px;
+}
+
+.avatar > img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.home-head__who {
+  min-width: 0;
+}
+
+.home-head__hello {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+  line-height: 1.3;
+}
+
+.home-head__name {
+  font-size: 1.6rem;
+  line-height: 1.3;
+}
+
+.home-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--candy-lemon);
+  color: var(--candy-lemon-ink);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-clay);
+}
+
+.home-stars svg {
+  color: #d99500;
+}
+
+/* today: one glance — minutes so far against the plan */
+.home-today {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "icon text"
+    "bar bar";
+  align-items: center;
+  gap: 10px 12px;
+  padding: 14px 18px 18px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-clay);
+}
+
+.home-today__icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--candy-lemon-soft);
+  color: var(--candy-lemon-ink);
+}
+
 .home-today__text {
-  margin: 0;
+  grid-area: text;
+  display: grid;
+  line-height: 1.3;
+}
+
+.home-today__text small {
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+
+.home-today__text strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
   font-weight: 600;
 }
 
+.home-today__bar {
+  grid-area: bar;
+}
+
+.home-today__bar .progress__fill {
+  background: var(--primary);
+}
+
+/* play on from the last round */
 .home-again {
+  --again-bg: var(--surface);
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) auto;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  min-height: 72px;
-  padding: 8px 14px 8px 8px;
-  border: 2px solid var(--line-strong);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: 0 3px 0 var(--line);
+  min-height: 84px;
+  padding: 8px 12px 8px 8px;
+  border: 2px solid transparent;
+  border-radius: var(--r-lg);
+  background: var(--again-bg);
+  box-shadow: var(--shadow-clay);
   color: var(--ink);
   font: inherit;
   text-align: start;
   cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-1);
 }
 
 .home-again:hover {
   border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.home-again--frog {
+  --again-bg: var(--candy-mint-soft);
+}
+
+.home-again--balloon {
+  --again-bg: var(--candy-pink-soft);
+}
+
+.home-again--runner {
+  --again-bg: var(--candy-lemon-soft);
+}
+
+.home-again--gate {
+  --again-bg: var(--candy-lilac-soft);
 }
 
 .home-again__pic {
   display: block;
-  width: 64px;
-  height: 52px;
+  width: 72px;
+  height: 64px;
   overflow: hidden;
   border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .home-again__pic img,
@@ -61,31 +264,45 @@
 
 .home-again__text {
   display: grid;
-  line-height: 1.45;
+  min-width: 0;
+  line-height: 1.4;
 }
 
 .home-again__text strong {
+  font-family: var(--font-display);
   font-size: 1.15rem;
+  font-weight: 600;
 }
 
 .home-again__text small {
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: var(--fs-small);
 }
 
+.home-again__go {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+
+/* the four games */
 .home-plays {
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
+  margin-top: var(--sp-2);
 }
 
 .home-plays__title {
   margin: 0;
-  font-size: clamp(1.6rem, 6.4vw, 2.1rem);
-  font-weight: 800;
-  line-height: 1.35;
+  font-size: var(--fs-hero);
+  font-weight: 600;
+  line-height: 1.25;
 }
 
-.home-plays__note,
 .home-plays__none {
   margin: 0;
   color: var(--ink-3);
@@ -95,47 +312,70 @@
 .plays {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .play-card {
+  --card-bg: var(--surface-muted);
+  --card-ink: var(--ink);
   display: grid;
-  grid-template-rows: auto auto auto;
-  gap: 2px;
+  grid-template-rows: auto auto;
+  gap: 8px;
   width: 100%;
   height: 100%;
-  padding: 8px 8px 12px;
-  border: 2px solid var(--line);
+  padding: 10px 10px 16px;
+  border: 3px solid transparent;
   border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: 0 4px 0 var(--line);
-  color: var(--ink);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-clay);
+  color: var(--card-ink);
   font: inherit;
   text-align: center;
   cursor: pointer;
   transition:
     transform var(--dur-2) var(--ease-spring),
-    border-color var(--dur-2);
+    border-color var(--dur-1);
 }
 
 .play-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
+  border-color: var(--surface);
+  transform: translateY(-3px) rotate(-0.5deg);
 }
 
 .play-card:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.98);
 }
 
+.play-card--frog {
+  --card-bg: var(--candy-mint);
+  --card-ink: var(--candy-mint-ink);
+}
+
+.play-card--balloon {
+  --card-bg: var(--candy-pink);
+  --card-ink: var(--candy-pink-ink);
+}
+
+.play-card--runner {
+  --card-bg: var(--candy-lemon);
+  --card-ink: var(--candy-lemon-ink);
+}
+
+.play-card--gate {
+  --card-bg: var(--candy-lilac);
+  --card-ink: var(--candy-lilac-ink);
+}
+
+/* images rendered from the 3D models have transparent skies: a soft window of the card's own colour */
 .play-card__pic {
   display: block;
-  aspect-ratio: 120 / 84;
+  aspect-ratio: 120 / 92;
   overflow: hidden;
-  border-radius: var(--r-lg);
-  background: var(--surface-muted);
+  border-radius: calc(var(--r-xl) - 8px);
+  background: radial-gradient(120% 90% at 50% 100%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.35));
 }
 
 .play-card__pic img,
@@ -147,53 +387,43 @@
 }
 
 .play-card__verb {
-  margin-top: 6px;
+  font-family: var(--font-display);
   font-size: clamp(1.15rem, 4.8vw, 1.45rem);
-  font-weight: 800;
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
-.play-card__name {
-  color: var(--ink-3);
-  font-size: var(--fs-small);
-  line-height: 1.4;
-}
-
+/* mic check: quiet pill, a tick once done today */
 .home-check {
   justify-content: center;
 }
 
-.btn--primary-soft {
-  border: 2px solid var(--primary);
-  background: var(--surface);
-  color: var(--primary);
+.home-check.is-done svg {
+  color: var(--ok);
 }
 
+/* collectibles */
 .collect-strip {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px 12px;
-  padding: var(--sp-3) var(--sp-4);
-  border: var(--bw) solid var(--line);
-  border-radius: var(--r-xl);
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
+  box-shadow: var(--shadow-clay);
 }
 
 .collect-strip__title {
   display: grid;
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.45;
-}
-
-.collect-strip__stars {
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.4;
 }
 
 .collect-strip__title small {
   color: var(--ink-3);
+  font-family: var(--font-sans);
   font-size: var(--fs-small);
   font-weight: 400;
 }
@@ -209,22 +439,30 @@
 .collect-strip__item {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: var(--surface-muted);
+  background: var(--candy-lemon-soft);
   color: var(--ink-3);
 }
 
+.collect-strip__item.is-locked {
+  background: var(--surface-muted);
+}
+
 .collect-strip__item img {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
-.collect-strip__note {
-  grid-column: 1 / -1;
-  margin: 0;
+/* adult footer */
+.home-foot {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px dashed var(--line-strong);
   color: var(--ink-3);
   font-size: var(--fs-xs);
 }
@@ -241,29 +479,33 @@
 @media (min-width: 900px) and (orientation: landscape) {
   .kid-frame.home {
     display: grid;
-    grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(300px, 0.75fr) minmax(0, 1.4fr);
     grid-template-areas:
-      "switch switch"
+      "top top"
       "head plays"
       "today plays"
+      "again plays"
       "check plays"
       "collect plays"
       "foot foot";
     /* the games set the height; the left column stays packed at the top */
-    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto;
     align-items: start;
-    column-gap: var(--sp-8);
+    column-gap: var(--sp-10);
+    row-gap: var(--sp-4);
     max-width: 1280px;
   }
-  .home > .viewswitch {
-    grid-area: switch;
+  .home > .home-top {
+    grid-area: top;
   }
   .home > .home-head {
     grid-area: head;
-    flex-wrap: wrap;
   }
   .home > .home-today {
     grid-area: today;
+  }
+  .home > .home-again {
+    grid-area: again;
   }
   .home > .home-check {
     grid-area: check;
@@ -273,17 +515,26 @@
   }
   .home > .home-plays {
     grid-area: plays;
+    margin-top: 0;
   }
-  .home > .disclaimer {
+  .home > .home-foot {
     grid-area: foot;
   }
   .home-plays__title {
-    font-size: 2.4rem;
+    font-size: 2.6rem;
+  }
+  .plays {
+    gap: 18px;
   }
   .play-card {
-    padding: 10px 10px 16px;
+    padding: 12px 12px 18px;
   }
   .play-card__verb {
-    font-size: 1.7rem;
+    font-size: 1.65rem;
   }
+}
+
+[data-motion="reduce"] .play-card,
+[data-motion="reduce"] .home-again {
+  transition: none;
 }

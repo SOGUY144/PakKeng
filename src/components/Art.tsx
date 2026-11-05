@@ -61,10 +61,9 @@ export function StarShape({ size = 28, filled = true }: { size?: number; filled?
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <path
         d="M12 2.6l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"
-        fill={filled ? "var(--star)" : "none"}
-        stroke={filled ? "var(--star-deep)" : "var(--ink-3)"}
-        strokeWidth={filled ? 1.4 : 1.8}
-        strokeDasharray={filled ? undefined : "3 2.4"}
+        fill={filled ? "var(--star)" : "var(--surface-sunken)"}
+        stroke={filled ? "var(--star-deep)" : "var(--line-strong)"}
+        strokeWidth={1.4}
         strokeLinejoin="round"
       />
     </svg>

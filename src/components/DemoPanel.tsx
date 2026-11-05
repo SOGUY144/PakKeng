@@ -138,22 +138,27 @@ function MockControls({ target, hint, children }: DemoPanelProps) {
   return (
     <aside className="demo" aria-label="เครื่องมือเดโม">
       <div className="demo__head">
-        <span className="demo__title">เดโม: จำลองสัญญาณจากอุปกรณ์</span>
-        <span className="badge badge--demo">ไม่ใช่ค่าจริง</span>
+        <span className="demo__title">จำลองสัญญาณจากอุปกรณ์</span>
+        <span className="badge badge--demo">เดโม · ไม่ใช่ค่าจริง</span>
       </div>
       {hint ? <p className="demo__hint">{hint}</p> : null}
 
-      <div className="demo__row demo__row--between">
-        <label htmlFor="demo-oral" className="demo__label">
-          ค่าออกปาก (จำลอง)
-        </label>
-        <output htmlFor="demo-oral" className="demo__readout">
-          <span className="t-oral">ออกปาก {shownOral}%</span> · <span className="t-nasal">ออกจมูก {100 - shownOral}%</span>
-        </output>
-      </div>
+      <output htmlFor="demo-oral" className="demo__readout">
+        <span className="demo__stat demo__stat--oral">
+          <small>ออกปาก</small>
+          <strong>{shownOral}%</strong>
+        </span>
+        <span className="demo__stat demo__stat--nasal">
+          <small>ออกจมูก</small>
+          <strong>{100 - shownOral}%</strong>
+        </span>
+      </output>
+      <label htmlFor="demo-oral" className="sr-only">
+        ค่าออกปาก (จำลอง)
+      </label>
       <input
         id="demo-oral"
-        className="range"
+        className="range range--split"
         type="range"
         min={0}
         max={100}
@@ -164,12 +169,17 @@ function MockControls({ target, hint, children }: DemoPanelProps) {
         onChange={(e) => mockSource.setParams({ oralPercent: Number(e.target.value) })}
         aria-describedby="demo-oral-note"
       />
+      <div className="demo__ends" aria-hidden="true">
+        <span className="t-nasal">← ออกจมูกมาก</span>
+        <span className="t-oral">ออกปากมาก →</span>
+      </div>
       <p id="demo-oral-note" className="sr-only">
         ออกจมูกคำนวณจาก 100 ลบค่าออกปาก
       </p>
 
-      <div className="demo__row demo__row--wrap">
-        <div className="seg" role="group" aria-label="เสียงพูด (จำลอง)">
+      <div className="demo__group">
+        <span className="demo__label">เสียงพูด</span>
+        <div className="seg seg--fill" role="group" aria-label="เสียงพูด (จำลอง)">
           {SPEECH.map((s) => (
             <button
               key={s.id}
@@ -182,32 +192,33 @@ function MockControls({ target, hint, children }: DemoPanelProps) {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className={`btn btn--secondary btn--sm demo__hold${params.holding ? " is-active" : ""}`}
-          aria-pressed={params.holding}
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            hold(true);
-          }}
-          onPointerUp={() => hold(false)}
-          onPointerCancel={() => hold(false)}
-          onLostPointerCapture={() => hold(false)}
-          onKeyDown={(e) => {
-            if ((e.key === " " || e.key === "Enter") && !e.repeat) {
-              e.preventDefault();
-              hold(true);
-            }
-          }}
-          onKeyUp={(e) => {
-            if (e.key === " " || e.key === "Enter") hold(false);
-          }}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <Icon name="hand" size={18} />
-          {params.holding ? "กำลังพูด…" : "กดค้างเพื่อพูด"}
-        </button>
       </div>
+      <button
+        type="button"
+        className={`btn btn--block demo__hold${params.holding ? " is-active" : ""}`}
+        aria-pressed={params.holding}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          hold(true);
+        }}
+        onPointerUp={() => hold(false)}
+        onPointerCancel={() => hold(false)}
+        onLostPointerCapture={() => hold(false)}
+        onKeyDown={(e) => {
+          if ((e.key === " " || e.key === "Enter") && !e.repeat) {
+            e.preventDefault();
+            hold(true);
+          }
+        }}
+        onKeyUp={(e) => {
+          if (e.key === " " || e.key === "Enter") hold(false);
+        }}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <Icon name="hand" size={20} />
+        {params.holding ? "กำลังพูด…" : "กดค้างเพื่อพูด"}
+      </button>
+      <p className="demo__meta demo__meta--center">หรือกด Space ค้างไว้บนคีย์บอร์ด</p>
 
       <details className="demo__more">
         <summary>ตัวเลือกทดสอบเพิ่ม</summary>

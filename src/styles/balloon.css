@@ -13,15 +13,9 @@
 
 /* Picker: "where do the balloons go today?" — postcards on a dawn sky */
 .pick.pick--sky {
-  background:
-    radial-gradient(circle at 84% 11%, rgba(255, 255, 255, 0.8) 0 24px, transparent 25px),
-    radial-gradient(ellipse 120px 30px at 16% 26%, rgba(255, 255, 255, 0.75), transparent 70%),
-    linear-gradient(#efe8ff, #fff4e6 58%, #f2f3dd);
-}
-
-.pick--sky .pick__title,
-.pick--sky .pick__note {
-  color: var(--sky-ink);
+  --pick-bg: var(--candy-pink-soft);
+  --pick-blob: var(--candy-pink);
+  --pick-ink: var(--candy-pink-ink);
 }
 
 .pick-trip {
@@ -29,14 +23,12 @@
   justify-items: center;
   gap: 4px;
   width: 100%;
-  padding: 8px 8px 10px;
-  border: 3px solid rgba(255, 255, 255, 0.95);
+  padding: 8px 8px 12px;
+  border: 3px solid var(--surface);
   border-radius: var(--r-xl);
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 6px 0 rgba(59, 50, 102, 0.12),
-    var(--shadow-2);
-  color: var(--trip-ink, var(--sky-ink));
+  background: var(--surface);
+  box-shadow: var(--shadow-clay);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
   transition:
@@ -47,7 +39,7 @@
 .pick-trip:hover,
 .pick-trip:focus-visible {
   transform: translateY(-3px);
-  border-color: var(--trip-ink);
+  border-color: var(--ink);
 }
 
 .pick-trip:active {
@@ -65,8 +57,9 @@
 }
 
 .pick-trip__name {
+  font-family: var(--font-display);
   font-size: 1.3rem;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.5;
   text-align: center;
   overflow-wrap: anywhere;
@@ -110,7 +103,8 @@
   box-shadow: var(--shadow-1);
   color: var(--trip-ink);
   font-size: 0.95rem;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 600;
   line-height: 1.6;
   white-space: nowrap;
   pointer-events: none;
@@ -320,7 +314,8 @@
   box-shadow: var(--shadow-1);
   color: var(--trip-ink);
   font-size: 0.95rem;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 600;
   line-height: 1.6;
   white-space: nowrap;
 }

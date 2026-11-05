@@ -1,0 +1,502 @@
+/* ---------- Calibrate (ปรับเครื่องก่อนเล่น) ----------
+   One thing per step: a big picture (how to hold the baffle / the word to say inside a progress ring / the two sounds
+   side by side) and a short panel with what to do and one button.
+   Phone & portrait tablet: picture above the panel. Wide screens: picture left, panel right — not a phone column. */
+
+.cal {
+  gap: var(--sp-4);
+}
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.cal-head__title {
+  flex: 1;
+  font-size: 1.35rem;
+}
+
+.cal-top {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* stepper: numbered bubbles joined by a line */
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepper__item {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+/* the joining line sits behind the bubbles */
+.stepper__item:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  right: 50%;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+}
+
+.stepper__item.is-done:not(:first-child)::before,
+.stepper__item.is-current:not(:first-child)::before {
+  background: var(--primary);
+}
+
+.stepper__dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  background: var(--surface-sunken);
+  box-shadow: var(--shadow-1);
+  color: var(--ink-3);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.stepper__item.is-current .stepper__dot {
+  background: var(--primary);
+  color: var(--primary-ink);
+  box-shadow: 0 0 0 5px var(--primary-soft);
+}
+
+.stepper__item.is-done .stepper__dot {
+  background: var(--candy-mint);
+  color: var(--candy-mint-ink);
+}
+
+.stepper__label {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+.stepper__item.is-current .stepper__label {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.cal-demo {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--info-soft);
+  color: #4c3a99;
+  font-size: var(--fs-xs);
+}
+
+/* body: picture + panel */
+.cal-body {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.cal-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--sp-3);
+  min-height: 260px;
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--candy-mint-soft);
+  box-shadow: var(--shadow-clay);
+  overflow: hidden;
+}
+
+/* two soft blobs behind the picture */
+.cal-visual::before,
+.cal-visual::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.cal-visual::before {
+  width: 58%;
+  aspect-ratio: 1;
+  top: -22%;
+  right: -14%;
+}
+
+.cal-visual::after {
+  width: 40%;
+  aspect-ratio: 1;
+  bottom: -18%;
+  left: -10%;
+}
+
+.cal-visual > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cal-visual--setup svg {
+  width: 100%;
+  max-width: 460px;
+}
+
+.cal-visual--oral {
+  background: var(--oral-soft);
+}
+
+.cal-visual--nasal {
+  background: var(--nasal-soft);
+}
+
+.cal-visual--sum {
+  background: var(--candy-lilac-soft);
+}
+
+.cal-visual__cap {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+/* the word to say, inside the ring that fills while there is voice */
+.cal-bubble {
+  --ring: var(--oral);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(72vw, 280px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow:
+    inset 0 -8px 0 rgba(34, 31, 59, 0.05),
+    0 22px 40px -18px rgba(34, 31, 59, 0.35);
+}
+
+.cal-visual--nasal .cal-bubble {
+  --ring: var(--nasal);
+}
+
+.cal-bubble__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cal-bubble__track,
+.cal-bubble__fill {
+  fill: none;
+  stroke-width: 12;
+}
+
+.cal-bubble__track {
+  stroke: var(--surface-sunken);
+}
+
+.cal-bubble__fill {
+  stroke: var(--ring);
+  stroke-linecap: round;
+}
+
+.cal-bubble.is-done .cal-bubble__fill {
+  stroke: var(--ok);
+}
+
+.cal-bubble__word {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 15vw, 4.4rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.cal-bubble__count {
+  position: absolute;
+  bottom: 16%;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-muted);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-bubble.is-done .cal-bubble__count {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+/* a gentle breathing glow while the device hears a voice */
+.cal-bubble.is-live {
+  animation: cal-breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes cal-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 -8px 0 rgba(34, 31, 59, 0.05),
+      0 22px 40px -18px rgba(34, 31, 59, 0.35),
+      0 0 0 0 color-mix(in srgb, var(--ring) 35%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 -8px 0 rgba(34, 31, 59, 0.05),
+      0 22px 40px -18px rgba(34, 31, 59, 0.35),
+      0 0 0 14px color-mix(in srgb, var(--ring) 0%, transparent);
+  }
+}
+
+/* summary: the two sounds side by side (nasal share = orange) */
+.cal-compare {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(28px, 10vw, 64px);
+}
+
+.cal-compare__col {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+}
+
+.cal-compare__col strong {
+  color: var(--nasal-text);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.cal-compare__col > span:last-child {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.cal-compare__bar {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 160px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: inset 0 2px 6px rgba(34, 31, 59, 0.08);
+  overflow: hidden;
+}
+
+.cal-compare__bar > span {
+  position: absolute;
+  inset: auto 0 0;
+  border-radius: var(--r-pill);
+  background: var(--nasal);
+}
+
+/* panel: what to do now + one button */
+.cal-panel {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-clay);
+}
+
+.cal-panel__title {
+  font-size: 1.6rem;
+  line-height: 1.3;
+}
+
+.cal-panel__lead {
+  margin-top: -6px;
+  color: var(--ink-3);
+  font-size: var(--fs-small);
+}
+
+.cal-panel .btn--lg {
+  margin-top: var(--sp-2);
+}
+
+.cal-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cal-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.cal-list__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.cal-list__icon--mint {
+  background: var(--candy-mint-soft);
+  color: var(--candy-mint-ink);
+}
+
+.cal-list__icon--lilac {
+  background: var(--candy-lilac-soft);
+  color: var(--candy-lilac-ink);
+}
+
+.cal-list__icon--lemon {
+  background: var(--candy-lemon-soft);
+  color: var(--candy-lemon-ink);
+}
+
+.cal-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--surface-muted);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.cal-status--ok {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.cal-status--warn {
+  background: var(--warn-soft);
+  color: var(--warn-text);
+}
+
+.cal-meta {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-result {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px 10px 10px 16px;
+  border-radius: var(--r-lg);
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.cal-result strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.cal-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: 12px 14px;
+  border-radius: var(--r-lg);
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.cal-check svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.cal-check--ok {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.cal-check--warn {
+  background: var(--warn-soft);
+  color: var(--warn-text);
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .kid-frame.cal {
+    max-width: 760px;
+  }
+  .cal-visual {
+    min-height: 340px;
+  }
+}
+
+/* wide screens: picture left, panel right */
+@media (min-width: 900px) {
+  .kid-frame.cal {
+    max-width: 1120px;
+    padding: var(--sp-6) var(--sp-8) var(--sp-8);
+  }
+  .cal-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .stepper {
+    max-width: 560px;
+  }
+  .cal-body {
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 1fr);
+    align-items: stretch;
+    gap: var(--sp-6);
+  }
+  .cal-visual {
+    min-height: 440px;
+  }
+  .cal-panel {
+    align-content: center;
+    padding: var(--sp-8);
+  }
+  .cal-panel__title {
+    font-size: 2rem;
+  }
+}
+
+[data-motion="reduce"] .cal-bubble.is-live {
+  animation: none;
+}

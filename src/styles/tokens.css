@@ -1,21 +1,24 @@
 /*
  * Design tokens — ใช้ร่วมกันทั้ง 8 หน้าจอ
+ * ทิศทางภาพ (6 พ.ย. 2569): พื้นลาเวนเดอร์อ่อนมีวงสีพาสเทล ตัวหนังสือสีครามเข้ม ปุ่มหลักสีม่วงสดแบบกดได้
+ * (ขอบล่างเข้มเหมือนของเล่น) การ์ดมนใหญ่ สีลูกกวาดประจำเกม — ไม่ใช้ปุ่มสีดำ
  * ความหมายสีที่ห้ามสลับ: --oral* = ค่าด้านปาก (น้ำเงิน), --nasal* = ค่าด้านจมูก (ส้ม)
+ * สีประจำเกม (--candy-*) จงใจไม่ใช้น้ำเงิน/ส้ม เพื่อไม่ให้ปนกับความหมายของสัญญาณ
  */
 :root {
-  /* Surfaces */
-  --paper: #f7f3ea;
-  --paper-deep: #efe8da;
+  /* Surfaces: lavender-white */
+  --paper: #f6f4fe;
+  --paper-deep: #ece8fb;
   --surface: #ffffff;
-  --surface-muted: #f4f0e8;
-  --surface-sunken: #ebe5d8;
-  --line: #e4ddd0;
-  --line-strong: #cbc2b2;
+  --surface-muted: #f3f1fb;
+  --surface-sunken: #e8e5f5;
+  --line: #e6e2f3;
+  --line-strong: #cfc9e6;
 
-  /* Ink (text) */
-  --ink: #1f2330;
-  --ink-2: #4b5263;
-  --ink-3: #626979;
+  /* Ink (text): deep indigo, softer than black */
+  --ink: #221f3b;
+  --ink-2: #4d4968;
+  --ink-3: #66627f;
   --ink-inverse: #ffffff;
 
   /* Semantic: oral = blue, nasal = orange */
@@ -36,14 +39,31 @@
   --warn-text: #8a5300;
   --warn-soft: #fff3d6;
   --info-soft: #efeaff;
-  --star: #f5b400;
-  --star-deep: #d99500;
+  --star: #ffc93c;
+  --star-deep: #e0a400;
 
-  /* Actions */
-  --primary: #22273a;
-  --primary-hover: #343b52;
+  /* Game candy colours: frog = mint, balloon = pink, runner = lemon, gate = lilac */
+  --candy-mint: #8fe3b0;
+  --candy-mint-soft: #dcf6e5;
+  --candy-mint-ink: #145c3a;
+  --candy-pink: #ffb3d1;
+  --candy-pink-soft: #ffe6f0;
+  --candy-pink-ink: #8a1f4f;
+  --candy-lemon: #ffe066;
+  --candy-lemon-soft: #fff6c9;
+  --candy-lemon-ink: #6b5200;
+  --candy-lilac: #c7b5ff;
+  --candy-lilac-soft: #eee8ff;
+  --candy-lilac-ink: #4b2fa8;
+
+  /* Actions: bright violet pill with a darker "toy" edge (white text ≥ 4.5:1) */
+  --primary: #6c4bf4;
+  --primary-hover: #5e3de6;
+  --primary-deep: #4a2dbf;
   --primary-ink: #ffffff;
-  --focus: #6d28d9;
+  --primary-soft: #eee9ff;
+  --primary-text: #5132d1;
+  --focus: #221f3b;
 
   /* Scene palette (kept away from blue/orange semantics) */
   --grass: #cfe9b5;
@@ -62,11 +82,13 @@
   --door: #4fa093;
   --door-deep: #2f7c70;
 
-  /* Typography */
+  /* Typography: Mitr for headings, words and buttons (round, chunky, Thai + Latin); Noto Sans Thai for reading */
   --font-sans: "Noto Sans Thai", "Leelawadee UI", "Thonburi", "Sarabun", "Tahoma", system-ui, sans-serif;
+  --font-display: "Mitr", var(--font-sans);
   --fs-word: clamp(2.5rem, 9vw, 3.25rem);
-  --fs-h1: 1.5rem;
-  --fs-h2: 1.125rem;
+  --fs-hero: clamp(2rem, 8vw, 2.75rem);
+  --fs-h1: 1.625rem;
+  --fs-h2: 1.25rem;
   --fs-body: 1rem;
   --fs-small: 0.875rem;
   --fs-xs: 0.8125rem;
@@ -83,19 +105,20 @@
   --sp-8: 32px;
   --sp-10: 40px;
 
-  /* Radius */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  /* Radius: big and soft */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
   --r-pill: 999px;
 
-  /* Borders & shadows */
+  /* Borders & shadows: soft clay — a lifted outer shadow plus a faint inner rim */
   --bw: 1px;
-  --bw-strong: 1.5px;
-  --shadow-1: 0 1px 2px rgba(31, 35, 48, 0.06), 0 1px 1px rgba(31, 35, 48, 0.04);
-  --shadow-2: 0 6px 18px rgba(31, 35, 48, 0.08), 0 2px 4px rgba(31, 35, 48, 0.05);
-  --shadow-3: 0 18px 40px rgba(31, 35, 48, 0.18);
+  --bw-strong: 2px;
+  --shadow-1: 0 1px 2px rgba(34, 31, 59, 0.05), 0 2px 6px rgba(34, 31, 59, 0.04);
+  --shadow-2: 0 10px 28px -10px rgba(34, 31, 59, 0.2), 0 2px 6px rgba(34, 31, 59, 0.05);
+  --shadow-3: 0 22px 48px -12px rgba(34, 31, 59, 0.3);
+  --shadow-clay: inset 0 -4px 0 rgba(34, 31, 59, 0.06), 0 12px 26px -12px rgba(76, 58, 153, 0.22);
 
   /* Motion */
   --dur-1: 120ms;
@@ -107,7 +130,7 @@
   /* Layout */
   --kid-col: 480px;
   --tap: 48px;
-  --tap-lg: 56px;
+  --tap-lg: 60px;
 }
 
 /* data-motion is set from prefers-reduced-motion (or the demo override) by src/lib/motion.ts */

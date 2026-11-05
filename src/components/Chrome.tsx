@@ -1,4 +1,5 @@
 import { POSITIONING, VALIDATION_NOTE } from "../data/copy";
+import { Icon } from "./Icon";
 import { hrefFor } from "../lib/router";
 
 export function Disclaimer({ compact = false }: { compact?: boolean }) {
@@ -32,5 +33,23 @@ export function ViewSwitch({ current }: { current: "kid" | "teacher" }) {
         นักแก้ไขการพูด
       </a>
     </nav>
+  );
+}
+
+/** Summary row of every "for the adult" drawer: one short title, what is inside, and a chevron. */
+export function CareSummary({ title = "สำหรับผู้ดูแล", sub }: { title?: string; sub: string }) {
+  return (
+    <summary className="care__summary">
+      <span className="care__icon" aria-hidden="true">
+        <Icon name="user" size={18} />
+      </span>
+      <span className="care__text">
+        <strong>{title}</strong>
+        <small>{sub}</small>
+      </span>
+      <span className="care__chev" aria-hidden="true">
+        <Icon name="next" size={18} />
+      </span>
+    </summary>
   );
 }
