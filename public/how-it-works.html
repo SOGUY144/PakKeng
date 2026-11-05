@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="th" data-motion="off">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f3ea">
+<meta name="description" content="ปากเก่งวัดอะไร เด็กปากแหว่งเพดานโหว่รักษาและฝึกพูดกันยังไง ปากเก่งช่วยตรงไหน มีหลักฐานแค่ไหน และจะทำอะไรต่อ">
+<title>ปากเก่งทำงานยังไง</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+/* ฟอนต์เดียวกับแอป: Noto Sans Thai (SIL OFL 1.1) เก็บไว้ใน how-it-works/fonts ไม่โหลดจากภายนอก */
+@font-face{font-family:"Noto Sans Thai";font-style:normal;font-weight:400;font-display:swap;src:url("how-it-works/fonts/noto-sans-thai-thai-400-normal.woff2") format("woff2");unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:"Noto Sans Thai";font-style:normal;font-weight:600;font-display:swap;src:url("how-it-works/fonts/noto-sans-thai-thai-600-normal.woff2") format("woff2");unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:"Noto Sans Thai";font-style:normal;font-weight:700;font-display:swap;src:url("how-it-works/fonts/noto-sans-thai-thai-700-normal.woff2") format("woff2");unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:"Noto Sans Thai";font-style:normal;font-weight:400;font-display:swap;src:url("how-it-works/fonts/noto-sans-thai-latin-400-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Noto Sans Thai";font-style:normal;font-weight:600;font-display:swap;src:url("how-it-works/fonts/noto-sans-thai-latin-600-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Noto Sans Thai";font-style:normal;font-weight:700;font-display:swap;src:url("how-it-works/fonts/noto-sans-thai-latin-700-normal.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+:root{
+  /* โลกเดียวกับแอปปากเก่ง: กระดาษอุ่น หมึกเข้ม · น้ำเงิน = ค่าด้านปาก ส้ม = ค่าด้านจมูก (สงวนไว้แค่สองความหมายนี้) · ม่วงเมฆ = ตัวปากเก่ง
+     เลย์เอาต์: คอลัมน์อ่านเดียวราว 68 ตัวอักษร ภาพ ตาราง และการ์ดกว้างได้ถึง 1080px · หน้านี้ตั้งใจเป็นธีมสว่างธีมเดียวเหมือนแอป */
+  color-scheme: light;
+  --paper:#f7f3ea; --paper-deep:#efe8da; --surface:#ffffff; --sunken:#ebe5d8; --line:#e4ddd0; --line-strong:#cbc2b2;
+  --ink:#1f2330; --ink-2:#4b5263; --ink-3:#626979;
+  --oral:#2563eb; --oral-text:#1d4ed8; --oral-soft:#e8efff;
+  --nasal:#e8692a; --nasal-text:#b4470f; --nasal-soft:#fff1e8;
+  --accent:#6e5bb8; --accent-text:#5b49a6; --accent-soft:#efeaff;
+  --ok:#1f9d74; --ok-text:#11694c; --ok-soft:#ddf3ea;
+  --warn-text:#7a4a00; --warn-soft:#fff3d6;
+  --focus:#6d28d9;
+  --font:"Noto Sans Thai","Leelawadee UI","Thonburi","Sarabun","Tahoma",system-ui,sans-serif;
+  --radius:18px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:1.0625rem;line-height:1.75}
+img,svg{max-width:100%;height:auto}
+a{color:var(--accent-text);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:10px}
+h1,h2,h3,h4{line-height:1.35;text-wrap:balance;margin:0}
+p,ul,ol,dl,dd,figure{margin:0}
+b,strong{font-weight:600}
+.skip{position:absolute;left:-9999px;top:8px}
+.skip:focus{left:16px;z-index:30;background:var(--surface);padding:8px 14px;border-radius:10px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.prose{max-width:68ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.fine{font-size:.8125rem;color:var(--ink-3);line-height:1.6}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;flex:none}
+.sw--n{background:var(--nasal)}
+.sw--o{background:var(--oral)}
+.sw--pk{background:var(--accent)}
+
+/* ---------- แถบบน ---------- */
+.top{position:sticky;top:0;z-index:20;background:rgba(247,243,234,.95);border-bottom:1px solid var(--line)}
+@supports (backdrop-filter:blur(8px)){.top{background:rgba(247,243,234,.85);backdrop-filter:blur(8px)}}
+.top__in{max-width:1080px;margin:0 auto;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap;font-size:1.05rem}
+.brand span{color:var(--ink-3);font-weight:500;margin-left:6px;font-size:.85em}
+.motion{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:6px 16px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ink);color:#fff;font:inherit;font-size:.875rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.motion__icon{width:10px;height:12px;background:currentColor;clip-path:polygon(0 0,100% 50%,0 100%)}
+[data-motion="on"] .motion{background:var(--surface);color:var(--ink)}
+[data-motion="on"] .motion__icon{clip-path:none;background:linear-gradient(90deg,currentColor 0 34%,transparent 34% 66%,currentColor 66%)}
+.motion-note{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:22px;padding:10px 14px;border-radius:12px;background:var(--warn-soft);font-size:.9rem;color:var(--warn-text)}
+.motion-note[hidden]{display:none}
+.motion-note__btn{font:inherit;font-weight:700;color:var(--ink);background:var(--surface);border:1.5px solid var(--ink);border-radius:999px;padding:4px 14px;min-height:36px;cursor:pointer}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--ink);text-decoration:none;padding:6px 14px 6px 6px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.toc a:hover{border-color:var(--ink-3)}
+.toc span{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:700}
+@media (max-width:760px){
+  .top__in{padding:6px 16px}
+  .wrap{padding:0 16px}
+  html{scroll-padding-top:72px}
+}
+
+/* ---------- หัวหน้า ---------- */
+.hero{padding:44px 0 40px}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:40px;align-items:start}
+.eyebrow{font-size:.875rem;color:var(--ink-3);font-weight:600}
+h1{font-size:clamp(2rem,1.3rem + 2.8vw,2.9rem);font-weight:700;margin-top:4px}
+.lead{font-size:1.125rem;color:var(--ink-2);max-width:62ch;margin-top:14px}
+.stance{margin-top:20px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--surface);border-radius:0 14px 14px 0;font-size:.95rem;color:var(--ink-2);display:grid;gap:4px}
+.stance strong{color:var(--ink)}
+.gist{list-style:none;padding:0;display:grid;gap:12px}
+.gist li{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 18px;font-size:.975rem;color:var(--ink-2)}
+.gist b{display:block;color:var(--ink);margin-bottom:2px}
+.gist a{font-size:.875rem;font-weight:600}
+@media (max-width:860px){.hero__grid{grid-template-columns:1fr;gap:28px}.hero{padding:32px 0}}
+
+/* ---------- หัวข้อ ---------- */
+.sec{padding:56px 0;border-top:1px solid var(--line)}
+.sec--alt{background:var(--paper-deep)}
+.sec__head{display:flex;align-items:center;gap:12px}
+.sec__num{flex:none;width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:1rem}
+h2{font-size:clamp(1.45rem,1.1rem + 1.2vw,1.85rem)}
+h3{font-size:1.15rem;margin:36px 0 12px}
+h4{font-size:1rem}
+.sec .lead{margin-top:12px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 36px}
+@media (max-width:760px){.cols{grid-template-columns:1fr}.sec{padding:44px 0}}
+.list{padding-left:1.3em;display:grid;gap:8px;color:var(--ink-2)}
+.list b{color:var(--ink)}
+.list--no li::marker{content:"×  ";color:var(--ink-3);font-weight:700}
+
+/* ---------- ห้องทดลอง (ภาพ + แผงควบคุม) ---------- */
+.lab{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;margin-top:26px;align-items:start}
+@media (max-width:860px){.lab{grid-template-columns:1fr}}
+.lab__fig{padding:12px 12px 14px}
+.lab__fig svg{display:block;width:100%}
+.lab__fig figcaption{font-size:.9rem;color:var(--ink-2);padding:8px 6px 0;line-height:1.6}
+.lab__panel{padding:18px;display:grid;gap:14px}
+.say{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.say__label{font-size:.875rem;color:var(--ink-3);font-weight:600;margin-right:2px}
+.say button{font:inherit;font-size:.975rem;font-weight:600;min-height:44px;padding:6px 16px;border-radius:999px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+.say button:hover{border-color:var(--ink-3)}
+.say button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.note{font-size:.95rem;color:var(--ink-2);min-height:3.3em}
+.readout{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.readout__label{font-size:.875rem;color:var(--ink-3);font-weight:600}
+.readout__num{font-size:3.2rem;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;min-width:2.4ch}
+.readout__num small{font-size:.42em;margin-left:3px;color:var(--ink-2)}
+.readout__state{font-size:.875rem;color:var(--ink-2);padding:4px 12px;border-radius:999px;background:var(--paper)}
+.split{display:flex;gap:2px;height:14px;transition:opacity .2s}
+.split span{border-radius:4px;flex-basis:0;flex-shrink:1;min-width:4px}
+.split__n{background:var(--nasal);flex-grow:12}
+.split__o{background:var(--oral);flex-grow:88}
+.is-silent .split{opacity:.28}
+.legend{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:.9rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center}
+.legend b{margin-left:4px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.levels{display:grid;gap:8px}
+.level{display:grid;grid-template-columns:10rem minmax(0,1fr);align-items:center;gap:10px;font-size:.875rem;color:var(--ink-2)}
+.level>span:first-child{display:inline-flex;align-items:center}
+.level__bar{height:8px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.level__bar span{display:block;height:100%;transform-origin:left center;transform:scaleX(.2);border-radius:4px}
+#d-lv-n{background:var(--nasal)}
+#d-lv-o{background:var(--oral)}
+.formula{font-size:.9rem;color:var(--ink-2);background:var(--paper);border-radius:12px;padding:10px 14px;font-variant-numeric:tabular-nums;line-height:1.7}
+.formula span{color:var(--ink);font-weight:600}
+@media (max-width:420px){.level{grid-template-columns:1fr}.readout__num{font-size:2.8rem}}
+
+/* ภาพเครื่อง (ด้านข้าง) */
+.k-hair{fill:#5a4334}
+.k-skin{fill:#f6dcc6}
+.k-ear{fill:#f6dcc6;stroke:#e2c0a5;stroke-width:2}
+.k-ear-in{fill:#eeb4a3}
+.k-brow{fill:none;stroke:#5a4334;stroke-width:4;stroke-linecap:round}
+.k-eye{fill:var(--ink);transform-box:fill-box;transform-origin:center}
+.k-glint{fill:#fff}
+.k-cheek{fill:#f39c95;opacity:.45}
+.k-nostril{fill:#b9806a}
+.k-lip{fill:#e48a87}
+.k-mouth{fill:#7a3530}
+.plate{fill:#d6cfc3;stroke:#a39b8e;stroke-width:1.5}
+.stem{fill:#8c8579}
+.mic{fill:#2b2f3a}
+.port--n{fill:var(--nasal)}
+.port--o{fill:var(--oral)}
+.glow{fill:none;stroke-width:3}
+.glow--n{stroke:var(--nasal);opacity:var(--n,.2)}
+.glow--o{stroke:var(--oral);opacity:var(--o,.9)}
+.wave{fill:none;stroke-width:4;stroke-linecap:round}
+.waves--n .wave{stroke:var(--nasal)}
+.waves--o .wave{stroke:var(--oral)}
+.waves--n{opacity:var(--n,.2)}
+.waves--o{opacity:var(--o,.9)}
+.wave:nth-child(1){transform:translateX(6px)}
+.wave:nth-child(2){transform:translateX(26px);opacity:.7}
+.wave:nth-child(3){transform:translateX(46px);opacity:.4}
+.dt{font-size:19px;font-weight:600;fill:var(--ink-2)}
+.dt--n{fill:var(--nasal-text)}
+.dt--o{fill:var(--oral-text)}
+.bub{fill:#fff;stroke:var(--line-strong);stroke-width:2;stroke-linejoin:round}
+.bub-word{font-size:27px;font-weight:700;fill:var(--ink)}
+.bub-tag{font-size:19px;font-weight:600;fill:var(--ink-2)}
+
+/* ภาพตัดประตูกั้นจมูก */
+.v-tissue{fill:#f3cfc6}
+.v-air{fill:#fffdf9;stroke:#dca197;stroke-width:2;stroke-linejoin:round}
+.v-bone{fill:#f4e8d8;stroke:#e0cdb4;stroke-width:1.5}
+.v-tongue{fill:#e9aa9f}
+.velum{fill:#e48f82;stroke:#c2675a;stroke-width:2;stroke-linejoin:round;transform:translate(206px,164px) rotate(10deg)}
+.valve[data-state="ma"] .velum{transform:translate(206px,164px) rotate(-40deg)}
+.valve[data-state="leak"] .velum{transform:translate(206px,164px) rotate(8deg) scaleX(.76)}
+.flow{fill:none;stroke-width:7;stroke-linecap:round;stroke-dasharray:.1 16}
+.flow--n{stroke:var(--nasal);opacity:0}
+.flow--o{stroke:var(--oral)}
+.valve[data-state="ma"] .flow--n{opacity:1}
+.valve[data-state="ma"] .flow--o{opacity:0}
+.valve[data-state="leak"] .flow--n{opacity:.95}
+.mk-n{fill:var(--nasal)}
+.mk-o{fill:var(--oral)}
+.port-ring{fill:none;stroke:var(--ink-2);stroke-width:2;stroke-dasharray:6 6}
+.ldr{fill:none;stroke:var(--ink-3);stroke-width:1.5}
+.vt{font-size:20px;font-weight:600;fill:var(--ink-2)}
+.vt--bone{fill:#866f52}
+.flows-key{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:.9rem;color:var(--ink-2)}
+.flows-key span{display:inline-flex;align-items:center}
+
+/* ---------- ไทม์ไลน์การรักษา ---------- */
+.timeline{list-style:none;padding:0;margin-top:22px;position:relative}
+.timeline::before{content:"";position:absolute;left:11px;top:10px;bottom:10px;width:2px;background:var(--line-strong)}
+.timeline::after{content:"";position:absolute;left:9px;top:0;width:6px;height:64px;border-radius:3px;background:linear-gradient(transparent,var(--accent),transparent);opacity:0}
+.timeline li{position:relative;display:grid;grid-template-columns:11.5rem minmax(0,1fr);gap:2px 16px;padding:12px 14px 12px 40px;border-radius:12px}
+.timeline li::before{content:"";position:absolute;left:5px;top:21px;width:14px;height:14px;border-radius:50%;background:var(--surface);border:2px solid var(--ink-3)}
+.when{font-weight:600}
+.what{color:var(--ink-2)}
+.timeline .is-pk{background:var(--accent-soft)}
+.timeline .is-pk::before{border-color:var(--accent);background:var(--accent)}
+.pk-chip{display:inline-block;margin-top:6px;font-size:.8rem;font-weight:600;color:var(--accent-text);background:var(--surface);border:1px solid var(--accent);padding:1px 10px;border-radius:999px}
+@media (max-width:620px){.timeline li{grid-template-columns:1fr}}
+.team{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding:0;list-style:none}
+.team li{font-size:.9rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;color:var(--ink-2)}
+
+/* ---------- กล่องเน้น ---------- */
+.callout{margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.callout h3{margin:0 0 8px}
+.callout p+p{margin-top:8px}
+.warnbox{margin-top:24px;background:var(--warn-soft);border-radius:16px;padding:16px 20px;color:#4a3a14}
+.warnbox h3{margin:0 0 6px;color:#3a2d0e}
+
+/* ---------- โครงสร้าง vs เรียนรู้ผิด ---------- */
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px}
+.vs article{padding:18px 20px;display:grid;gap:8px;align-content:start}
+.vs h3{margin:0}
+.vs__fix{font-weight:600;color:var(--ink);padding-top:8px;border-top:1px dashed var(--line-strong)}
+.vs__both{margin-top:14px;color:var(--ink-2)}
+@media (max-width:620px){.vs{grid-template-columns:1fr}}
+
+/* บันไดการฝึก + กระต่าย */
+.ladder{position:relative;margin-top:8px;padding-top:76px}
+.ladder__steps{list-style:none;margin:0;padding:0;display:flex;align-items:flex-end;gap:6px}
+.ladder__steps li{flex:1 1 0;min-width:0;height:calc(36px + var(--h) * 26px);background:var(--surface);border:1px solid var(--line);border-radius:12px 12px 4px 4px;display:flex;align-items:flex-end;justify-content:center;padding:8px 4px;font-size:.9rem;font-weight:600;color:var(--ink-2);text-align:center;line-height:1.3}
+.ladder__steps .is-pk{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+.bunny{--b:56px;position:absolute;width:var(--b);height:var(--b);left:calc(50% - var(--b) / 2);bottom:114px;pointer-events:none}
+@media (min-width:760px){.bunny{--b:76px}.ladder{padding-top:104px}}
+.ladder__note{margin-top:12px;font-size:.95rem;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.tech{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:8px}
+.tech article{padding:16px 18px;display:grid;gap:4px;align-content:start}
+.tech p{font-size:.95rem;color:var(--ink-2)}
+
+/* ---------- ปากเก่ง ---------- */
+.idcard{margin-top:24px;padding:6px 20px}
+.idcard div{display:grid;grid-template-columns:7rem minmax(0,1fr);gap:4px 16px;padding:12px 0;border-bottom:1px solid var(--line)}
+.idcard div:last-child{border-bottom:0}
+.idcard dt{font-weight:600;color:var(--ink-3)}
+.idcard dd{color:var(--ink)}
+@media (max-width:520px){.idcard div{grid-template-columns:1fr}}
+.loop{list-style:none;padding:0;margin-top:4px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px;counter-reset:loop}
+.loop li{position:relative;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:4px;align-content:start;font-size:.95rem;color:var(--ink-2)}
+.loop li::before{counter-increment:loop;content:counter(loop);width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);font-weight:700;font-size:.85rem;display:grid;place-items:center}
+.loop b{color:var(--ink)}
+.loop li:not(:last-child)::after{content:"";position:absolute;right:-19px;top:50%;width:10px;height:10px;border-top:2px solid var(--ink-3);border-right:2px solid var(--ink-3);transform:translateY(-50%) rotate(45deg)}
+.loop__back{margin-top:12px;font-size:.9rem;color:var(--ink-3)}
+@media (max-width:860px){
+  .loop{grid-template-columns:1fr;gap:22px}
+  .loop li:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-16px;transform:translateX(-50%) rotate(135deg)}
+}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:4px}
+.game{overflow:hidden;display:grid;align-content:start}
+.game__pic{background:linear-gradient(#e9e1ff,#fff3e3);aspect-ratio:360/252;display:grid;place-items:center}
+.game__pic img,.game__pic svg{width:100%;height:100%;object-fit:contain;display:block}
+.game__body{padding:14px 16px 16px;display:grid;gap:6px}
+.game__body p{font-size:.95rem;color:var(--ink-2)}
+.cue{display:inline-flex;align-items:center;font-size:.8125rem;font-weight:600;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:2px 10px;justify-self:start}
+
+/* ---------- หลักฐาน ---------- */
+.table-scroll{overflow-x:auto;margin-top:22px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.ev{width:100%;min-width:700px;border-collapse:collapse;font-size:.95rem}
+.ev th,.ev td{padding:14px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.ev thead th{font-size:.85rem;color:var(--ink-3);font-weight:600;background:var(--paper)}
+.ev tbody th{font-weight:600;width:26%}
+.ev td{color:var(--ink-2)}
+.ev tr:last-child>*{border-bottom:0}
+.chip{display:inline-block;font-size:.8rem;font-weight:600;padding:1px 10px;border-radius:999px;background:var(--sunken);color:var(--ink);margin:0 0 4px}
+.norms{margin-top:24px;padding:18px 20px}
+.norms__title{font-weight:600}
+.norms__sub{font-size:.875rem;color:var(--ink-3);margin-bottom:14px}
+.norms__row,.norms__axis{display:grid;grid-template-columns:13rem minmax(0,1fr);gap:4px 14px;align-items:center}
+.norms__row+.norms__row{margin-top:10px}
+.norms__label{font-size:.9rem;color:var(--ink-2)}
+.norms__track{position:relative;height:24px;background:linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/calc(100% / 3) 100%;border-right:1px solid var(--line)}
+.norms__bar{position:absolute;left:0;top:4px;height:16px;width:calc(var(--v) / 75 * 100%);background:var(--nasal);border-radius:0 4px 4px 0}
+.norms__val{position:absolute;top:0;left:calc(var(--v) / 75 * 100% + 8px);font-size:.9rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:24px}
+.norms__ticks{position:relative;height:20px;margin-top:6px;font-size:.75rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.norms__ticks span{position:absolute;top:0;left:calc(var(--x) / 75 * 100%);transform:translateX(-50%)}
+.norms__ticks span:first-child{transform:none}
+.norms__ticks span:last-child{transform:translateX(-100%)}
+.norms .fine{margin-top:12px}
+@media (max-width:560px){.norms__row,.norms__axis{grid-template-columns:1fr}.norms__axis>span{display:none}}
+
+/* ---------- แผนต่อไป ---------- */
+.road{list-style:none;padding:0;margin-top:22px;display:grid;gap:12px}
+.road>li{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px 16px 62px}
+.road>li::before{content:"";position:absolute;left:22px;top:22px;width:20px;height:20px;border-radius:50%;border:2px solid var(--line-strong);background:var(--surface)}
+.road>.is-done::before{background:var(--ok);border-color:var(--ok)}
+.road>.is-done::after{content:"";position:absolute;left:29px;top:25px;width:6px;height:11px;border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(45deg)}
+.road>.is-now{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.road>.is-now::before{border-color:var(--accent);background:var(--accent)}
+.road>.is-now::after{content:"";position:absolute;left:22px;top:22px;width:20px;height:20px;border-radius:50%;border:2px solid var(--accent);opacity:0}
+.road>li>.road__state{font-size:.8125rem;font-weight:700;color:var(--ink-3)}
+.road>.is-done>.road__state{color:var(--ok-text)}
+.road>.is-now>.road__state{color:var(--accent-text)}
+.road h3{margin:2px 0 4px;font-size:1.05rem}
+.road>li>p{color:var(--ink-2);font-size:.975rem}
+.road code,.callout code{font-size:.85em;background:var(--paper);padding:1px 6px;border-radius:6px;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:0;list-style:none}
+.tags li{font-size:.8rem;padding:2px 10px;border-radius:999px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2)}
+
+/* ---------- แหล่งข้อมูล + ท้ายหน้า ---------- */
+.sources{columns:2;column-gap:36px;padding-left:1.2em;margin-top:18px;font-size:.95rem}
+.sources li{break-inside:avoid;margin-bottom:8px;color:var(--ink-2)}
+@media (max-width:760px){.sources{columns:1}}
+.foot{padding:36px 0 56px;border-top:1px solid var(--line);font-size:.9rem;color:var(--ink-2)}
+.foot .wrap{display:grid;gap:8px}
+.foot strong{color:var(--ink)}
+.foot__links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:6px}
+
+/* ---------- ภาพเคลื่อนไหว: ทำงานเฉพาะเมื่อ data-motion="on" ---------- */
+[data-motion="on"] .wave{animation:wave 1.2s linear infinite}
+[data-motion="on"] .wave:nth-child(2){animation-delay:-.4s}
+[data-motion="on"] .wave:nth-child(3){animation-delay:-.8s}
+[data-motion="on"] .k-eye{animation:blink 5s infinite}
+[data-motion="on"] .velum{transition:transform .8s cubic-bezier(.3,.7,.2,1)}
+[data-motion="on"] .flow{animation:flow .9s linear infinite;transition:opacity .4s}
+[data-motion="on"] .split span{transition:flex-grow .25s}
+[data-motion="on"] .timeline::after{animation:rail 8s linear infinite}
+[data-motion="on"] .bunny{animation:hop 9s ease-in-out infinite}
+[data-motion="on"] .loop li{animation:loopHi 8s infinite}
+[data-motion="on"] .loop li:nth-child(2){animation-delay:2s}
+[data-motion="on"] .loop li:nth-child(3){animation-delay:4s}
+[data-motion="on"] .loop li:nth-child(4){animation-delay:6s}
+[data-motion="on"] .road>.is-now::after{animation:pulse 1.8s ease-out infinite}
+@keyframes wave{0%{transform:translateX(0);opacity:0}15%{opacity:1}100%{transform:translateX(62px);opacity:0}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
+@keyframes flow{to{stroke-dashoffset:-16.1}}
+@keyframes rail{0%{top:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:calc(100% - 64px);opacity:0}}
+@keyframes loopHi{0%,22%{border-color:var(--accent);background:var(--accent-soft);transform:translateY(-3px)}28%,100%{border-color:var(--line);background:var(--surface);transform:none}}
+@keyframes pulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.3);opacity:0}}
+@keyframes hop{
+  0%{left:calc(10% - var(--b) / 2);bottom:62px;opacity:0}
+  4%{opacity:1}
+  12%{left:calc(10% - var(--b) / 2);bottom:62px}
+  16%{left:calc(20% - var(--b) / 2);bottom:118px}
+  20%{left:calc(30% - var(--b) / 2);bottom:88px}
+  29%{left:calc(30% - var(--b) / 2);bottom:88px}
+  33%{left:calc(40% - var(--b) / 2);bottom:144px}
+  37%{left:calc(50% - var(--b) / 2);bottom:114px}
+  62%{left:calc(50% - var(--b) / 2);bottom:114px}
+  66%{left:calc(60% - var(--b) / 2);bottom:170px}
+  70%{left:calc(70% - var(--b) / 2);bottom:140px}
+  78%{left:calc(70% - var(--b) / 2);bottom:140px}
+  82%{left:calc(80% - var(--b) / 2);bottom:196px}
+  86%{left:calc(90% - var(--b) / 2);bottom:166px}
+  95%{left:calc(90% - var(--b) / 2);bottom:166px;opacity:1}
+  100%{left:calc(90% - var(--b) / 2);bottom:166px;opacity:0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">ข้ามไปเนื้อหา</a>
+
+<header class="top">
+  <div class="top__in">
+    <a class="brand" href="#top">ปากเก่ง<span>PakKeng</span></a>
+    <button id="motion" class="motion" type="button"><span class="motion__icon" aria-hidden="true"></span><span class="motion__label">เล่นภาพเคลื่อนไหว</span></button>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top">
+  <div class="wrap">
+  <p id="motion-note" class="motion-note" hidden>เครื่องนี้ตั้งค่าให้ลดการเคลื่อนไหว ภาพในหน้านี้จึงหยุดอยู่ <button type="button" class="motion-note__btn" id="motion-on">เล่นภาพเคลื่อนไหว</button></p>
+  <div class="hero__grid">
+    <div>
+      <p class="eyebrow">ต้นแบบ · อัปเดต 5 พ.ย. 2569</p>
+      <h1>ปากเก่งทำงานยังไง</h1>
+      <p class="lead">ปากเก่งคือแผ่นกั้นใต้จมูกกับไมค์ 2 ตัว ที่วัดว่าเสียงพูดออกทางจมูกมากแค่ไหน แล้วส่งค่าให้เกมบนแท็บเล็ต เด็กปากแหว่งเพดานโหว่จึงฝึกพูดที่บ้านได้บ่อยขึ้น และเห็นเสียงของตัวเองทันที</p>
+      <div class="stance">
+        <p><strong>เครื่องมือฝึกเสริมที่บ้าน ภายใต้คำแนะนำของนักแก้ไขการพูด</strong></p>
+        <p>ต้นแบบนี้ยังไม่ได้ตรวจสอบเทียบกับ Nasometer ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย</p>
+      </div>
+    </div>
+    <ul class="gist">
+      <li><b>วัดอะไร</b>สัดส่วนเสียงที่ออกทางจมูก (nasalance) หลักเดียวกับเครื่อง Nasometer ที่คลินิกใช้ <a href="#device">ดูภาพ</a></li>
+      <li><b>รักษากันยังไง</b>ทีมเพดานโหว่ผ่าตัดซ่อม แล้วฝึกพูดกับนักแก้ไขการพูด บางคนต้องผ่าตัดแก้ไขเพิ่ม <a href="#care">ดูลำดับ</a></li>
+      <li><b>ปากเก่งช่วยตรงไหน</b>ให้ฝึกที่บ้านระหว่างนัดได้บ่อยขึ้น เห็นผลทันที ครูเห็นแนวโน้ม แต่ไม่ได้รักษาเอง <a href="#pakkeng">ดูรายละเอียด</a></li>
+    </ul>
+  </div>
+  <nav class="toc" aria-label="หัวข้อในหน้านี้">
+    <a href="#device"><span>1</span>เครื่องวัดอะไร</a>
+    <a href="#why"><span>2</span>ทำไมเสียงขึ้นจมูก</a>
+    <a href="#care"><span>3</span>การรักษาจริง</a>
+    <a href="#therapy"><span>4</span>ฝึกพูดแก้อะไรได้</a>
+    <a href="#pakkeng"><span>5</span>ปากเก่งช่วยตรงไหน</a>
+    <a href="#evidence"><span>6</span>มีหลักฐานไหม</a>
+    <a href="#next"><span>7</span>จะทำอะไรต่อ</a>
+  </nav>
+  </div>
+</section>
+
+<!-- 1 -->
+<section class="sec" id="device" aria-labelledby="device-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">1</span><h2 id="device-h">เครื่องวัดอะไร</h2></div>
+    <p class="lead">แผ่นกั้นแยกเสียงที่ออกจมูกกับเสียงที่ออกปาก ไมค์แต่ละตัวรับเสียงฝั่งของตัวเอง เครื่องเทียบความดังของสองฝั่งแล้วบอกเป็นเปอร์เซ็นต์เสียงจมูก</p>
+
+    <div class="lab" id="lab-device">
+      <figure class="lab__fig card">
+        <svg class="dev" viewBox="0 0 520 330" role="img" aria-labelledby="dev-title">
+          <title id="dev-title">ภาพด้านข้างของเด็ก แผ่นกั้นแนบใต้จมูก ไมค์บนรับเสียงที่ออกจมูก ไมค์ล่างรับเสียงที่ออกปาก</title>
+          <circle class="k-hair" cx="150" cy="150" r="110"/>
+          <circle class="k-skin" cx="172" cy="180" r="104"/>
+          <ellipse class="k-skin" cx="279" cy="176" rx="17" ry="13"/>
+          <ellipse class="k-skin" cx="268" cy="222" rx="10" ry="18"/>
+          <ellipse class="k-ear" cx="140" cy="190" rx="16" ry="22"/>
+          <ellipse class="k-ear-in" cx="142" cy="191" rx="8" ry="12"/>
+          <path class="k-brow" d="M224 136q11-7 22-1"/>
+          <ellipse class="k-eye" cx="236" cy="157" rx="6.5" ry="8.5"/>
+          <circle class="k-glint" cx="238.5" cy="154" r="2.2"/>
+          <circle class="k-cheek" cx="224" cy="200" r="14"/>
+          <ellipse class="k-nostril" cx="285" cy="185" rx="4.5" ry="2.6"/>
+          <ellipse class="k-lip" cx="273" cy="214" rx="7" ry="4.5"/>
+          <ellipse class="k-mouth" cx="273" cy="223" rx="5.5" ry="4.5"/>
+          <ellipse class="k-lip" cx="271" cy="232" rx="7" ry="4.5"/>
+
+          <g class="waves waves--n">
+            <path class="wave" d="M300 162q11 14 0 28"/>
+            <path class="wave" d="M300 162q11 14 0 28"/>
+            <path class="wave" d="M300 162q11 14 0 28"/>
+          </g>
+          <g class="waves waves--o">
+            <path class="wave" d="M290 210q12 15 0 30"/>
+            <path class="wave" d="M290 210q12 15 0 30"/>
+            <path class="wave" d="M290 210q12 15 0 30"/>
+          </g>
+
+          <rect class="plate" x="272" y="196" width="160" height="9" rx="4.5"/>
+          <rect class="stem" x="378" y="182" width="4" height="14"/>
+          <rect class="stem" x="378" y="205" width="4" height="14"/>
+          <circle class="glow glow--n" cx="380" cy="170" r="19"/>
+          <rect class="mic" x="366" y="158" width="28" height="24" rx="7"/>
+          <circle class="port--n" cx="380" cy="170" r="5.5"/>
+          <circle class="glow glow--o" cx="380" cy="231" r="19"/>
+          <rect class="mic" x="366" y="219" width="28" height="24" rx="7"/>
+          <circle class="port--o" cx="380" cy="231" r="5.5"/>
+
+          <text class="dt dt--n" x="380" y="144" text-anchor="middle">ไมค์บน · ช่องจมูก</text>
+          <text class="dt dt--o" x="380" y="274" text-anchor="middle">ไมค์ล่าง · ช่องปาก</text>
+          <text class="dt" x="442" y="207">แผ่นกั้น</text>
+
+          <rect class="bub" x="128" y="288" width="166" height="38" rx="14"/>
+          <path class="bub" d="M244 289L270 244L262 289"/>
+          <text x="211" y="316" text-anchor="middle"><tspan id="d-word" class="bub-word">ปา</tspan><tspan id="d-tag" class="bub-tag" dx="10">ประตูปิด</tspan></text>
+        </svg>
+        <figcaption>ส้มคือเสียงที่ออกจมูก น้ำเงินคือเสียงที่ออกปาก คลื่นยิ่งเข้ม เสียงฝั่งนั้นยิ่งดัง</figcaption>
+      </figure>
+
+      <div class="lab__panel card" id="d-panel">
+        <div class="say" role="group" aria-label="เลือกเสียงที่จะลองพูด">
+          <span class="say__label">ลองพูด</span>
+          <button type="button" data-word="pa" aria-pressed="true">ปา</button>
+          <button type="button" data-word="ma" aria-pressed="false">มา</button>
+          <button type="button" data-word="leak" aria-pressed="false">ปา แบบลมรั่ว</button>
+        </div>
+        <p class="note" id="d-note">ปา เป็นเสียงปาก ประตูกั้นจมูกปิด เสียงออกทางปากเกือบทั้งหมด ค่าเสียงจมูกจึงต่ำ</p>
+        <div class="readout">
+          <div>
+            <p class="readout__label">เสียงจมูก (nasalance)</p>
+            <p class="readout__num"><span id="d-pct">12</span><small>%</small></p>
+          </div>
+          <p class="readout__state" id="d-state">กำลังพูด · เครื่องคำนวณค่า</p>
+        </div>
+        <div class="split" aria-hidden="true"><span class="split__n" id="d-split-n"></span><span class="split__o" id="d-split-o"></span></div>
+        <p class="legend"><span><i class="sw sw--n"></i>จมูก<b id="d-n">12%</b></span><span><i class="sw sw--o"></i>ปาก<b id="d-o">88%</b></span></p>
+        <div class="levels" aria-hidden="true">
+          <p class="level"><span><i class="sw sw--n"></i>ความดังไมค์จมูก</span><span class="level__bar"><span id="d-lv-n"></span></span></p>
+          <p class="level"><span><i class="sw sw--o"></i>ความดังไมค์ปาก</span><span class="level__bar"><span id="d-lv-o"></span></span></p>
+        </div>
+        <p class="formula">เสียงจมูก ÷ (เสียงจมูก + เสียงปาก) × 100<br><span id="d-formula">0.12 ÷ (0.12 + 0.88) × 100 = 12%</span></p>
+        <p class="fine">ตัวเลขในภาพนี้สมมติขึ้นเพื่ออธิบายหลักการ ไม่ใช่ค่าจากเครื่องจริงหรือค่าของเด็กคนใด</p>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <h3>จากเสียงพูดถึงเกม</h3>
+        <ol class="list">
+          <li>แผ่นกั้นแนบใต้จมูก เหนือริมฝีปากบน แยกเสียงจมูกกับเสียงปากออกจากกัน</li>
+          <li>ไมค์ดิจิทัล INMP441 สองตัว ตัวบนรับเสียงจมูก ตัวล่างรับเสียงปาก ต่อเข้า ESP32 ทางบัส I2S เดียวกัน</li>
+          <li>ESP32 กรองเสียงทั้งสองช่องด้วยย่านความถี่เดียวกัน แล้ววัดความดัง (RMS) เป็นช่วงสั้น ๆ ช่วงละ 20–50 มิลลิวินาที</li>
+          <li>คำนวณเปอร์เซ็นต์เสียงจมูก และตัดสินว่ากำลังมีเสียงพูดอยู่ไหม (speechDetected)</li>
+          <li>ส่งค่าทาง Wi-Fi (WebSocket) ไปที่เว็บเกม</li>
+          <li>เว็บตรวจคุณภาพสัญญาณก่อนใช้ ถ้าค่าค้าง ไมค์ช่องใดหาย เสียงแตก หรือเบาเกิน จะไม่นับ และไม่โทษเด็ก</li>
+        </ol>
+      </div>
+      <div>
+        <h3>สิ่งที่เครื่องไม่รู้</h3>
+        <ul class="list list--no">
+          <li>ไม่รู้ว่าเด็กพูดคำอะไร เพราะไม่มีการถอดเสียงเป็นคำ</li>
+          <li>มองไม่เห็นเพดานโดยตรง ค่านี้บอกทางอ้อมว่าประตูกั้นจมูกปิดดีแค่ไหน</li>
+          <li>ไม่รู้ว่าลิ้นอยู่ตรงไหน เด็กที่กักเสียงที่ลำคออาจได้ค่าเสียงปากดี แต่ยังออกเสียงผิดอยู่</li>
+        </ul>
+        <p class="fine" style="margin-top:12px">รายละเอียดข้อมูลที่ ESP32 ต้องส่ง อยู่ใน <a href="https://github.com/SOGUY144/PakKeng/blob/feat/call-friend/docs/DEVICE_PROTOCOL.md">docs/DEVICE_PROTOCOL.md</a> (ข้อเสนอ ยังไม่ได้ทดสอบกับบอร์ดจริง)</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="sec sec--alt" id="why" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">2</span><h2 id="why-h">ทำไมเด็กเพดานโหว่พูดเสียงขึ้นจมูก</h2></div>
+    <p class="lead">ในปากมีประตูกั้นจมูก (velopharyngeal valve) คือเพดานอ่อนที่ยกขึ้นไปปิดกับผนังคอหอย พูดเสียงปากอย่าง ปา ตา กา ประตูต้องปิด พูดเสียงนาสิก ม น ง ประตูเปิด</p>
+
+    <div class="lab" id="lab-valve">
+      <figure class="lab__fig card">
+        <svg class="valve" viewBox="0 0 560 400" role="img" aria-labelledby="valve-title" data-state="pa">
+          <title id="valve-title">ภาพตัดด้านข้างอย่างง่าย: โพรงจมูก ช่องปาก คอหอย และเพดานอ่อนที่ทำหน้าที่เป็นประตูกั้นจมูก</title>
+          <defs>
+            <marker id="arr-n" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" orient="auto"><path class="mk-n" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="arr-o" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" orient="auto"><path class="mk-o" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+          <rect class="v-tissue" x="16" y="40" width="514" height="344" rx="28"/>
+          <path class="v-air" d="M46 384V96Q46 70 72 70H600V132H206V196H600V280H150V384Z"/>
+          <rect class="v-bone" x="206" y="140" width="324" height="48" rx="12"/>
+          <path class="v-tongue" d="M150 280C196 256 290 246 360 248C430 250 490 262 530 272V280Z"/>
+          <path class="flow flow--n" d="M60 392V108Q60 92 76 92H548" marker-end="url(#arr-n)"/>
+          <path class="flow flow--o" d="M60 392V248Q60 232 76 232H548" marker-end="url(#arr-o)"/>
+          <path class="velum" d="M0 -15L-150 -9Q-166 -9 -166 0Q-166 9 -150 9L0 15Z"/>
+          <circle class="port-ring" cx="62" cy="140" r="32"/>
+          <path class="ldr" d="M36 34V116"/>
+          <path class="ldr" d="M232 204L210 178"/>
+          <text class="vt" x="16" y="26">ประตูกั้นจมูก</text>
+          <text class="vt" x="330" y="124">โพรงจมูก</text>
+          <text class="vt" x="400" y="220">ช่องปาก</text>
+          <text class="vt vt--bone" x="434" y="172">เพดานแข็ง</text>
+          <text class="vt" x="226" y="222">เพดานอ่อน</text>
+          <text class="vt" x="72" y="352">คอหอย</text>
+        </svg>
+        <figcaption id="v-cap">ปา: เพดานอ่อนยกขึ้นไปแนบผนังคอหอย ประตูปิดสนิท ลมทั้งหมดออกทางปาก</figcaption>
+      </figure>
+      <div class="lab__panel card">
+        <div class="say" role="group" aria-label="เลือกเสียงที่จะดู">
+          <button type="button" data-valve="pa" aria-pressed="true">ปา · ประตูปิด</button>
+          <button type="button" data-valve="ma" aria-pressed="false">มา · ประตูเปิด</button>
+          <button type="button" data-valve="leak" aria-pressed="false">ปา · ปิดไม่สนิท</button>
+        </div>
+        <p class="flows-key"><span><i class="sw sw--o"></i>ลมและเสียงที่ออกทางปาก</span><span><i class="sw sw--n"></i>ลมและเสียงที่ออกทางจมูก</span></p>
+        <p class="note">บางคนแม้ผ่าตัดซ่อมเพดานแล้ว ประตูก็ยังปิดไม่สนิท เรียกว่า VPI (velopharyngeal insufficiency) อาจเพราะเพดานสั้น มีรูเหลือ หรือขยับได้ไม่พอ</p>
+        <p class="fine">ภาพวาดอย่างง่าย สัดส่วนไม่ตรงกับอวัยวะจริง</p>
+      </div>
+    </div>
+
+    <h3>เมื่อประตูปิดไม่สนิท เด็กจะมีปัญหาแบบนี้</h3>
+    <ol class="list prose">
+      <li><b>เสียงขึ้นจมูก</b> (hypernasality) เสียงก้องในจมูกมากเกินไปตอนพูดเสียงปาก</li>
+      <li><b>ลมรั่วออกจมูก</b> พยัญชนะ ป ต ก ส ไม่มีแรง เพราะเก็บแรงดันในปากไม่ได้</li>
+      <li><b>ออกเสียงชดเชย</b> เด็กไปใช้ลำคอแทน เช่น กักเสียงที่คอแทน ป ต ก กลายเป็นนิสัยที่เรียนรู้ไปแล้ว ผ่าตัดเสร็จก็ยังติดอยู่</li>
+      <li><b>ปัญหาร่วม</b> หูมีน้ำขัง ได้ยินลดลง และภาษาพัฒนาช้า</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="sec" id="care" aria-labelledby="care-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">3</span><h2 id="care-h">การรักษาจริงทำยังไง</h2></div>
+    <p class="lead">เด็กอยู่ในการดูแลของทีมเพดานโหว่หลายวิชาชีพ ผ่าตัดเป็นช่วง ๆ ตามวัย และฝึกพูดต่อเนื่องหลังซ่อมเพดาน</p>
+    <ul class="team" aria-label="ทีมเพดานโหว่">
+      <li>ศัลยแพทย์</li><li>นักแก้ไขการพูด</li><li>แพทย์หู คอ จมูก</li><li>ทันตแพทย์จัดฟัน</li><li>กุมารแพทย์</li><li>พยาบาล</li><li>นักสังคมสงเคราะห์</li>
+    </ul>
+
+    <ol class="timeline">
+      <li><span class="when">แรกเกิด</span><span class="what">ช่วยเรื่องการกินนม ใช้ขวดนมพิเศษ</span></li>
+      <li><span class="when">ราว 3–6 เดือน</span><span class="what">ผ่าตัดเย็บริมฝีปาก</span></li>
+      <li><span class="when">ราว 9–18 เดือน</span><span class="what">ผ่าตัดซ่อมเพดาน ให้ทันก่อนเด็กเริ่มพูดเยอะ</span></li>
+      <li><span class="when">วัยเล็กต่อเนื่อง</span><span class="what">ตรวจหู ใส่ท่อระบายหูถ้าจำเป็น กระตุ้นภาษา สอนพ่อแม่</span></li>
+      <li class="is-pk"><span class="when">ราว 3–5 ปี</span><span class="what">นักแก้ไขการพูดประเมินและเริ่มฝึกพูด ถ้ายังเสียงขึ้นจมูก จะส่องกล้องดูประตูกั้นจมูก เอกซเรย์ขณะพูด หรือวัดด้วย Nasometer<br><span class="pk-chip">ช่วงที่ปากเก่งเข้าไปช่วย</span></span></li>
+      <li class="is-pk"><span class="when">ถ้าปัญหาอยู่ที่โครงสร้าง</span><span class="what">ผ่าตัดแก้ไขการพูด เช่น pharyngeal flap หรือซ่อมเพดานใหม่ หรือใส่เพดานเทียมช่วยพูด แล้วฝึกพูดต่อ</span></li>
+      <li><span class="when">ราว 7–11 ปี</span><span class="what">ปลูกกระดูกเหงือก จัดฟัน (บางคนยังฝึกพูดอยู่ช่วงนี้)</span></li>
+      <li><span class="when">วัยรุ่น</span><span class="what">ผ่าตัดขากรรไกรหรือจมูกถ้าจำเป็น</span></li>
+    </ol>
+    <p class="fine" style="margin-top:10px">ช่วงอายุเป็นค่าประมาณจากความรู้ทั่วไป แต่ละศูนย์ทำต่างกัน แถบม่วงคือช่วงหลังซ่อมเพดานที่ยังฝึกพูดอยู่ ซึ่งเป็นช่วงที่ปากเก่งใช้ได้</p>
+
+    <div class="callout prose">
+      <h3>ในไทย: โมเดลฝึกพูดในชุมชนของมหาวิทยาลัยขอนแก่น</h3>
+      <p>นักแก้ไขการพูดในไทยมีน้อย ทีมของ Prathanee จึงจัดค่ายฝึกพูดเข้มข้น 4 วัน แล้วนัดติดตามแบบวันเดียวอีก 5 ครั้ง และฝึก “ผู้ช่วยฝึกพูด” ในพื้นที่ให้ฝึกเด็กต่อหลังค่าย</p>
+      <p>งานวิจัยรายงานว่าได้ผล แต่ส่วนใหญ่เป็นงานขนาดเล็ก ภายหลังนำไปใช้ที่ลาวด้วย แนวคิด “ฝึกบ่อย มีคนช่วยฝึกใกล้บ้าน” นี้คือที่ที่ปากเก่งอยากเข้าไปเสริม</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="sec sec--alt" id="therapy" aria-labelledby="therapy-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">4</span><h2 id="therapy-h">การฝึกพูดแก้อะไรได้ อะไรแก้ไม่ได้</h2></div>
+    <div class="vs">
+      <article class="card">
+        <h3>ปัญหาที่โครงสร้าง</h3>
+        <p>เพดานสั้น มีรู หรือขยับไม่พอ ประตูจึงปิดไม่ได้จริง ๆ</p>
+        <p class="vs__fix">ฝึกเท่าไรก็ไม่หาย ต้องผ่าตัด หรือใส่เพดานเทียมช่วยพูด</p>
+      </article>
+      <article class="card">
+        <h3>ปัญหาที่เรียนรู้ผิด</h3>
+        <p>ออกเสียงชดเชย หรือผิดเฉพาะบางเสียง ทั้งที่ประตูปิดได้</p>
+        <p class="vs__fix">แก้ด้วยการฝึกพูด และเริ่มฝึกได้แม้ประตูยังปิดไม่สนิท</p>
+      </article>
+    </div>
+    <p class="vs__both prose">เด็กหลายคนมีทั้งสองแบบ จึงต้องผ่าตัดควบคู่กับฝึกพูด</p>
+
+    <h3>นักแก้ไขการพูดฝึกไล่ระดับ</h3>
+    <div class="ladder" role="img" aria-label="ลำดับการฝึก 5 ขั้น จากเสียงเดี่ยว พยางค์ คำ ประโยค ถึงพูดคุยจริง เกมปากเก่งอยู่ที่ขั้นคำ">
+      <ol class="ladder__steps" aria-hidden="true">
+        <li style="--h:1">เสียงเดี่ยว</li>
+        <li style="--h:2">พยางค์</li>
+        <li style="--h:3" class="is-pk">คำ</li>
+        <li style="--h:4">ประโยค</li>
+        <li style="--h:5">พูดคุยจริง</li>
+      </ol>
+      <img class="bunny" src="renders/avatar-bunny.webp" alt="" width="176" height="176">
+    </div>
+    <p class="ladder__note"><i class="sw sw--pk"></i>เกมปากเก่งตอนนี้อยู่ที่ขั้นคำ: คำในแผนของครู ชื่อเพื่อน และคำนาสิกอย่าง “มา”</p>
+
+    <h3>วิธีที่นักแก้ไขการพูดใช้จริง</h3>
+    <div class="tech">
+      <article class="card"><h4>สอนตำแหน่งออกเสียงใหม่</h4><p>ไล่จากเสียงเดี่ยว ไปพยางค์ คำ ประโยค จนถึงพูดคุยจริง</p></article>
+      <article class="card"><h4>คู่คำเทียบ</h4><p>ปา–มา ตา–นา ให้เด็กรู้ความต่างระหว่างเสียงปากกับเสียงจมูก</p></article>
+      <article class="card"><h4>ภาพป้อนกลับ (biofeedback)</h4><p>ให้เด็กเห็นเสียงตัวเอง เช่น จอของ Nasometer กล้องส่องดูเพดาน หรือหลอดที่มีลูกลอยบอกลมรั่ว</p></article>
+      <article class="card"><h4>ฝึกบ่อย</h4><p>ให้พ่อแม่ช่วยฝึกต่อที่บ้านระหว่างนัด</p></article>
+    </div>
+    <div class="warnbox prose">
+      <h3>สิ่งที่ไม่ได้ผล</h3>
+      <p>เป่าลูกโป่ง ดูดหลอด หรือบริหารปากโดยไม่พูด เพื่อหวังให้เพดานแข็งแรง ใช้ไม่ได้กับเด็กกลุ่มนี้ การเป่าใช้ได้แค่ช่วยให้เด็กรู้สึกว่าลมออกทางปาก ระหว่างที่ฝึกพูด เกมบอลลูนของปากเก่งจึงใช้เสียงพูดเท่านั้น</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="sec" id="pakkeng" aria-labelledby="pk-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">5</span><h2 id="pk-h">ปากเก่งคืออะไร และช่วยตรงไหน</h2></div>
+    <dl class="idcard card">
+      <div><dt>ชื่อ</dt><dd>ปากเก่ง (PakKeng)</dd></div>
+      <div><dt>ประเภท</dt><dd>เครื่องวัด nasalance ราคาถูก ใช้ไมค์คู่กับแผ่นกั้น ให้ภาพป้อนกลับผ่านเกมเพื่อฝึกพูดที่บ้าน (ภาษาวิชาการ: home-based nasalance biofeedback)</dd></div>
+      <div><dt>ใช้เมื่อไร</dt><dd>หลังผ่าตัดซ่อมเพดานแล้ว ระหว่างที่ฝึกพูดอยู่ โดยนักแก้ไขการพูดเป็นคนเลือกคำและตั้งเกณฑ์ให้</dd></div>
+      <div><dt>ไม่ใช่</dt><dd>การรักษา เครื่องวินิจฉัย หรือตัวแทนนักแก้ไขการพูด</dd></div>
+    </dl>
+
+    <h3>วงจรการฝึก</h3>
+    <ol class="loop">
+      <li><b>นักแก้ไขการพูดตั้งแผน</b><span>เลือกคำ ตั้งเกณฑ์ เวลาฝึกต่อวัน และเปิดเกมที่เหมาะ</span></li>
+      <li><b>เด็กฝึกที่บ้าน</b><span>เล่นเกมกับผู้ปกครอง เห็นเสียงตัวเองทันที</span></li>
+      <li><b>เกมบันทึกผล</b><span>ใช้รหัสเด็ก ไม่เก็บเสียงดิบ ไม่นับช่วงที่สัญญาณเสีย</span></li>
+      <li><b>แดชบอร์ดแสดงแนวโน้ม</b><span>ครูดูแล้วปรับแผนรอบถัดไป</span></li>
+    </ol>
+    <p class="loop__back">แล้ววนกลับไปข้อ 1 ทุกครั้งที่ครูทบทวนแผน</p>
+
+    <h3>สี่เกม</h3>
+    <div class="games">
+      <article class="game card">
+        <div class="game__pic"><img src="renders/thumb-frog.webp" alt="กบกับเพื่อนในบึง" width="360" height="252" loading="lazy"></div>
+        <div class="game__body"><h4>เรียกเพื่อน</h4><p>ฟังคำ แล้วเรียกชื่อเพื่อน ปู หมา ปลา นก เต่า เพื่อนหันมาเมื่อเกมได้ยินเสียงที่สัญญาณใช้ได้ ไม่ตัดสินจากค่าเสียงจมูก</p><span class="cue">ตอบสนองต่อ: ได้ยินเสียงพูด</span></div>
+      </article>
+      <article class="game card">
+        <div class="game__pic"><img src="renders/thumb-runner.webp" alt="กระต่ายวิ่งบนทางในสวน" width="360" height="252" loading="lazy"></div>
+        <div class="game__body"><h4>เลือกทางวิ่ง</h4><p>เด็กเลือกทางเอง พูด 1 คำ กระต่ายวิ่ง 1 ช่วง จนถึงปลายทาง เกณฑ์เสียงปากบันทึกให้ผู้ดูแลดูเท่านั้น</p><span class="cue">ตอบสนองต่อ: ได้ยินเสียงพูด</span></div>
+      </article>
+      <article class="game card">
+        <div class="game__pic"><img src="renders/thumb-balloon.webp" alt="บอลลูนมีกระต่ายนั่งในตะกร้า" width="360" height="252" loading="lazy"></div>
+        <div class="game__body"><h4>พาบอลลูนไปส่ง</h4><p>พูดต่อเนื่องให้ครบเวลาในแผน หยุดหายใจได้ บอลลูนไม่ตก บอลลูนลอยขึ้นเมื่อค่าเสียงปากถึงเกณฑ์ที่ครูตั้ง (เริ่มต้น 70%) และทุกค่าที่ผ่านเกณฑ์ลอยเร็วเท่ากัน</p><span class="cue"><i class="sw sw--o"></i>ตอบสนองต่อ: เสียงปากถึงเกณฑ์</span></div>
+      </article>
+      <article class="game card">
+        <div class="game__pic">
+          <svg viewBox="0 0 360 252" role="img" aria-label="ประตูซุ้มหินมีลูกปัดรอบตรา">
+            <ellipse cx="180" cy="234" rx="128" ry="12" fill="#cfe9b5"/>
+            <path d="M96 234V112a84 84 0 0 1 168 0v122z" fill="#ddd3e6" stroke="#a99bbd" stroke-width="3"/>
+            <path d="M124 234V124a56 56 0 0 1 56-56v166z" fill="#4fa093" stroke="#2f7c70" stroke-width="2"/>
+            <path d="M236 234V124a56 56 0 0 0-56-56v166z" fill="#4fa093" stroke="#2f7c70" stroke-width="2"/>
+            <path d="M138 140h28M138 176h28M194 140h28M194 176h28" stroke="#2f7c70" stroke-width="2" stroke-linecap="round"/>
+            <rect x="164" y="150" width="32" height="12" rx="5" fill="#f5c542" stroke="#c9971c" stroke-width="2"/>
+            <circle cx="180" cy="48" r="11" fill="#f5c542" stroke="#c9971c" stroke-width="2"/>
+            <g fill="#e8692a">
+              <circle cx="180" cy="30" r="4"/><circle cx="189" cy="32.4" r="4"/><circle cx="195.6" cy="39" r="4"/><circle cx="198" cy="48" r="4"/><circle cx="195.6" cy="57" r="4"/><circle cx="189" cy="63.6" r="4"/>
+              <circle cx="180" cy="66" r="4"/><circle cx="171" cy="63.6" r="4"/><circle cx="164.4" cy="57" r="4"/><circle cx="162" cy="48" r="4"/><circle cx="164.4" cy="39" r="4"/><circle cx="171" cy="32.4" r="4"/>
+            </g>
+          </svg>
+        </div>
+        <div class="game__body"><h4>เปิดประตู</h4><p>พูดคำนาสิก เช่น “มา” ให้ถึงเป้าเสียงจมูกที่ครูตั้ง (เริ่มต้น 40%) ฝึกให้รู้ว่าบางคำต้องมีเสียงจมูก</p><span class="cue"><i class="sw sw--n"></i>ตอบสนองต่อ: เสียงจมูกถึงเป้า</span></div>
+      </article>
+    </div>
+
+    <div class="cols">
+      <div>
+        <h3>ช่วยตรงไหน</h3>
+        <ul class="list">
+          <li><b>ฝึกได้บ่อยขึ้น</b> นัดกับนักแก้ไขการพูดห่าง แต่เด็กฝึกที่บ้านได้ทุกวัน</li>
+          <li><b>เห็นผลทันที</b> เด็กเห็นเองว่าเสียงไปทางปากหรือจมูก ไม่ต้องรอผู้ใหญ่ฟังแล้วบอก</li>
+          <li><b>อยากฝึก</b> การพูดเป็นการกระทำในเกม เช่น เรียกเพื่อนให้หันมา หรือพากระต่ายวิ่ง</li>
+          <li><b>ฝึกแยกเสียงปากกับเสียงจมูก</b> เกมประตูให้ฝึกคำนาสิก เด็กจะได้ไม่กดเสียงจมูกลงในทุกคำ</li>
+          <li><b>ครูเห็นแนวโน้ม</b> ดูได้ในแดชบอร์ด เพื่อใช้ปรับแผนฝึก</li>
+          <li><b>ไม่โทษเด็กเมื่อสัญญาณเสีย</b> ไมค์หลุด เสียงแตก หรือเบาเกิน ไม่นับเป็นความผิดของเด็ก</li>
+        </ul>
+      </div>
+      <div>
+        <h3>สิ่งที่ช่วยไม่ได้</h3>
+        <ul class="list list--no">
+          <li>ถ้าปัญหาอยู่ที่โครงสร้าง ฝึกด้วยเกมก็ไม่หาย ถ้าฝึกแล้วไม่ดีขึ้นต้องกลับไปให้ทีมเพดานโหว่ตรวจ</li>
+          <li>เด็กที่กักเสียงที่ลำคออาจได้ค่าเสียงปากดี แต่ยังออกเสียงผิดอยู่ จึงยังต้องมีนักแก้ไขการพูดคอยฟัง</li>
+          <li>ไม่มีกติกา “ยิ่งเสียงจมูกต่ำยิ่งเก่ง” เพราะคำที่มีเสียงนาสิกต้องมีเสียงจมูกตามปกติ</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="sec sec--alt" id="evidence" aria-labelledby="ev-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">6</span><h2 id="ev-h">มีหลักการบำบัดที่ใช้จริงไหม</h2></div>
+    <p class="lead">มีอยู่จริง แต่ต้องแยกให้ออกว่าอะไรพิสูจน์แล้ว อะไรยังไม่ได้พิสูจน์</p>
+    <div class="table-scroll">
+      <table class="ev">
+        <thead><tr><th scope="col">หลักที่ปากเก่งใช้</th><th scope="col">ใช้จริงในคลินิกไหม</th><th scope="col">หลักฐาน</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">วัด nasalance ด้วยแผ่นกั้นกับไมค์ 2 ตัว</th><td><span class="chip">ใช้แพร่หลาย</span><br>เครื่อง Nasometer</td><td>หลักฐานว่าวินิจฉัยได้แม่นยังจำกัด (INAHTA 2016) วัดคนเดิมซ้ำต่างครั้งยังต่างกันได้ 6–8 จุด (de Boer &amp; Bressmann 2014) และเครื่องราคาถูกแบบโอเพนซอร์สแยกเสียงได้น้อยกว่าเครื่องมาตรฐาน (Wang 2026)</td></tr>
+          <tr><th scope="row">ภาพป้อนกลับ</th><td><span class="chip">ใช้</span><br>ASHA ระบุว่าเหมาะกับปัญหาที่เกิดเฉพาะบางเสียงหรือเกิดจากการเรียนรู้ผิด</td><td>งานส่วนใหญ่เล็ก ระดับหลักฐานยังต่ำ (Neumann &amp; Romonath 2012)</td></tr>
+          <tr><th scope="row">เกมฝึกพูดที่บ้าน</th><td><span class="chip">เริ่มมีใช้</span></td><td>เกมที่ให้ภาพป้อนกลับในเด็ก 5 คน เสียงขึ้นจมูกมีแนวโน้มลดลง แต่ไม่มีกลุ่มเปรียบเทียบ (Cler 2017) และการฝึกบนแท็บเล็ตได้ผลพอ ๆ กับฝึกบนโต๊ะ แต่เป็นเด็กกลุ่มอื่น ไม่ใช่เด็กเพดานโหว่ (Jesus 2019)</td></tr>
+          <tr><th scope="row">ฝึกบ่อย มีคนช่วยฝึกนอกคลินิก</th><td><span class="chip">ใช้ในไทย</span></td><td>โมเดลชุมชนของมหาวิทยาลัยขอนแก่นรายงานว่าได้ผล ส่วนใหญ่เป็นงานขนาดเล็ก</td></tr>
+          <tr><th scope="row">ไม่ตั้งกติกา “ยิ่งเสียงจมูกต่ำยิ่งดี”</th><td><span class="chip">ตรงกับหลักวิชาชีพ</span></td><td>ค่าเสียงจมูกของเด็กไทยที่พูดปกติขึ้นตามจำนวนเสียงนาสิกในบทอ่าน (Prathanee 2003) ดูกราฟด้านล่าง</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="norms card">
+      <figcaption>
+        <p class="norms__title">ค่าเสียงจมูกเฉลี่ยของเด็กไทยที่พูดปกติ</p>
+        <p class="norms__sub">แยกตามชนิดบทอ่าน · Prathanee และคณะ 2003 · เด็ก 188 คน</p>
+      </figcaption>
+      <div role="img" aria-label="บทอ่านไม่มีเสียงนาสิก 14.3 เปอร์เซ็นต์ บทผสม 35.6 เปอร์เซ็นต์ บทที่มีเสียงนาสิกมาก 51.1 เปอร์เซ็นต์">
+        <div class="norms__row" title="บทอ่านไม่มีเสียงนาสิก: 14.3%"><span class="norms__label">บทอ่านไม่มีเสียงนาสิก</span><span class="norms__track"><span class="norms__bar" style="--v:14.3"></span><span class="norms__val" style="--v:14.3">14.3%</span></span></div>
+        <div class="norms__row" title="บทผสม: 35.6%"><span class="norms__label">บทผสม</span><span class="norms__track"><span class="norms__bar" style="--v:35.6"></span><span class="norms__val" style="--v:35.6">35.6%</span></span></div>
+        <div class="norms__row" title="บทที่มีเสียงนาสิกมาก: 51.1%"><span class="norms__label">บทที่มีเสียงนาสิกมาก</span><span class="norms__track"><span class="norms__bar" style="--v:51.1"></span><span class="norms__val" style="--v:51.1">51.1%</span></span></div>
+        <div class="norms__axis" aria-hidden="true"><span></span><span class="norms__ticks"><span style="--x:0">0%</span><span style="--x:25">25%</span><span style="--x:50">50%</span><span style="--x:75">75%</span></span></div>
+      </div>
+      <p class="fine">ค่าปกติขึ้นลงตามคำที่พูด เกมของปากเก่งจึงไม่ให้รางวัลกับค่าเสียงจมูกที่ต่ำที่สุด และเกณฑ์ทุกอันให้นักแก้ไขการพูดตั้งตามคำที่ใช้ฝึก</p>
+    </figure>
+
+    <div class="callout prose">
+      <h3>สิ่งที่ยังไม่ได้พิสูจน์ ต้องทดสอบร่วมกับนักแก้ไขการพูด</h3>
+      <ul class="list">
+        <li>เครื่องของเราวัดได้ตรงแค่ไหน</li>
+        <li>เด็กใช้งานเองได้ไหม</li>
+        <li>เกมทำให้เด็กฝึกมากขึ้นจริงไหม</li>
+        <li>เสียงพูดนอกเกมดีขึ้นจริงไหม</li>
+      </ul>
+      <p>สรุปงานวิจัยฉบับเต็มของโปรเจกต์อยู่ใน <a href="https://github.com/SOGUY144/PakKeng/blob/feat/call-friend/.claude/skills/cleft-speech-game/references/evidence-th.md">evidence-th.md</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="sec" id="next" aria-labelledby="next-h">
+  <div class="wrap">
+    <div class="sec__head"><span class="sec__num" aria-hidden="true">7</span><h2 id="next-h">จะทำอะไรต่อ</h2></div>
+    <p class="lead">ตอนนี้เว็บต้นแบบครบ 4 เกมกับแดชบอร์ด ทำงานกับสัญญาณจำลอง ยังไม่ได้ต่อ ESP32 จริง และยังไม่ได้ทดสอบกับเด็ก</p>
+    <ol class="road">
+      <li class="is-done">
+        <p class="road__state">เสร็จแล้ว</p>
+        <h3>เว็บต้นแบบ</h3>
+        <p>4 เกม แดชบอร์ดนักแก้ไขการพูด สัญญาณจำลอง ฉาก 3D และหน้านี้ อยู่บน GitHub <a href="https://github.com/SOGUY144/PakKeng">SOGUY144/PakKeng</a></p>
+      </li>
+      <li class="is-now">
+        <p class="road__state">ถัดไป · เราอยู่ตรงนี้</p>
+        <h3>ต่อ ESP32 จริง</h3>
+        <p>เฟิร์มแวร์ส่ง <code>nasalPercent</code> <code>speechDetected</code> <code>nasalDb</code> <code>oralDb</code> <code>clip</code> ตาม DEVICE_PROTOCOL.md และหน้าเว็บมีตัวเลือก “สัญญาณจำลอง / อุปกรณ์จริง”</p>
+        <ul class="tags"><li>ฝั่งเว็บเริ่มได้เลย</li><li>เฟิร์มแวร์ต้องมีบอร์ด</li></ul>
+      </li>
+      <li>
+        <p class="road__state">ต่อจากนั้น</p>
+        <h3>ทดสอบบนมือถือและ iPad จริง</h3>
+        <p>ฉาก 3D ลื่นไหม เสียงอ่านภาษาไทยของเครื่อง การแตะ และวัดความหน่วงจากเสียงพูดถึงจอ</p>
+        <ul class="tags"><li>ต้องมีเครื่อง</li></ul>
+      </li>
+      <li>
+        <p class="road__state">ต่อจากนั้น</p>
+        <h3>ทดสอบตัวเครื่องบนโต๊ะ</h3>
+        <p>วัดซ้ำหลายรอบดูว่าค่าแกว่งเท่าไร ตั้งเกณฑ์ไมค์หลุด เสียงเบา เสียงแตกจากค่าจริง และถ้าทำได้ เทียบกับ Nasometer ของโรงพยาบาล</p>
+        <ul class="tags"><li>ต้องมีเครื่อง</li></ul>
+      </li>
+      <li>
+        <p class="road__state">ต่อจากนั้น</p>
+        <h3>ให้นักแก้ไขการพูดทบทวน</h3>
+        <p>ชุดคำ เกณฑ์ ข้อความในจอเด็ก และอัดเสียงตัวอย่างแทนเสียงสังเคราะห์ของเครื่อง</p>
+        <ul class="tags"><li>ต้องมีผู้เชี่ยวชาญ</li></ul>
+      </li>
+      <li>
+        <p class="road__state">ต่อจากนั้น</p>
+        <h3>ลองกับเด็กและผู้ปกครองกลุ่มเล็ก</h3>
+        <p>ภายใต้นักแก้ไขการพูด ดูว่าใช้เองได้ไหม ฝึกได้นานแค่ไหน ถ้าทำเป็นงานวิจัยต้องผ่านคณะกรรมการจริยธรรมก่อน</p>
+        <ul class="tags"><li>ต้องมีผู้เชี่ยวชาญ</li></ul>
+      </li>
+    </ol>
+
+    <div class="callout prose">
+      <h3>งานเว็บที่เพื่อนเริ่มได้เลย ไม่ต้องรอเครื่อง</h3>
+      <ul class="list">
+        <li>ทำตัวเลือกแหล่งสัญญาณในหน้าเว็บ แล้วผูก <code>WebSocketSignalSource</code> พร้อม test ด้วย WebSocket จำลอง</li>
+        <li>merge branch <code>feat/call-friend</code> เข้า <code>master</code> แล้วให้เจ้าของ repo (SOGUY144) ต่อ Vercel กับ GitHub ให้ deploy เองทุก push</li>
+        <li>ลดคำเตือน lint ในฉาก 3D และลบ CSS ฉาก 2D รุ่นเก่าที่ไม่ได้ใช้แล้ว</li>
+      </ul>
+      <p>เริ่มอ่านที่ <a href="https://github.com/SOGUY144/PakKeng/blob/feat/call-friend/HANDOFF.md">HANDOFF.md</a> แล้วดูรายการเต็มใน <a href="https://github.com/SOGUY144/PakKeng/blob/feat/call-friend/TODO.md">TODO.md</a></p>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec--alt" id="sources" aria-labelledby="src-h">
+  <div class="wrap">
+    <h2 id="src-h">แหล่งข้อมูล</h2>
+    <ol class="sources">
+      <li><a href="https://www.asha.org/practice-portal/clinical-topics/cleft-lip-and-palate/">ASHA Practice Portal: Cleft Lip and Palate</a></li>
+      <li><a href="https://cdn.mycrowdwisdom.com/asha/document/103269-Handout-1776970651893.pdf">ASHA SIG 5 handout</a> (การบริหารปากโดยไม่พูดไม่ได้ผล, ปัญหาจากโครงสร้างกับที่เรียนรู้ผิด)</li>
+      <li><a href="https://pubs.asha.org/doi/10.1044/2020_AJSLP-20-00087">AJSLP 2020</a> บทความเรื่องการบริหารปากโดยไม่พูด</li>
+      <li><a href="https://kkucleft.kku.ac.th/wp-content/uploads/2021/07/2011-S33-39-Cost-Effectiveness-of-Speech-Camps-for-Children-with.pdf">มหาวิทยาลัยขอนแก่น: ความคุ้มค่าของค่ายฝึกพูด</a></li>
+      <li><a href="https://repository.li.mahidol.ac.th/entities/publication/1f3705fc-234a-4b2d-92e9-d0f126d0d514/full">Speech camp for children with cleft lip and/or palate in Thailand</a></li>
+      <li><a href="https://www.uni-erfurt.de/fileadmin/fakultaet/erziehungswissenschaftliche/Sonder-_und_Sozialpaedagogik/PDFs___Bilddateien/LoPhoVoc_Neumann__Romonath_2012_Effectiveness_of_nasopharyngoscopic_biofeedback.pdf">Neumann &amp; Romonath 2012</a> ภาพป้อนกลับจากกล้องส่อง</li>
+      <li><a href="https://www.inahta.org/upload/2016/16052_Nasometer.pdf">INAHTA 2016: Nasometer</a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/28655049/">Cler et al. 2017</a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/31644381/">Jesus et al. 2019</a></li>
+      <li><a href="https://pubmed.ncbi.nlm.nih.gov/15328774/">Prathanee et al. 2003</a></li>
+      <li><a href="https://doi.org/10.1597/12-202">de Boer &amp; Bressmann 2014</a></li>
+      <li><a href="https://doi.org/10.3390/s26092739">Wang et al. 2026</a></li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><strong>เครื่องมือฝึกเสริมที่บ้าน ภายใต้คำแนะนำของนักแก้ไขการพูด</strong></p>
+    <p>ต้นแบบนี้ยังไม่ได้ตรวจสอบเทียบกับ Nasometer ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย</p>
+    <p class="fine">หน้านี้สรุปจากเอกสารที่ค้นได้ถึง 5 พ.ย. 2569 ไม่ใช่คำแนะนำทางการแพทย์ เรื่องการรักษาของเด็กแต่ละคนให้ปรึกษาทีมเพดานโหว่</p>
+    <p class="foot__links"><a id="back-app" href="./" hidden>กลับไปหน้าเว็บต้นแบบ</a><a href="https://github.com/SOGUY144/PakKeng">โค้ดบน GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var KEY = "pakkeng-how-motion";
+  var reduce = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var saved = null;
+  try { saved = window.localStorage.getItem(KEY); } catch (e) { saved = null; }
+  var motion = saved === "on" ? true : saved === "off" ? false : !(reduce && reduce.matches);
+  var ORDER = ["pa", "ma", "leak"];
+  function $(id) { return document.getElementById(id); }
+  function next(s) { return ORDER[(ORDER.indexOf(s) + 1) % ORDER.length]; }
+  function press(list, attr, value) {
+    for (var i = 0; i < list.length; i++) list[i].setAttribute("aria-pressed", String(list[i].getAttribute(attr) === value));
+  }
+
+  /* ---------- 1: เครื่องวัด (ค่าสมมติ) ---------- */
+  var WORDS = {
+    pa: { word: "ปา", tag: "ประตูปิด", f: 0.12, note: "ปา เป็นเสียงปาก ประตูกั้นจมูกปิด เสียงออกทางปากเกือบทั้งหมด ค่าเสียงจมูกจึงต่ำ" },
+    ma: { word: "มา", tag: "ประตูเปิด", f: 0.55, note: "มา ขึ้นต้นด้วย ม ซึ่งเป็นเสียงนาสิก ประตูเปิด เสียงออกทางจมูกด้วย ค่าเสียงจมูกสูงขึ้นเป็นเรื่องปกติ" },
+    leak: { word: "ปา", tag: "ลมรั่ว", f: 0.38, note: "ปา ควรออกทางปาก แต่ถ้าประตูปิดไม่สนิท ลมจะรั่วออกจมูก ค่าเสียงจมูกจึงสูงกว่าที่ควรเป็น" }
+  };
+  var lab = $("lab-device");
+  var dsvg = lab.querySelector("svg");
+  var panel = $("d-panel");
+  var wordBtns = lab.querySelectorAll("[data-word]");
+  var word = "pa", picked = false, raf = 0, t0 = 0, lastT = 0, lastText = 0, lastCycle = -1, sn = 0.12, so = 0.88, devVisible = true;
+
+  function showWord(w) {
+    word = w;
+    press(wordBtns, "data-word", w);
+    $("d-note").textContent = WORDS[w].note;
+    $("d-word").textContent = WORDS[w].word;
+    $("d-tag").textContent = WORDS[w].tag;
+  }
+  function draw(an, ao, speaking, text) {
+    var ln = Math.min(1, an * 1.7), lo = Math.min(1, ao * 1.25);
+    dsvg.style.setProperty("--n", (0.08 + 0.92 * ln).toFixed(3));
+    dsvg.style.setProperty("--o", (0.08 + 0.92 * lo).toFixed(3));
+    $("d-lv-n").style.transform = "scaleX(" + ln.toFixed(3) + ")";
+    $("d-lv-o").style.transform = "scaleX(" + lo.toFixed(3) + ")";
+    if (!text) return;
+    panel.classList.toggle("is-silent", !speaking);
+    if (speaking) {
+      var rn = Math.round(an * 100) / 100, ro = Math.round(ao * 100) / 100;
+      var p = Math.round(100 * rn / (rn + ro));
+      $("d-pct").textContent = String(p);
+      $("d-n").textContent = p + "%";
+      $("d-o").textContent = (100 - p) + "%";
+      $("d-split-n").style.flexGrow = String(p);
+      $("d-split-o").style.flexGrow = String(100 - p);
+      $("d-formula").textContent = rn.toFixed(2) + " ÷ (" + rn.toFixed(2) + " + " + ro.toFixed(2) + ") × 100 = " + p + "%";
+      $("d-state").textContent = "กำลังพูด · เครื่องคำนวณค่า";
+    } else {
+      $("d-pct").textContent = "–";
+      $("d-n").textContent = "–";
+      $("d-o").textContent = "–";
+      $("d-formula").textContent = "ไม่มีเสียงพูด จึงไม่คำนวณ";
+      $("d-state").textContent = "เงียบ · ไม่แสดงเป็น 0%";
+    }
+  }
+  function drawStill() {
+    var f = WORDS[word].f;
+    sn = f; so = 1 - f;
+    draw(sn, so, true, true);
+  }
+  function frame(now) {
+    raf = 0;
+    if (!motion || !devVisible || document.hidden) return;
+    if (!t0) { t0 = now; lastT = now; lastCycle = -1; }
+    var T = 1700, V = 950;
+    var el = now - t0, k = Math.floor(el / T), t = el - k * T;
+    if (!picked && k !== lastCycle) {
+      if (lastCycle >= 0 && k % 2 === 0) showWord(next(word));
+      lastCycle = k;
+    }
+    var env = t < V ? Math.pow(Math.sin(Math.PI * t / V), 0.6) : 0;
+    var wob = 0.9 + 0.1 * Math.sin(now / 53) * Math.cos(now / 131);
+    var f = WORDS[word].f * (0.95 + 0.05 * Math.sin(now / 97));
+    var an = env * f * wob + 0.01 + 0.012 * Math.random();
+    var ao = env * (1 - f) * wob + 0.01 + 0.012 * Math.random();
+    var a = 1 - Math.exp(-Math.min(100, now - lastT) / 60);
+    lastT = now;
+    sn += (an - sn) * a;
+    so += (ao - so) * a;
+    var text = now - lastText > 110;
+    if (text) lastText = now;
+    draw(sn, so, sn + so > 0.22, text);
+    raf = requestAnimationFrame(frame);
+  }
+  function runDevice() {
+    if (motion && devVisible && !document.hidden && !raf) { t0 = 0; raf = requestAnimationFrame(frame); }
+  }
+  for (var i = 0; i < wordBtns.length; i++) {
+    wordBtns[i].addEventListener("click", function (e) {
+      picked = true;
+      showWord(e.currentTarget.getAttribute("data-word"));
+      if (!motion) drawStill();
+    });
+  }
+
+  /* ---------- 2: ประตูกั้นจมูก ---------- */
+  var VALVE = {
+    pa: "ปา: เพดานอ่อนยกขึ้นไปแนบผนังคอหอย ประตูปิดสนิท ลมทั้งหมดออกทางปาก",
+    ma: "มา: เพดานอ่อนลดลง ประตูเปิด เสียง ม ออกทางจมูก แบบนี้ถูกต้องตามปกติ",
+    leak: "ปา แต่ประตูปิดไม่สนิท: เพดานอ่อนยกขึ้นแต่ไม่ถึงผนังคอหอย ลมส่วนหนึ่งรั่วออกจมูก ทำให้เสียงขึ้นจมูกและพยัญชนะไม่มีแรง"
+  };
+  var vlab = $("lab-valve");
+  var vsvg = vlab.querySelector("svg");
+  var vBtns = vlab.querySelectorAll("[data-valve]");
+  var vState = "pa", vPicked = false, vTimer = 0, valveVisible = true;
+  function showValve(s) {
+    vState = s;
+    vsvg.setAttribute("data-state", s);
+    $("v-cap").textContent = VALVE[s];
+    press(vBtns, "data-valve", s);
+  }
+  for (var j = 0; j < vBtns.length; j++) {
+    vBtns[j].addEventListener("click", function (e) {
+      vPicked = true;
+      showValve(e.currentTarget.getAttribute("data-valve"));
+    });
+  }
+  function valveTick() {
+    if (motion && !vPicked && valveVisible && !document.hidden) showValve(next(vState));
+  }
+
+  /* ---------- เล่น / หยุดภาพเคลื่อนไหว ---------- */
+  var btn = $("motion");
+  function applyMotion() {
+    root.setAttribute("data-motion", motion ? "on" : "off");
+    btn.querySelector(".motion__label").textContent = motion ? "หยุดภาพเคลื่อนไหว" : "เล่นภาพเคลื่อนไหว";
+    $("motion-note").hidden = !(reduce && reduce.matches && !motion);
+    if (motion) {
+      runDevice();
+      if (!vTimer) vTimer = window.setInterval(valveTick, 4200);
+    } else {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      drawStill();
+      if (vTimer) { window.clearInterval(vTimer); vTimer = 0; }
+    }
+  }
+  function setMotion(on) {
+    motion = on;
+    try { window.localStorage.setItem(KEY, motion ? "on" : "off"); } catch (e) { /* เก็บไม่ได้ก็ไม่เป็นไร */ }
+    applyMotion();
+  }
+  btn.addEventListener("click", function () { setMotion(!motion); });
+  $("motion-on").addEventListener("click", function () { setMotion(true); btn.focus(); });
+
+  if ("IntersectionObserver" in window) {
+    var seen = new IntersectionObserver(function (entries) {
+      for (var k = 0; k < entries.length; k++) {
+        if (entries[k].target === lab) { devVisible = entries[k].isIntersecting; if (devVisible) runDevice(); }
+        if (entries[k].target === vlab) valveVisible = entries[k].isIntersecting;
+      }
+    });
+    seen.observe(lab);
+    seen.observe(vlab);
+  }
+  document.addEventListener("visibilitychange", runDevice);
+
+  var back = $("back-app");
+  if (back && /how-it-works\.html$/.test(window.location.pathname)) back.hidden = false;
+
+  showWord("pa");
+  drawStill();
+  applyMotion();
+})();
+</script>
+</body>
+</html>

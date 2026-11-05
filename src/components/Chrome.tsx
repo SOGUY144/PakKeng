@@ -8,6 +8,14 @@ export function Disclaimer({ compact = false }: { compact?: boolean }) {
         <strong>{POSITIONING}</strong>
       </p>
       <p>{VALIDATION_NOTE}</p>
+      {compact ? null : (
+        <p>
+          {/* หน้าอธิบายแบบไฟล์เดียวใน public/ สำหรับผู้ใหญ่ (มีภาพเคลื่อนไหว) */}
+          <a className="disclaimer__link" href="how-it-works.html">
+            หลักการทำงานของเครื่องและที่มาของเกม
+          </a>
+        </p>
+      )}
     </footer>
   );
 }

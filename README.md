@@ -15,6 +15,8 @@ npm run dev
 เปิด
 - ฝั่งเด็ก: http://localhost:5173/#/home
 - แดชบอร์ดนักแก้ไขการพูด: http://localhost:5173/#/dashboard
+- หน้าอธิบายหลักการ (มีภาพเคลื่อนไหว สำหรับผู้ใหญ่และคนที่มาร่วมทำงาน): http://localhost:5173/how-it-works.html
+  ไฟล์เดียว `public/how-it-works.html` ไม่ผ่าน React · ลิงก์อยู่ท้ายหน้า Home และแดชบอร์ด
 
 ## ตรวจงาน
 ```bash

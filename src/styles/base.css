@@ -457,3 +457,9 @@ svg {
   color: var(--ink-2);
   font-weight: 600;
 }
+
+.disclaimer__link {
+  color: var(--ink-2);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}

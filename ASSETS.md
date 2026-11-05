@@ -31,13 +31,17 @@
 ถ้าแก้โมเดลแล้วต้องการภาพใหม่: `npm run dev` → เปิด `http://localhost:5173/?studio` → รอจนขึ้น `done: 18 images`
 (เฉพาะเพื่อน: `/?studio&only=friend`)
 
+## หน้าอธิบายหลักการ — `public/how-it-works.html`
+ภาพทั้งหมดในหน้านี้วาดเองเป็น SVG/CSS ในไฟล์ (หน้าเด็กกับแผ่นกั้นและไมค์, ภาพตัดประตูกั้นจมูก, ประตูซุ้มหิน, กราฟค่าปกติ) และใช้ภาพเรนเดอร์เดิม `avatar-bunny` `thumb-frog` `thumb-runner` `thumb-balloon`
+ไม่มี asset หรือสคริปต์จากภายนอก
+
 ## ไลบรารีและฟอนต์ (license)
 | รายการ | license | หมายเหตุ |
 |---|---|---|
 | three 0.187 | MIT (© three.js authors) | เรนเดอร์ 3D |
 | @react-three/fiber 9.8 | MIT (© Poimandres) | ใช้ three ผ่าน React |
 | @types/three 0.187 | MIT | dev only |
-| @fontsource/noto-sans-thai | SIL OFL 1.1 | มีอยู่เดิม |
+| @fontsource/noto-sans-thai | SIL OFL 1.1 | มีอยู่เดิม · สำเนา woff2 6 ไฟล์ (ไทย/ละติน น้ำหนัก 400/600/700) + `OFL.txt` อยู่ใน `public/how-it-works/fonts/` ให้หน้าอธิบายหลักการใช้โดยไม่โหลดจากภายนอก |
 | React, Vite, TypeScript, vitest, oxlint | MIT / Apache-2.0 | มีอยู่เดิม |
 
 ไม่ได้ใช้ `@react-three/drei` (เหตุผลใน `DECISIONS.md`)
