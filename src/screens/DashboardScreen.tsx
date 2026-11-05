@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { BarChart, type ChartBar } from "../components/BarChart";
 import { Disclaimer, ViewSwitch } from "../components/Chrome";
 import { GAME_NAME } from "../data/copy";
-import { Icon } from "../components/Icon";
+import { Icon, type IconName } from "../components/Icon";
 import { showToast } from "../lib/toast";
 import { childSessions, REVIEW_RULES, reviewStatus, weeklyBuckets, type ReviewStatus, type RuleState, type WeekBucket } from "../data/analytics";
 import { CALL_WORDS, callGroupNasal, RESONANCE_LABEL } from "../data/callWords";
@@ -18,10 +18,6 @@ const STATE_BADGE: Record<RuleState | "review", { cls: string; text: string }> =
   insufficient: { cls: "", text: "ข้อมูลยังไม่พอ" },
   clear: { cls: "badge--ok", text: "ไม่มีแจ้งเตือน" },
 };
-
-function overallBadge(r: ReviewStatus) {
-  return r.overall === "review" ? STATE_BADGE.review : r.overall === "insufficient" ? STATE_BADGE.insufficient : STATE_BADGE.clear;
-}
 
 function weekBars(weeks: WeekBucket[], pick: (w: WeekBucket) => number | null, kind: string): ChartBar[] {
   return weeks.map((w, i) => {
@@ -422,9 +418,27 @@ function PlanForm({ child }: { child: Child }) {
   );
 }
 
+type Tab = "overview" | "history" | "plan" | "data";
+const TABS: { id: Tab; label: string; icon: IconName }[] = [
+  { id: "overview", label: "ภาพรวม", icon: "chart" },
+  { id: "history", label: "ประวัติ", icon: "clock" },
+  { id: "plan", label: "แผนการฝึก", icon: "target" },
+  { id: "data", label: "ข้อมูลเดโม", icon: "save" },
+];
+
+type ChartKind = "oral" | "nasal";
+
+/** Status dot + short label for a child: one place for what used to be a dropdown, a sidebar and a banner. */
+function statusOf(r: ReviewStatus): { cls: string; text: string } {
+  return r.overall === "review" ? { cls: "is-review", text: "ควรทบทวน" } : r.overall === "insufficient" ? { cls: "is-insufficient", text: "ข้อมูลยังไม่พอ" } : { cls: "is-clear", text: "ไม่มีแจ้งเตือน" };
+}
+
 export function DashboardScreen() {
   const db = useDB();
   const [selectedId, setSelectedId] = useState(db.activeChildId);
+  const [tab, setTab] = useState<Tab>("overview");
+  const [chart, setChart] = useState<ChartKind>("oral");
+  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ overview: null, history: null, plan: null, data: null });
   const child = findChild(db, selectedId);
   const now = new Date();
 
@@ -433,7 +447,8 @@ export function DashboardScreen() {
     return { child: c, weeks, review: reviewStatus(weeks, c.plan) };
   });
   const sel = all.find((x) => x.child.id === child.id) ?? all[0];
-  const flagged = all.filter((x) => x.review.overall === "review");
+  const status = statusOf(sel.review);
+  const flagRule = sel.review.overall === "review" ? sel.review.rules.find((r) => r.state === "flag") : undefined;
   const wk = sel.weeks[sel.weeks.length - 1];
   const prev = sel.weeks[sel.weeks.length - 2];
   const plan = child.plan;
@@ -448,192 +463,227 @@ export function DashboardScreen() {
     navigate("home");
   };
 
+  /** Tabs: arrow keys / Home / End move and select (roving tabindex), as a tablist should. */
+  const onTabKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const i = TABS.findIndex((t) => t.id === tab);
+    const to = e.key === "ArrowRight" ? (i + 1) % TABS.length : e.key === "ArrowLeft" ? (i - 1 + TABS.length) % TABS.length : e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : -1;
+    if (to < 0) return;
+    e.preventDefault();
+    setTab(TABS[to].id);
+    tabRefs.current[TABS[to].id]?.focus();
+  };
+
+  const chartOral = chart === "oral";
+
   return (
     <div className="dash">
-      <header className="dash-head">
-        <div>
-          <p className="dash-crumb">{GAME_NAME} · สำหรับนักแก้ไขการพูด</p>
-          <h1 className="dash-title">แดชบอร์ดติดตามการฝึกที่บ้าน</h1>
+      <aside className="dash-side" aria-labelledby="kids-title">
+        <div className="dash-brand">
+          <span className="dash-brand__name">{GAME_NAME}</span>
+          <span className="dash-brand__role">สำหรับนักแก้ไขการพูด</span>
         </div>
-        <div className="dash-head__right">
-          <ViewSwitch current="teacher" />
-          <div className="field dash-pick">
-            <label htmlFor="pick-child" className="field__label">
-              เลือกเด็กดูข้อมูล
-            </label>
-            <select id="pick-child" className="select" value={child.id} onChange={(e) => setSelectedId(e.target.value)}>
-              {all.map((x) => (
-                <option key={x.child.id} value={x.child.id}>
-                  {x.child.id} · {overallBadge(x.review).text}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </header>
+        <ViewSwitch current="teacher" />
+        <h2 id="kids-title" className="dash-side__title">
+          เด็กที่ดูแล
+        </h2>
+        <ul className="kids">
+          {all.map((x) => {
+            const s = statusOf(x.review);
+            const last = x.weeks[x.weeks.length - 1];
+            return (
+              <li key={x.child.id}>
+                <button type="button" className={`kid${x.child.id === child.id ? " is-selected" : ""}`} aria-pressed={x.child.id === child.id} onClick={() => setSelectedId(x.child.id)}>
+                  <span className={`kid__dot ${s.cls}`} aria-hidden="true" />
+                  <span className="kid__code">{x.child.id}</span>
+                  <span className={`kid__status ${s.cls}`}>{s.text}</span>
+                  <span className="kid__meta">ฝึก {last.practiceDays}/7 วัน</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="dash-privacy">
+          <Icon name="lock" size={16} /> ใช้รหัสเด็กแทนชื่อจริง ไม่เก็บเสียงดิบ ข้อมูลเดโมอยู่ในเบราว์เซอร์นี้เท่านั้น
+        </p>
+      </aside>
 
-      <p className="dash-note">
-        <span className="badge badge--sample">ข้อมูลตัวอย่าง</span>
-        <span>ตัวเลขในหน้านี้เป็นข้อมูลตัวอย่างรวมกับรอบที่เล่นในเดโม · ต้นแบบนี้ยังไม่ได้ตรวจสอบเทียบกับ Nasometer ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย</span>
-      </p>
-
-      {flagged.length > 0 ? (
-        <section className="dash-alert" aria-labelledby="alert-title">
-          <span className="dash-alert__icon">
-            <Icon name="alert" size={20} />
-          </span>
-          <div className="dash-alert__body">
-            <h2 id="alert-title" className="dash-alert__title">
-              ควรทบทวนแผนการฝึก: {flagged.map((f) => f.child.id).join(", ")}
-            </h2>
-            {flagged.map((f) => {
-              const rule = f.review.rules.find((r) => r.state === "flag");
-              return (
-                <p key={f.child.id}>
-                  {f.child.id} · {rule?.title}: {rule?.detail} (กฎเดโม: ดูข้อมูล {rule?.used.length} สัปดาห์ล่าสุด)
-                </p>
-              );
-            })}
-            <p className="dash-alert__fine">การแจ้งเตือนนี้มาจากกฎตัวอย่างของเดโม ใช้ช่วยเลือกว่าควรดูข้อมูลของใครก่อน ไม่ใช่การวินิจฉัย</p>
+      <main className="dash-main">
+        <header className="dash-child">
+          <div className="dash-child__who">
+            <p className="dash-crumb">แดชบอร์ดติดตามการฝึกที่บ้าน</p>
+            <h1 className="dash-title">
+              {child.id} <span className={`dash-status ${status.cls}`}>{status.text}</span>
+            </h1>
+            <p className="dash-note">
+              <span className="badge badge--sample">ข้อมูลตัวอย่าง</span> ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
+            </p>
           </div>
-          {flagged[0].child.id !== child.id ? (
-            <button type="button" className="btn btn--secondary btn--sm" onClick={() => setSelectedId(flagged[0].child.id)}>
-              ดูข้อมูล {flagged[0].child.id}
+          <div className="dash-child__actions">
+            <button type="button" className="btn btn--secondary" onClick={openKidView}>
+              <Icon name="external" size={18} /> เปิดหน้าเด็ก
             </button>
-          ) : null}
-        </section>
-      ) : null}
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => {
+                setTab("plan");
+                tabRefs.current.plan?.focus();
+              }}
+            >
+              <Icon name="target" size={18} /> แก้แผน
+            </button>
+          </div>
+        </header>
 
-      <div className="dash-grid">
-        <aside className="dash-side card" aria-labelledby="kids-title">
-          <h2 id="kids-title" className="dash-card__title">
-            เด็กที่ดูแล
-          </h2>
-          <ul className="kids">
-            {all.map((x) => {
-              const b = overallBadge(x.review);
-              const last = x.weeks[x.weeks.length - 1];
-              return (
-                <li key={x.child.id}>
-                  <button type="button" className={`kid${x.child.id === child.id ? " is-selected" : ""}`} aria-pressed={x.child.id === child.id} onClick={() => setSelectedId(x.child.id)}>
-                    <span className="kid__row">
-                      <span className="kid__code">{x.child.id}</span>
-                      <span className={`badge ${b.cls}`}>{b.text}</span>
-                    </span>
-                    <span className="kid__meta">ฝึก {last.practiceDays} วันใน 7 วันล่าสุด</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="dash-privacy">
-            <Icon name="lock" size={16} /> ใช้รหัสเด็กแทนชื่อจริง ไม่เก็บเสียงดิบ เก็บเฉพาะตัวเลขสรุป ข้อมูลเดโมอยู่ในเบราว์เซอร์นี้เท่านั้น
-          </p>
-        </aside>
+        {flagRule ? (
+          <section className="dash-alert" aria-labelledby="alert-title">
+            <span className="dash-alert__icon">
+              <Icon name="alert" size={20} />
+            </span>
+            <div className="dash-alert__body">
+              <h2 id="alert-title" className="dash-alert__title">
+                ควรทบทวนแผน · {flagRule.title}
+              </h2>
+              <p>{flagRule.detail}</p>
+              <p className="dash-alert__fine">มาจากกฎตัวอย่างของเดโม (ดู {flagRule.used.length} สัปดาห์ล่าสุด) ใช้เลือกว่าควรดูข้อมูลใครก่อน ไม่ใช่การวินิจฉัย</p>
+            </div>
+          </section>
+        ) : null}
 
-        <main className="dash-main">
-          <section className="kpis" aria-label={`สรุป 7 วันล่าสุดของ ${child.id}`}>
-            <div className="card kpi">
-              <span className="kpi__label">วันที่ฝึก · 7 วันล่าสุด</span>
+        <div className="dash-tabs" role="tablist" aria-label={`ข้อมูลของ ${child.id}`}>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              ref={(el) => {
+                tabRefs.current[t.id] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
+              tabIndex={tab === t.id ? 0 : -1}
+              className="dash-tab"
+              onClick={() => setTab(t.id)}
+              onKeyDown={onTabKey}
+            >
+              <Icon name={t.icon} size={18} /> {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* panels stay mounted (hidden) so an unsaved plan is not lost when switching tabs */}
+        <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="dash-panel" hidden={tab !== "overview"}>
+          <div className="kpis" aria-label={`สรุป 7 วันล่าสุดของ ${child.id}`}>
+            <div className="kpi kpi--days">
+              <span className="kpi__icon" aria-hidden="true">
+                <Icon name="flag" size={20} />
+              </span>
+              <span className="kpi__label">วันที่ฝึก · 7 วัน</span>
               <span className="kpi__value">
-                {wk.practiceDays} <small>จาก 7 วัน</small>
+                {wk.practiceDays}
+                <small>/7 วัน</small>
               </span>
               <span className="kpi__sub">สัปดาห์ก่อน {prev.practiceDays} วัน</span>
             </div>
-            <div className="card kpi">
-              <span className="kpi__label">จำนวนครั้งที่พูด (คำด้านปาก)</span>
+            <div className="kpi kpi--attempts">
+              <span className="kpi__icon" aria-hidden="true">
+                <Icon name="mic" size={20} />
+              </span>
+              <span className="kpi__label">ครั้งที่พูด · คำด้านปาก</span>
               <span className="kpi__value">
-                {wk.attempts} <small>ครั้ง</small>
+                {wk.attempts}
+                <small>ครั้ง</small>
               </span>
               <span className="kpi__sub">1 ครั้ง = 1 ช่วงเสียง</span>
             </div>
-            <div className="card kpi">
-              <span className="kpi__label">ผ่านเกณฑ์เดโมด้านปาก</span>
+            <div className="kpi kpi--oral">
+              <span className="kpi__icon" aria-hidden="true">
+                <Icon name="mouth" size={20} />
+              </span>
+              <span className="kpi__label">ผ่านเกณฑ์ด้านปาก (เดโม)</span>
               <span className="kpi__value">{fmtPct(passRate)}</span>
-              <span className="kpi__sub">สัดส่วนครั้งที่ออกปาก ≥ เกณฑ์ในแผน</span>
+              <span className="kpi__sub">ออกปาก ≥ {plan.oralThreshold}% ตามแผน</span>
             </div>
-            <div className="card kpi kpi--nasal">
+            <div className="kpi kpi--nasal">
+              <span className="kpi__icon" aria-hidden="true">
+                <Icon name="nose" size={20} />
+              </span>
               <span className="kpi__label">ออกจมูกเฉลี่ย · คำด้านปาก</span>
               <span className="kpi__value">{fmtPct(wk.nasalOral)}</span>
               <span className="kpi__sub">
-                {delta === null ? "ยังเทียบสัปดาห์ก่อนไม่ได้" : `${delta <= 0 ? "ลดลง" : "เพิ่มขึ้น"} ${Math.abs(delta).toFixed(1)} จุดจากสัปดาห์ก่อน`} · คำนาสิก {fmtPct(wk.nasalNasal)}
+                {delta === null ? "ยังเทียบสัปดาห์ก่อนไม่ได้" : `${delta <= 0 ? "ลดลง" : "เพิ่มขึ้น"} ${Math.abs(delta).toFixed(1)} จุด`} · คำนาสิก {fmtPct(wk.nasalNasal)}
               </span>
             </div>
-          </section>
-
-          <div className="charts">
-            <section className="card dash-card" aria-labelledby="chart-oral-title">
-              <h2 id="chart-oral-title" className="dash-card__title">
-                ค่าออกจมูกเฉลี่ยรายสัปดาห์ · คำด้านปาก
-              </h2>
-              <p className="dash-card__sub">
-                คำเช่น {plan.words.join(" ")} · แผนของ {child.id}: ไม่เกิน {oralTarget}% (มาจากเกณฑ์ออกปาก {plan.oralThreshold}%) · ส.8 = 7 วันล่าสุด
-              </p>
-              <BarChart
-                bars={weekBars(sel.weeks, (w) => w.nasalOral, "คำด้านปาก")}
-                max={60}
-                unit="%"
-                color="nasal"
-                refLine={{ value: oralTarget, label: `แผน ≤ ${oralTarget}%` }}
-                ariaLabel={`กราฟค่าออกจมูกเฉลี่ยรายสัปดาห์ขณะพูดคำด้านปากของ ${child.id}`}
-                valueLabels="ends"
-                height={200}
-              />
-              <WeekTable weeks={sel.weeks} pick={(w) => w.nasalOral} caption="ค่าออกจมูกรายสัปดาห์ คำด้านปาก" />
-            </section>
-            <section className="card dash-card" aria-labelledby="chart-nasal-title">
-              <h2 id="chart-nasal-title" className="dash-card__title">
-                ค่าออกจมูกเฉลี่ยรายสัปดาห์ · คำนาสิก (ด่านประตู)
-              </h2>
-              <p className="dash-card__sub">
-                คำเช่น {plan.nasalWords.join(" ") || "—"} · คำกลุ่มนี้ควรมีเสียงออกจมูก แผน: ตั้งแต่ {plan.gateThreshold}% ขึ้นไป ไม่ได้ตั้งเป้าให้ต่ำ
-              </p>
-              <BarChart
-                bars={weekBars(sel.weeks, (w) => w.nasalNasal, "คำนาสิก")}
-                max={60}
-                unit="%"
-                color="nasal"
-                refLine={{ value: plan.gateThreshold, label: `แผน ≥ ${plan.gateThreshold}%` }}
-                ariaLabel={`กราฟค่าออกจมูกเฉลี่ยรายสัปดาห์ขณะพูดคำนาสิกของ ${child.id}`}
-                valueLabels="ends"
-                height={200}
-              />
-              <WeekTable weeks={sel.weeks} pick={(w) => w.nasalNasal} caption="ค่าออกจมูกรายสัปดาห์ คำนาสิก" />
-            </section>
           </div>
 
-          <section className="card dash-card" aria-labelledby="rules-title">
-            <div className="dash-card__row">
-              <h2 id="rules-title" className="dash-card__title">
-                สถานะตามกฎแจ้งเตือน (เดโม)
-              </h2>
-              <span className={`badge ${overallBadge(sel.review).cls}`}>{overallBadge(sel.review).text}</span>
-            </div>
-            <ul className="rules">
-              {sel.review.rules.map((r) => (
-                <li key={r.id} className={`rule rule--${r.state}`}>
-                  <div className="rule__top">
-                    <strong>{r.title}</strong>
-                    <span className={`badge ${STATE_BADGE[r.state].cls}`}>{STATE_BADGE[r.state].text}</span>
-                  </div>
-                  <p className="rule__detail">{r.detail}</p>
-                  <p className="rule__data">
-                    ข้อมูลที่ใช้: {r.used.map((u) => `ส.${u.week} ${fmtPct(u.value)}`).join(" · ")}
-                  </p>
-                  <p className="rule__def">กฎ: {r.rule}</p>
-                </li>
-              ))}
-            </ul>
-            <p className="dash-card__fine">
-              นับเฉพาะสัปดาห์ที่ฝึกอย่างน้อย {REVIEW_RULES.minDaysPerWeek} วัน · กฎนี้เป็นตัวอย่างของเดโม ไม่ใช่การวินิจฉัย และควรปรับร่วมกับนักแก้ไขการพูด
-            </p>
-          </section>
+          <div className="dash-over">
+            <section className="dash-card dash-chart" aria-labelledby="chart-title">
+              <div className="dash-card__row">
+                <h2 id="chart-title" className="dash-card__title">
+                  ค่าออกจมูกรายสัปดาห์
+                </h2>
+                <div className="seg" role="group" aria-label="เลือกกลุ่มคำของกราฟ">
+                  <button type="button" className="seg__btn" aria-pressed={chartOral} onClick={() => setChart("oral")}>
+                    คำด้านปาก
+                  </button>
+                  <button type="button" className="seg__btn" aria-pressed={!chartOral} onClick={() => setChart("nasal")}>
+                    คำนาสิก
+                  </button>
+                </div>
+              </div>
+              <p className="dash-card__sub">
+                {chartOral
+                  ? `คำเช่น ${plan.words.join(" ")} · แผน: ไม่เกิน ${oralTarget}% · ส.${wk.index} = 7 วันล่าสุด`
+                  : `คำเช่น ${plan.nasalWords.join(" ") || "—"} · ควรมีเสียงออกจมูก · แผน: ตั้งแต่ ${plan.gateThreshold}% ขึ้นไป`}
+              </p>
+              <BarChart
+                key={chart}
+                bars={weekBars(sel.weeks, chartOral ? (w) => w.nasalOral : (w) => w.nasalNasal, chartOral ? "คำด้านปาก" : "คำนาสิก")}
+                max={60}
+                unit="%"
+                color="nasal"
+                refLine={chartOral ? { value: oralTarget, label: `แผน ≤ ${oralTarget}%` } : { value: plan.gateThreshold, label: `แผน ≥ ${plan.gateThreshold}%` }}
+                ariaLabel={`กราฟค่าออกจมูกเฉลี่ยรายสัปดาห์ขณะพูด${chartOral ? "คำด้านปาก" : "คำนาสิก"}ของ ${child.id}`}
+                valueLabels="ends"
+                height={220}
+              />
+              <WeekTable
+                weeks={sel.weeks}
+                pick={chartOral ? (w) => w.nasalOral : (w) => w.nasalNasal}
+                caption={chartOral ? "ค่าออกจมูกรายสัปดาห์ คำด้านปาก" : "ค่าออกจมูกรายสัปดาห์ คำนาสิก"}
+              />
+            </section>
 
-          <section className="card dash-card" aria-labelledby="history-title">
-            <div className="dash-card__row">
-              <h2 id="history-title" className="dash-card__title">
-                ประวัติการฝึกล่าสุด
+            <section className="dash-card dash-rules" aria-labelledby="rules-title">
+              <h2 id="rules-title" className="dash-card__title">
+                กฎแจ้งเตือน (เดโม)
               </h2>
+              <ul className="rules">
+                {sel.review.rules.map((r) => (
+                  <li key={r.id} className={`rule rule--${r.state}`}>
+                    <div className="rule__top">
+                      <strong>{r.title}</strong>
+                      <span className={`badge ${STATE_BADGE[r.state].cls}`}>{STATE_BADGE[r.state].text}</span>
+                    </div>
+                    <p className="rule__detail">{r.detail}</p>
+                    <details className="rule__more">
+                      <summary>ข้อมูลที่ใช้และกฎ</summary>
+                      <p className="rule__data">ข้อมูลที่ใช้: {r.used.map((u) => `ส.${u.week} ${fmtPct(u.value)}`).join(" · ")}</p>
+                      <p className="rule__def">กฎ: {r.rule}</p>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+              <p className="dash-card__fine">นับเฉพาะสัปดาห์ที่ฝึกอย่างน้อย {REVIEW_RULES.minDaysPerWeek} วัน · กฎตัวอย่าง ควรปรับร่วมกับนักแก้ไขการพูด</p>
+            </section>
+          </div>
+        </section>
+
+        <section role="tabpanel" id="panel-history" aria-labelledby="tab-history" className="dash-panel" hidden={tab !== "history"}>
+          <div className="dash-card">
+            <div className="dash-card__row">
+              <h2 className="dash-card__title">ประวัติการฝึกล่าสุด</h2>
               <span className="dash-card__meta">
                 {cal ? `ปรับเครื่องล่าสุด (จำลอง) ${fmtDayMonth(new Date(cal.at))} ${fmtTime(new Date(cal.at))}` : "ยังไม่มีการปรับเครื่อง"}
               </span>
@@ -719,9 +769,11 @@ export function DashboardScreen() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="card dash-card">
+        <section role="tabpanel" id="panel-plan" aria-labelledby="tab-plan" className="dash-panel" hidden={tab !== "plan"}>
+          <div className="dash-card">
             <PlanForm key={child.id} child={child} />
             <div className="plan__kid">
               <button type="button" className="btn btn--secondary btn--sm" onClick={openKidView}>
@@ -729,22 +781,23 @@ export function DashboardScreen() {
               </button>
               <span className="field__hint">สลับเด็กในเครื่องนี้เพื่อเดโมเท่านั้น ไม่ใช่การเข้าสู่ระบบหรือการควบคุมสิทธิ์</span>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="card dash-card data-tools" aria-labelledby="data-title">
-            <h2 id="data-title" className="dash-card__title">
-              ข้อมูลเดโมในเบราว์เซอร์นี้
-            </h2>
+        <section role="tabpanel" id="panel-data" aria-labelledby="tab-data" className="dash-panel" hidden={tab !== "data"}>
+          <div className="dash-card data-tools">
+            <h2 className="dash-card__title">ข้อมูลเดโมในเบราว์เซอร์นี้</h2>
             <p className="dash-card__sub">ข้อมูลตัวอย่างสร้างครั้งเดียว รีเฟรชหน้าแล้วไม่เติมซ้ำ · ไม่มีการส่งข้อมูลออกจากเครื่อง</p>
             <div className="data-tools__row">
               <ConfirmButton label="ลบข้อมูลตัวอย่าง" confirmLabel="กดอีกครั้งเพื่อยืนยันการลบ" onConfirm={() => { clearSampleData(); showToast("ลบข้อมูลตัวอย่างแล้ว"); }} />
               <ConfirmButton label="ลบรอบที่เล่นในเดโม" confirmLabel="กดอีกครั้งเพื่อยืนยันการลบ" onConfirm={() => { clearDemoPlays(); showToast("ลบรอบที่เล่นในเดโมแล้ว"); }} />
               <ConfirmButton label="รีเซ็ตเป็นข้อมูลตัวอย่างเริ่มต้น" confirmLabel="กดอีกครั้งเพื่อยืนยันการรีเซ็ต" onConfirm={() => { resetAllDemoData(); showToast("รีเซ็ตข้อมูลเดโมแล้ว"); }} />
             </div>
-          </section>
-        </main>
-      </div>
-      <Disclaimer />
+          </div>
+        </section>
+
+        <Disclaimer />
+      </main>
     </div>
   );
 }
