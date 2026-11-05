@@ -23,6 +23,9 @@ const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
     { name: `friend-${f}` as const, w: 200, h: 200 },
     { name: `friend-${f}-back` as const, w: 200, h: 200 },
   ]),
+  // welcome screen: bigger, so they stay sharp on tablets and desktops
+  { name: "hero-bunny", w: 440, h: 580 },
+  ...FRIENDS.map((f) => ({ name: `hero-${f}` as const, w: 360, h: 360 })),
 ];
 
 /** `/?studio&only=friend` re-renders just the shots whose name starts with "friend". */

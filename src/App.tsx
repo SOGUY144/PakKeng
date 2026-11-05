@@ -12,8 +12,10 @@ import { GateScreen } from "./screens/GateScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { ResultScreen } from "./screens/ResultScreen";
 import { RunnerScreen } from "./screens/RunnerScreen";
+import { WelcomeScreen } from "./screens/WelcomeScreen";
 
 const TITLES: Record<Route, string> = {
+  welcome: "ยินดีต้อนรับ",
   home: "หน้าหลัก",
   calibrate: "ปรับเครื่อง",
   runner: "กระต่ายวิ่ง",
@@ -51,6 +53,8 @@ function Screen({ route }: { route: Route }) {
   if (route === "balloon" && !plan.games.balloon) return <Locked game="เกมบอลลูน" />;
   if (route === "frog" && !plan.games.frog) return <Locked game="เกมกบข้ามบึง" />;
   switch (route) {
+    case "welcome":
+      return <WelcomeScreen />;
     case "home":
       return <HomeScreen />;
     case "calibrate":

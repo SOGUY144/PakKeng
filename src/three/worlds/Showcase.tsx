@@ -141,18 +141,21 @@ export type StudioSubject =
   | "item-scarf"
   | "item-crown"
   | `friend-${FriendKind}`
-  | `friend-${FriendKind}-back`;
+  | `friend-${FriendKind}-back`
+  | "hero-bunny"
+  | `hero-${FriendKind}`;
 
 /** Still subjects rendered once (dev tool) into the images used by Home, Result and the call-a-friend cards. */
 export function StudioScene({ subject }: { subject: StudioSubject }) {
   const kit = useKit();
-  const bunny = useRef(bunnyDrive({ pose: subject === "thumb-runner" ? "run" : "stand", speed: 1.3, boost: true }));
+  const bunny = useRef(bunnyDrive({ pose: subject === "thumb-runner" ? "run" : subject === "hero-bunny" ? "wave" : "stand", speed: 1.3, boost: true }));
   const ride = useRef(bunnyDrive({ pose: "ride" }));
   const cloud = useRef(cloudDrive({ reduced: true }));
   const frogPose = useRef<FrogPose>({ crouch: false, airborne: false, land: 0, reduced: true });
   const friendPose = useRef<FriendPose>({ listening: false, happy: 0, asking: 0, reduced: true });
   const lights = <Lights tier="high" sun={[-3, 7, 6]} box={4} intensity={2.5} />;
-  const friend = /^friend-(crab|dog|fish|bird|turtle)(-back)?$/.exec(subject);
+  // hero-<friend>: the same friend, rendered larger for the welcome screen
+  const friend = /^(?:friend|hero)-(crab|dog|fish|bird|turtle)(-back)?$/.exec(subject);
   if (friend) {
     const kind = friend[1] as FriendKind;
     return (
@@ -213,6 +216,15 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
           <group position={[0, 0.04, 0]} rotation-y={0.3}>
             <Frog pose={frogPose} />
           </group>
+        </group>
+      );
+    case "hero-bunny":
+      return (
+        <group dispose={null}>
+          {lights}
+          <FitCamera target={[0, 0.82, 0]} dir={[0.1, 0.16, 1]} width={1.5} height={2} />
+          <Bunny drive={bunny} outfit="cap" />
+          <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
         </group>
       );
     case "avatar-bunny":

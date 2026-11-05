@@ -103,8 +103,9 @@ npm run lint        # oxlint
 npm run build       # สร้างไฟล์ใน dist/
 ```
 
-### 8 หน้าจอ (hash route)
-`#/home` · `#/calibrate` · `#/runner` · `#/gate` · `#/result` · `#/balloon` · `#/frog` · `#/dashboard`
+### หน้าจอ (hash route)
+`/` (ไม่มี `#/` = หน้าต้อนรับ) · `#/home` · `#/calibrate` · `#/runner` · `#/gate` · `#/result` · `#/balloon` · `#/frog` · `#/dashboard`
+ลิงก์ในแอปที่กลับหน้าหลักไปที่ `#/home` ตรง ๆ จึงไม่ผ่านหน้าต้อนรับซ้ำ
 
 ### เครื่องมือเดโม
 อยู่ในมุม “สำหรับผู้ดูแล” ของทุกเกม (พับไว้ แตะป้าย “โหมดสาธิต” บนตลิ่งเพื่อเปิด)

@@ -1,11 +1,13 @@
 import { useSyncExternalStore } from "react";
 
-export type Route = "home" | "calibrate" | "runner" | "gate" | "result" | "balloon" | "frog" | "dashboard";
+export type Route = "welcome" | "home" | "calibrate" | "runner" | "gate" | "result" | "balloon" | "frog" | "dashboard";
 
-const ROUTES: Route[] = ["home", "calibrate", "runner", "gate", "result", "balloon", "frog", "dashboard"];
+const ROUTES: Route[] = ["welcome", "home", "calibrate", "runner", "gate", "result", "balloon", "frog", "dashboard"];
 
+/** The plain app link (no "#/screen") opens the welcome screen; any named screen opens directly; unknown names go Home. */
 export function parseRoute(hash: string): Route {
   const name = hash.replace(/^#\/?/, "").split(/[?/]/)[0];
+  if (name === "") return "welcome";
   return (ROUTES as string[]).includes(name) ? (name as Route) : "home";
 }
 
