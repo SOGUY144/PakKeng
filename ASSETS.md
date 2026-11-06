@@ -47,3 +47,7 @@
 | React, Vite, TypeScript, vitest, oxlint | MIT / Apache-2.0 | มีอยู่เดิม |
 
 ไม่ได้ใช้ `@react-three/drei` (เหตุผลใน `DECISIONS.md`)
+
+## เสียงประกอบ
+- เสียงบอลลูนส่งถึง: สังเคราะห์ในโค้ดด้วย Web Audio (`src/lib/sfx.ts`) ไม่มีไฟล์เสียงภายนอก
+- เคยพิจารณา Kenney “Interface Sounds” (CC0, WAV) แต่ไม่ได้ใช้ เพราะสั้นแบบเสียงปุ่ม (เหตุผลใน `DECISIONS.md`)

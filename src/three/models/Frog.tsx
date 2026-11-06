@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { damp, frameDt } from "../anim";
+import { CALM, damp, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { C } from "../palette";
 
@@ -40,7 +40,7 @@ export function Frog({ pose }: { pose: RefObject<FrogPose> }) {
     const dt = frameDt(dtRaw);
     const p = pose.current;
     const s = st.current;
-    const motion = p.reduced ? 0 : 1;
+    const motion = p.reduced ? CALM.amp : 1; // reduced motion: half-size breathing and landing squash
     s.t += dt;
     s.crouch = damp(s.crouch, p.crouch && !p.airborne ? 1 : 0, 10, dt);
     s.air = damp(s.air, p.airborne ? 1 : 0, 14, dt);

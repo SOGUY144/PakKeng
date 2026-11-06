@@ -127,8 +127,9 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
     const call = g.call.state;
     if (seen.current.game !== g) seen.current = { game: g, reached: g.reached, off: null }; // new round / restart
 
-    // where the bunny is on the route: eased run from the logic; reduced motion cuts straight to the next stop
-    const want = (reduced && g.leg ? g.leg.to : g.pos) * LEG_UNITS;
+    // where the bunny is on the route: the eased run from the logic (reduced motion too: no cut to the next stop,
+    // only the parallax, dust and flag sway stay off)
+    const want = g.pos * LEG_UNITS;
     const prev = seen.current.off ?? want;
     seen.current.off = want;
     offset.current = want;

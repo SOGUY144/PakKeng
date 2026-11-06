@@ -239,7 +239,7 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
   useEffect(() => {
     if (!isOpen) return;
     onOpened(door.id);
-    const id = setTimeout(() => setShowDone(true), reduced ? 700 : 2600);
+    const id = setTimeout(() => setShowDone(true), reduced ? 3300 : 2600); // after the door has swung open (slower with reduced motion)
     return () => clearTimeout(id);
   }, [isOpen, reduced, door.id, onOpened]);
 

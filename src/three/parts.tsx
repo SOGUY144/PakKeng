@@ -2,6 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef, type Ref, type RefObject } from "react";
 import * as THREE from "three";
 import type { Tier } from "./gfx";
+import { CALM } from "./anim";
 import { useKit } from "./kitContext";
 import { C } from "./palette";
 import { sparkle } from "./shapes";
@@ -280,7 +281,7 @@ export interface BurstFire {
 
 const LIFE = 0.9;
 
-/** Short reward sparkle (≈0.9 s). Nothing is emitted with reduced motion. */
+/** Short reward sparkle (≈0.9 s). Reduced motion: a third of the sparks, slower and lower. */
 export function Burst({ fire, color = C.gold, max = 16, reduced }: { fire: RefObject<BurstFire>; color?: string; max?: number; reduced: boolean }) {
   const kit = useKit();
   const mesh = useRef<THREE.InstancedMesh>(null);
@@ -313,16 +314,16 @@ export function Burst({ fire, color = C.gold, max = 16, reduced }: { fire: RefOb
     const f = fire.current;
     if (f.seq !== sim.seq) {
       sim.seq = f.seq;
-      if (!reduced) {
-        for (let i = 0; i < max; i++) {
-          const a = (i / max) * Math.PI * 2 + Math.random() * 0.4;
-          const up = 1.1 + Math.random() * 1.0;
-          const out = 0.6 + Math.random() * 0.7;
-          sim.p.set([f.x, f.y, f.z], i * 3);
-          sim.v.set([Math.cos(a) * out, up, Math.sin(a) * out * 0.6], i * 3);
-          sim.life[i] = LIFE * (0.75 + Math.random() * 0.25);
-          sim.size[i] = 0.06 + Math.random() * 0.05;
-        }
+      const count = reduced ? Math.ceil(max / 3) : max;
+      const speed = reduced ? CALM.amp : 1;
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+        const up = (1.1 + Math.random() * 1.0) * speed;
+        const out = (0.6 + Math.random() * 0.7) * speed;
+        sim.p.set([f.x, f.y, f.z], i * 3);
+        sim.v.set([Math.cos(a) * out, up, Math.sin(a) * out * 0.6], i * 3);
+        sim.life[i] = LIFE * (0.75 + Math.random() * 0.25);
+        sim.size[i] = 0.06 + Math.random() * 0.05;
       }
     }
     let any = false;

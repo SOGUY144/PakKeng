@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { bump, damp, frameDt } from "../anim";
+import { bump, CALM, damp, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { C } from "../palette";
 import { Cap, Crown, Scarf, Shoe } from "./Accessories";
@@ -45,8 +45,9 @@ export function Bunny({ drive, outfit = "" }: { drive: RefObject<BunnyDrive>; ou
     s.boost = damp(s.boost, d.boost && running ? 1 : 0, 6, dt);
     s.sing = damp(s.sing, d.pose === "sing" ? 1 : 0, 5, dt);
     s.wave = damp(s.wave, d.pose === "wave" ? 1 : 0, 5, dt);
-    const motion = d.reduced ? 0 : 1;
-    s.phase += dt * (5 + 6.5 * Math.min(1.8, d.speed)) * motion;
+    // reduced motion: the run cycle keeps its pace (feet match the ground) but swings at half size
+    const motion = d.reduced ? CALM.amp : 1;
+    s.phase += dt * (5 + 6.5 * Math.min(1.8, d.speed));
     if (d.cheer !== s.cheerSeen) {
       s.cheerSeen = d.cheer;
       s.cheerT = 0;
@@ -69,7 +70,7 @@ export function Bunny({ drive, outfit = "" }: { drive: RefObject<BunnyDrive>; ou
     const f = Math.sin(p);
     const singBounce = Math.abs(Math.sin(s.t * 4.2)) * 0.035 * s.sing * motion;
     if (rig.current) {
-      rig.current.position.y = Math.abs(f) * 0.07 * runA + cheer * (d.reduced ? 0.05 : 0.36) + singBounce;
+      rig.current.position.y = Math.abs(f) * 0.07 * runA + cheer * 0.36 * (d.reduced ? 0.45 : 1) + singBounce;
       rig.current.rotation.x = (0.1 + 0.14 * s.boost) * s.run - cheer * 0.06;
     }
     if (body.current) body.current.scale.y = 0.44 * (1 + Math.sin(s.t * 2.2) * 0.014 * (1 - s.run) * motion);

@@ -14,6 +14,7 @@ import { useActiveChild } from "../data/store";
 import { TRIPS, tripById, type Trip, type TripId } from "../data/trips";
 import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
+import { playSuccessChime, stopSfx } from "../lib/sfx";
 import { exampleKind, playExample, stopExample, subscribeVoices, type ExampleKind } from "../lib/speech";
 import { showToast } from "../lib/toast";
 import { BALLOONS_PER_ROUND, BalloonGame, type BalloonIssue } from "../logic/balloon";
@@ -181,7 +182,13 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
 
   // Thai voices load asynchronously: re-render when the list changes so "ฟังคำ" knows what it can play.
   useEffect(() => subscribeVoices(() => setVoices((n) => n + 1)), []);
-  useEffect(() => () => stopExample(), []);
+  useEffect(
+    () => () => {
+      stopExample();
+      stopSfx();
+    },
+    [],
+  );
 
   const rt = useGameRuntime(
     () =>
@@ -191,7 +198,13 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
         balloonsPerRound: BALLOONS_PER_ROUND,
         restBetween: true,
       }),
-    (game, frame, now, dt) => game.update(frame, now, dt).some((e) => e.type === "done"),
+    (game, frame, now, dt) => {
+      const events = game.update(frame, now, dt);
+      // a balloon reached the pin: a short chime while the game rests (the mics are not counted until
+      // "ส่งลูกถัดไป", which stops the chime first; the logic's settle window covers the tail)
+      if (events.some((e) => e.type === "balloon-complete")) playSuccessChime();
+      return events.some((e) => e.type === "done");
+    },
   );
 
   const { game, frame } = rt;
@@ -214,17 +227,22 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
 
   // Pausing (button or tab hidden) stops any example that is still playing; the game itself has left "playing".
   useEffect(() => {
-    if (rt.paused !== null) stopExample();
+    if (rt.paused !== null) {
+      stopExample();
+      stopSfx();
+    }
   }, [rt.paused]);
 
   const settleAudio = () => {
     stopExample();
+    stopSfx();
     setAdultModel(false);
   };
 
   const listen = () => {
     const g = rt.gameRef.current;
     if (!g || g.state.done) return;
+    stopSfx();
     g.listenStart();
     if (kind === "none") {
       setAdultModel(true);

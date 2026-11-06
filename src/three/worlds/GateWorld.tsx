@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { BEACH_SEA, doorById, type Door, type DoorPlace } from "../../data/doors";
-import { clamp01, damp, easeInOutSine, easeOutCubic, frameDt, lerp, seeded } from "../anim";
+import { CALM, clamp01, damp, easeInOutSine, easeOutCubic, frameDt, lerp, seeded } from "../anim";
 import type { Kit } from "../kit";
 import { useKit } from "../kitContext";
 import { Bunny } from "../models/Bunny";
@@ -259,7 +259,7 @@ function Butterflies({ reduced }: { reduced: boolean }) {
   const wings = useRef<(THREE.Group | null)[]>([]);
   const t = useRef(0);
   useFrame((_, dtRaw) => {
-    t.current += reduced ? 0 : frameDt(dtRaw);
+    t.current += frameDt(dtRaw) * (reduced ? 0.35 : 1);
     const k = t.current;
     BUTTERFLIES.forEach((b, i) => {
       flyers.current[i]?.position.set(b.x + Math.sin(k * 0.8 + b.p) * 0.3, b.y + Math.sin(k * 1.9 + b.p) * 0.1, b.z + Math.cos(k * 0.8 + b.p) * 0.1);
@@ -518,7 +518,7 @@ export function GateWorld({ gameRef, frameRef, outfit, reduced, tier, door: door
     c.reduced = reduced;
     c.excite = s.inZone ? 0.6 : 0.2;
 
-    w.openT = s.open ? (reduced ? 99 : w.openT + dt) : 0;
+    w.openT = s.open ? w.openT + dt / (reduced ? CALM.slow : 1) : 0;
     if (s.open && !w.cheered) {
       w.cheered = true;
       b.cheer += 1;
@@ -534,17 +534,18 @@ export function GateWorld({ gameRef, frameRef, outfit, reduced, tier, door: door
       p.visible = spill > 0.01;
     }
     // after opening, both friends turn to look through the doorway
-    w.turn = s.open ? (reduced ? 1 : damp(w.turn, 1, 3, dt)) : 0;
+    w.turn = s.open ? damp(w.turn, 1, reduced ? 1.6 : 3, dt) : 0;
     bunnyRoot.current?.rotation.set(0, lerp(BUNNY_FACE, BUNNY_LOOK, w.turn), 0);
     cloudRoot.current?.rotation.set(0, lerp(CLOUD_FACE, CLOUD_LOOK, w.turn), 0);
 
-    // camera: the whole gate while playing; once the leaves swing it moves to the doorway (reduced motion: cut)
+    // camera: the whole gate while playing; once the leaves swing it moves to the doorway (reduced motion: slower, part of the way)
     const cam = state.camera as THREE.PerspectiveCamera;
     if (cam.fov !== FOV) {
       cam.fov = FOV;
       cam.updateProjectionMatrix();
     }
-    placeCamera(cam, state.size.width / Math.max(1, state.size.height), easeInOutSine(clamp01((w.openT - PUSH_DELAY_S) / PUSH_S)));
+    const push = easeInOutSine(clamp01((w.openT - PUSH_DELAY_S) / PUSH_S));
+    placeCamera(cam, state.size.width / Math.max(1, state.size.height), reduced ? push * 0.6 : push);
 
     // orange "voice" motes travel from the bunny to the emblem only while the game counts in-zone speech
     const m = motes.current;
