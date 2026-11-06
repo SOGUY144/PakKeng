@@ -15,8 +15,8 @@
 
 2) ตำแหน่งและไฟล์เริ่มอ่าน
 - โฟลเดอร์โปรเจกต์: D:\nasal-trainer-web · git: master = รุ่น 2D (commit แรก), branch feat/3d-games = งาน 3D, branch feat/call-friend = งานล่าสุด 4 เกม (ยังไม่ merge เข้า master)
-- GitHub: https://github.com/SOGUY144/PakKeng (public, default branch = feat/call-friend; repo เก่า Gupalmza/nasal-trainer-web เลิกใช้แล้ว) · เว็บ: https://nasal-trainer-web.vercel.app
-  (deploy ด้วย Vercel CLI ยังไม่เชื่อม GitHub — push แล้วเว็บไม่อัปเดตเอง; วิธี deploy ใหม่อยู่ใน HANDOFF.md หัวข้อ “Deploy (Vercel)”)
+- GitHub: https://github.com/SOGUY144/PakKeng (public, default branch = feat/call-friend; repo เก่า Gupalmza/nasal-trainer-web เลิกใช้แล้ว) · เว็บ: https://pak-keng.vercel.app
+  (Vercel project pak-keng เชื่อม GitHub แล้ว — push ขึ้น feat/call-friend แล้วเว็บอัปเดตเอง; วิธี deploy ใหม่อยู่ใน HANDOFF.md หัวข้อ “Deploy (Vercel)”)
 - อ่านตามลำดับ: HANDOFF.md → PROJECT_BRIEF.md → DECISIONS.md (หัวข้อ “อัปเกรดฉากเกมเป็น 3D”) → ASSETS.md → TODO.md → PROGRESS.md
 - brief ฉบับเต็ม: C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt
 - โค้ด 3D: src/three/* (gfx, World3D, WorldCanvas, kit, parts, shapes, models/*, worlds/*); logic: src/logic/*; screens: src/screens/*
@@ -53,7 +53,7 @@
 - ตรวจด้วยมือตาม HANDOFF.md หัวข้อ “วิธีตรวจ”; เครื่องมือเดโม → ตัวเลือกทดสอบเพิ่ม → “ภาพฉากเกม” (ตัวนับ fps/draw calls) และ “ภาพเคลื่อนไหว”
 - เครื่องพัฒนาเดิมตั้งค่าลดการเคลื่อนไหวไว้ → แอปแสดงแบบนุ่ม (ไม่ตัด) ถ้าจะดู animation เต็มรูปแบบเลือก “เต็ม” ในเครื่องมือเดโม
 - แก้โมเดลแล้วต้องการภาพ Home ใหม่: npm run dev → เปิด /?studio
-- deploy ใหม่หลังแก้: npx vercel@65.2.0 deploy --prod --scope gupalmzas-projects (รายละเอียด/ปัญหา npx บนเครื่องนี้ ดู HANDOFF.md)
+- deploy ใหม่หลังแก้: push ขึ้น feat/call-friend แล้ว Vercel deploy https://pak-keng.vercel.app เอง (รายละเอียดดู HANDOFF.md)
 - ถ้าตรวจใน Claude Browser pane ให้เปิด pane ให้เห็นก่อน (pane ที่ซ่อนลดเฟรมเหลือ ~2 fps)
 
 7) ข้อสมมติที่ยังต้องตรวจ และสิ่งที่ห้ามรายงานว่าเสร็จ

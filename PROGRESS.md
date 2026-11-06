@@ -21,6 +21,8 @@
   มีปุ่มเล่น/หยุดภาพเคลื่อนไหว เครื่องที่ตั้งลดการเคลื่อนไหวจะเริ่มแบบหยุดภาพ · ตรวจแล้ว: typecheck ผ่าน · tests 93/93 · lint 0 error / 50 warning · build ผ่าน · ดูในเบราว์เซอร์ 1280×800 และ 375×812 ไม่ล้นจอ ไม่มี console error
 - 5 พ.ย. 2569 ช่วง 22 น.: deploy รุ่น `5a74dac` ขึ้น Vercel production ด้วย CLI (https://nasal-trainer-web.vercel.app) · ตรวจแล้ว `/` และ `/how-it-works.html` ตอบ 200 ·
   เขียน `README.md` ใหม่เป็นรายละเอียดโปรเจกต์ (commit `3cec7af`)
+- 6 พ.ย. 2569: deploy บน Vercel บัญชีของเจ้าของ repo (project `pak-keng`, import จาก GitHub `feat/call-friend` รุ่น `82294d9`) → https://pak-keng.vercel.app
+  ตรวจแล้ว: หน้าต้อนรับ หน้าหลัก เกมกบ แดชบอร์ด และ `/how-it-works.html` โหลดได้ ไม่มีไฟล์ 4xx ไม่มี error ใน console · push ต่อจากนี้ deploy เอง
 
 ## สถานะก่อนหน้า (5 พ.ย. 2569 · ด่านเรียกเพื่อน + งานคืน, branch `feat/call-friend`, อยู่ใน commit `30a11f8`)
 - กบข้ามบึง → **ด่านเรียกเพื่อน**: เด็กเลือกเพื่อนที่จะไปหาก่อน, ฟังคำ (ไม่ฟังไมค์ระหว่างเล่น), เรียก → เพื่อน 3D หันมาตอบ “ได้ยินแล้ว” → กบกระโดดไปหา, เล่นจบรอบแล้วรวมที่ตลิ่ง

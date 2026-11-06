@@ -24,7 +24,7 @@
 - [ ] ทดสอบทั้งแอปบน iPad จริง (แนวตั้ง/แนวนอน, หมุนกลางรอบ, Split View, แตะค้าง “กดค้างเพื่อพูด”) — คืน 5 พ.ย. ทดสอบด้วย viewport จำลองเท่านั้น (ตารางใน `docs/OVERNIGHT_HANDOFF.md`)
 
 ## P2
-- [ ] เชื่อม Vercel กับ GitHub ให้ deploy อัตโนมัติทุก push — เจ้าของ repo (`SOGUY144`) ติดตั้ง Vercel GitHub App (เลือกเฉพาะ `PakKeng`) แล้ว `vercel git connect`; ตอนนี้ deploy ด้วย CLI (ดู `HANDOFF.md`)
+- [x] (6 พ.ย.) เชื่อม Vercel กับ GitHub แล้ว: project `pak-keng` ในบัญชีเจ้าของ repo → https://pak-keng.vercel.app deploy เองทุก push ขึ้น `feat/call-friend` · ข้อความเดิม: เชื่อม Vercel กับ GitHub ให้ deploy อัตโนมัติทุก push — เจ้าของ repo (`SOGUY144`) ติดตั้ง Vercel GitHub App (เลือกเฉพาะ `PakKeng`) แล้ว `vercel git connect`; ตอนนี้ deploy ด้วย CLI (ดู `HANDOFF.md`)
 - [ ] merge `feat/call-friend` (รวม `feat/3d-games` อยู่แล้ว) เข้า `master` เมื่อรับรุ่นนี้แล้ว และให้เจ้าของ repo (`SOGUY144`) ตั้ง default branch บน GitHub เป็น `master`
 - [ ] ลด lint warnings (50 รายการ ณ 5 พ.ย. 02:19 น.): ส่วนใหญ่ react(immutability) จากการแก้ค่า three.js ใน `useFrame` และ react(refs)/purity ในหน้าจอเกม
 - [ ] ลบ CSS ฉาก 2D รุ่นเก่าที่ไม่มีที่ใช้แล้วใน `kid.css` (`.gate__*`, `.runner__*`, `.balloon__*`, `.frog__*`, `.stage__pill/pop/frozen`) แล้วถ่ายภาพเทียบทุกหน้าอีกรอบ

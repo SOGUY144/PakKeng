@@ -5,8 +5,9 @@
 > **เครื่องมือฝึกเสริมที่บ้าน ภายใต้คำแนะนำของนักแก้ไขการพูด**
 > ต้นแบบนี้ยังไม่ได้ตรวจสอบเทียบกับ Nasometer ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
 
-- เว็บต้นแบบ: https://nasal-trainer-web.vercel.app (deploy ล่าสุด 5 พ.ย. 2569 จาก commit `5a74dac` · วิธี deploy ใหม่ดู [`HANDOFF.md`](HANDOFF.md))
-- หน้าอธิบายหลักการแบบมีภาพเคลื่อนไหว: https://nasal-trainer-web.vercel.app/how-it-works.html
+- เว็บต้นแบบ: https://pak-keng.vercel.app (อัปเดตเองทุกครั้งที่ push ขึ้น `feat/call-friend` · รายละเอียดใน [`HANDOFF.md`](HANDOFF.md))
+- หน้าอธิบายหลักการแบบมีภาพเคลื่อนไหว: https://pak-keng.vercel.app/how-it-works.html
+- เว็บบน Vercel เป็น https จึงต่อบอร์ด ESP32 (`ws://`) ไม่ได้ — ลองกับบอร์ดจริงให้เปิดเว็บด้วย `npm run dev -- --host` ในวง Wi-Fi เดียวกับบอร์ด ([`firmware/README.md`](firmware/README.md))
 - ค่าทั้งหมดในเว็บตอนนี้มาจาก **สัญญาณจำลอง** (`MockSignalSource`) ยังไม่ได้ต่อ ESP32 จริง
 
 ## ที่มาของปัญหา

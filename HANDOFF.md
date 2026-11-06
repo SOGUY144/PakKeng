@@ -26,8 +26,8 @@ Home ใช้ภาพที่เรนเดอร์จากโมเดล
 - GitHub (repo หลักตั้งแต่ 5 พ.ย. 2569): https://github.com/SOGUY144/PakKeng (**public**) · push ครบ 3 branch · default branch = `feat/call-friend`
   · บัญชี `Gupalmza` เขียนได้แต่ไม่ใช่ admin — ตั้งค่า repo, เพิ่มคนร่วมงาน, เปลี่ยน default branch ต้องใช้บัญชีเจ้าของ `SOGUY144`
   · repo เก่า `Gupalmza/nasal-trainer-web` (private) เลิกใช้แล้ว ถอดออกจาก remote ของเครื่องนี้ แต่ยังไม่ได้ลบบน GitHub
-- เว็บที่ deploy: https://nasal-trainer-web.vercel.app (รุ่น 4 เกม + หน้าอธิบายหลักการ `/how-it-works.html` จาก commit `5a74dac`, deploy 5 พ.ย. 2569,
-  ใครมีลิงก์ก็เปิดได้, ข้อมูลจำลองทั้งหมด) — วิธี deploy ใหม่ดูหัวข้อ “Deploy (Vercel)” · ก่อนหน้านี้เป็นรุ่น 3D จาก commit `a78b1b0` (4 พ.ย.)
+- เว็บที่ deploy (ตั้งแต่ 6 พ.ย. 2569): https://pak-keng.vercel.app — อัปเดตเองทุกครั้งที่ push ขึ้น `feat/call-friend`, ใครมีลิงก์ก็เปิดได้, ข้อมูลจำลองทั้งหมด
+  (ดูหัวข้อ “Deploy (Vercel)”) · ลิงก์เดิม https://nasal-trainer-web.vercel.app อยู่ในบัญชีของ Gupalmza ค้างที่รุ่น `5a74dac` (5 พ.ย.) ไม่อัปเดตแล้ว
 - เอกสาร: `PROJECT_BRIEF.md` (ข้อกำหนด รวมคำสั่งเพิ่มเติมเรื่อง 3D) · `DECISIONS.md` · `PROGRESS.md` · `TODO.md` · `ASSETS.md` (โมเดล/ภาพ/license)
 - brief หลัก: `C:\Users\TCcomputer\Documents\Codex\2026-11-04\1-ai-2-esp32-nasalance-nasometer\outputs\claude-overnight-web-prompt.txt`
 
@@ -40,12 +40,15 @@ npm run dev          # http://localhost:5173/#/home  และ  http://localhost
 - หมายเหตุเซสชันที่ทำงานนี้: ระบบ preview ของแอปยังผูกกับโฟลเดอร์ชั่วคราวเดิม จึงรัน Vite จาก `D:\nasal-trainer-web` เป็นงานเบื้องหลังของเซสชันแทน (หยุดเมื่อเซสชันจบ)
 
 ## Deploy (Vercel)
-- Vercel project `gupalmzas-projects/nasal-trainer-web` deploy ด้วย Vercel CLI จากเครื่องนี้ — **ยังไม่ได้เชื่อมกับ GitHub**
-  (บัญชี GitHub ยังไม่ได้ติดตั้ง Vercel GitHub App) ดังนั้น push แล้วเว็บไม่อัปเดตเอง
+- **ปัจจุบัน:** Vercel project `pak-keng` ในบัญชีของเจ้าของ repo (`guyy9980-4443's projects`, Hobby) import จาก GitHub `SOGUY144/PakKeng`
+  production branch `feat/call-friend` (preset Vite, `npm run build` → `dist`, ไม่มี environment variable) → https://pak-keng.vercel.app
+  **push ขึ้น `feat/call-friend` = deploy production เอง** ไม่ต้องรันคำสั่ง deploy · push branch อื่น = ได้ลิงก์ preview แยก
+- เว็บ https ต่อบอร์ด ESP32 แบบ `ws://` ไม่ได้ (mixed content) — ลองบอร์ดจริงด้วย `npm run dev -- --host` (ดู `firmware/README.md`)
+- **เดิม (เลิกใช้):** Vercel project `gupalmzas-projects/nasal-trainer-web` deploy ด้วย Vercel CLI จากเครื่องของ Gupalmza ไม่ได้เชื่อม GitHub
+  ค้างที่รุ่น 5 พ.ย. — คำสั่งเดิมด้านล่างเก็บไว้เผื่อต้อง deploy ลิงก์นั้นอีก
 - deploy ใหม่ (รันในโฟลเดอร์โปรเจกต์; ถ้า CLI ยังไม่ได้ล็อกอิน ให้รัน `npx vercel@65.2.0 login` แล้วกด Allow Access ในเบราว์เซอร์):
   `npx vercel@65.2.0 deploy --prod --scope gupalmzas-projects`
 - เครื่องนี้ npx ที่ใช้ cache `D:\npm-cache` ล้มด้วย `ECOMPROMISED Lock compromised` → ใน Git Bash ใส่ `npm_config_cache="C:/Users/TCcomputer/AppData/Local/npm-cache"` นำหน้าคำสั่ง
-- ให้ deploy อัตโนมัติทุก push: เจ้าของ repo (`SOGUY144`) ติดตั้ง Vercel GitHub App แบบเลือกเฉพาะ `PakKeng` แล้วรัน `npx vercel@65.2.0 git connect --scope gupalmzas-projects`
 - URL เฉพาะของแต่ละ deployment (`nasal-trainer-<id>-gupalmzas-projects.vercel.app`) ต้องล็อกอิน Vercel; โดเมนหลักเปิดได้ทุกคน · `.vercel/` อยู่ใน `.gitignore`
 
 ## วิธีตรวจ
