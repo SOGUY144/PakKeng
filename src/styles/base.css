@@ -422,6 +422,10 @@ svg {
 }
 
 /* split slider: mouth share (blue) on the left of the thumb, nose share (orange) on the right */
+.range--split {
+  height: 44px;
+}
+
 .range--split::-webkit-slider-runnable-track {
   height: 14px;
   background: linear-gradient(90deg, var(--oral) 0 var(--pct), var(--nasal) var(--pct) 100%);
@@ -460,12 +464,16 @@ svg {
 
 .seg--fill {
   display: flex;
+  flex-wrap: nowrap;
   width: 100%;
 }
 
 .seg--fill .seg__btn {
   flex: 1;
+  min-width: 0;
   min-height: 44px;
+  white-space: normal;
+  line-height: 1.3;
 }
 
 /* ---------- Toast ---------- */

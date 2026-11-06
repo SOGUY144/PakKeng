@@ -9,7 +9,7 @@ import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { fmtClock, fmtDayMonth, fmtPct, isSameDay } from "../data/format";
-import { roundDid } from "../data/resultCards";
+import { isDoorAlone, roundDid, roundRating } from "../data/resultCards";
 import { getLastResultId } from "../data/rounds";
 import type { FriendId } from "../data/callWords";
 import { doorById } from "../data/doors";
@@ -20,15 +20,8 @@ import { navigate, type Route } from "../lib/router";
 import { nextStarHint, roundStars } from "../logic/scoring";
 import "../styles/result.css";
 
-function rating(s: Session): { got: number; of: number } {
-  if (s.call) return { got: s.call.heard, of: s.call.target };
-  if (s.game === "balloon" && s.balloon) return { got: s.balloon.completed, of: s.balloon.target };
-  if (s.game === "runner" && s.attempts === 0 && s.gate) return { got: s.gate.opened ? 1 : 0, of: 1 };
-  return { got: s.passed, of: s.attempts };
-}
-
-/** A door-only round (played on its own, or the door after a route). */
-const isGateRound = (s: Session) => s.game === "runner" && s.attempts === 0 && s.gate !== null;
+/** A door-only round (played on its own, not after a run). */
+const isGateRound = (s: Session) => isDoorAlone(s);
 
 /** The event the child just achieved, in the words of its game (the headline of the kid's result). */
 function achieved(s: Session): { title: string; sub: string } {
@@ -85,7 +78,7 @@ export function ResultScreen() {
   }
 
   const child = findChild(db, session.childId);
-  const r = rating(session);
+  const r = roundRating(session);
   const stars = roundStars(r.got, r.of);
   const hint = nextStarHint(r.got, r.of);
   const now = new Date();
@@ -128,9 +121,9 @@ export function ResultScreen() {
   const call = session.call ?? null;
   const event = achieved(session);
   const did = roundDid(session);
-  // colour of the game this round belongs to (a door round is the door's lilac)
-  const tone = session.gate ? "gate" : session.game;
-  const didIcon = session.call ? "ear" : session.game === "balloon" ? "target" : session.gate ? (session.gate.opened ? "check" : "lock") : "flag";
+  // colour and icon of the game the card speaks for (a door the child never reached does not recolour a run)
+  const tone = did.kind === "other" ? session.game : did.kind;
+  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : "mic";
   const met = call ? call.words.filter((w) => w.heard) : [];
   const again: Route = isGateRound(session) ? "gate" : session.game;
 
@@ -148,6 +141,8 @@ export function ResultScreen() {
           )}
         </div>
 
+        {/* everything beside the celebration on wide screens */}
+        <div className="result__side">
         <header className={`result__head result__head--${tone}`}>
           <h1>{event.title}</h1>
           <p className="result__sub">
@@ -175,7 +170,7 @@ export function ResultScreen() {
         {hint ? <p className="result__hint">{hint}</p> : stars === 3 ? <p className="result__hint">ได้ครบ 3 ดาวแล้ว!</p> : null}
         <ul className="result-cards" aria-label="รอบนี้">
           <li className="result-card result-card--star">
-            <span className="result-card__band">ดาว</span>
+            <span className="result-card__band">ดาวสะสม</span>
             <span className="result-card__body">
               <Icon name="star" size={22} /> +{session.stars}
             </span>
@@ -359,6 +354,7 @@ export function ResultScreen() {
         <p className="result__saved">
           <Icon name="check" size={16} /> บันทึกแล้ว ครูดูได้ในแดชบอร์ด (เดโม) · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
         </p>
+        </div>
         <Disclaimer compact />
       </div>
     </div>

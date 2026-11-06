@@ -186,7 +186,7 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
     }
     const practiceMs = g.call.state.practiceMs;
     if (then === "gate") {
-      setPendingRunner({ childId: child.id, startedAt: startedAt.current, attempts: g.attempts, stars: g.stars, practiceMs, completed: g.done });
+      setPendingRunner({ childId: child.id, startedAt: startedAt.current, attempts: g.attempts, stars: g.stars, practiceMs, completed: g.done, choice });
       navigate("gate");
       return;
     }

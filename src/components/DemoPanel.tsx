@@ -169,9 +169,10 @@ function MockControls({ target, hint, children }: DemoPanelProps) {
         onChange={(e) => mockSource.setParams({ oralPercent: Number(e.target.value) })}
         aria-describedby="demo-oral-note"
       />
+      {/* plain ink: the track's own blue/orange already says which side is which */}
       <div className="demo__ends" aria-hidden="true">
-        <span className="t-nasal">← ออกจมูกมาก</span>
-        <span className="t-oral">ออกปากมาก →</span>
+        <span>← ออกจมูกมาก</span>
+        <span>ออกปากมาก →</span>
       </div>
       <p id="demo-oral-note" className="sr-only">
         ออกจมูกคำนวณจาก 100 ลบค่าออกปาก
@@ -218,7 +219,6 @@ function MockControls({ target, hint, children }: DemoPanelProps) {
         <Icon name="hand" size={20} />
         {params.holding ? "กำลังพูด…" : "กดค้างเพื่อพูด"}
       </button>
-      <p className="demo__meta demo__meta--center">หรือกด Space ค้างไว้บนคีย์บอร์ด</p>
 
       <details className="demo__more">
         <summary>ตัวเลือกทดสอบเพิ่ม</summary>

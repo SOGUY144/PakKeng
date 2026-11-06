@@ -7,6 +7,11 @@
   gap: var(--sp-4);
 }
 
+/* a step or card that takes focus never hides under the sticky banner */
+.home button {
+  scroll-margin-top: 120px;
+}
+
 /* slim utility bar: data source (honest demo label) + teacher link */
 .home-top {
   display: flex;
@@ -70,7 +75,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 12px;
   border-radius: var(--r-pill);
   color: var(--ink-2);
@@ -215,11 +220,16 @@
   background: var(--surface);
 }
 
+/* darker green: white text stays ≥ 4.5:1 */
 .home-today.is-complete {
-  background: var(--ok);
+  background: #157a59;
   box-shadow:
-    0 5px 0 #157a59,
+    0 5px 0 #0e5c42,
     0 14px 24px -14px rgba(17, 105, 76, 0.7);
+}
+
+.home-today.is-complete .home-today__text span {
+  opacity: 1;
 }
 
 /* the path */
@@ -330,7 +340,7 @@ button.trail__node:focus-visible {
 .trail__node.is-locked {
   --face: var(--surface-sunken);
   --edge: #cfcadf;
-  --ink-node: #9a96b0;
+  --ink-node: var(--ink-3);
 }
 
 /* the step to play: bigger, violet, a ring of today's minutes, a "start" bubble and a soft pulse */
@@ -341,28 +351,38 @@ button.trail__node:focus-visible {
   width: 92px;
   height: 92px;
   padding-left: 6px;
-  animation: trail-pulse 2.2s ease-in-out infinite;
+}
+
+/* the pulse is a ring that grows and fades: transform + opacity only, no repaint of the button */
+.trail__node.is-current::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 5px solid rgba(108, 75, 244, 0.45);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: trail-ring 2.2s ease-out infinite;
 }
 
 .trail__node.is-current:disabled {
   --face: var(--surface-sunken);
   --edge: #cfcadf;
   --ink-node: var(--ink-3);
-  animation: none;
   cursor: default;
 }
 
-@keyframes trail-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 6px 0 var(--edge),
-      0 0 0 0 rgba(108, 75, 244, 0.35);
+.trail__node.is-current:disabled::after {
+  display: none;
+}
+
+@keyframes trail-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
   }
-  50% {
-    box-shadow:
-      0 6px 0 var(--edge),
-      0 0 0 14px rgba(108, 75, 244, 0);
+  to {
+    transform: scale(1.32);
+    opacity: 0;
   }
 }
 
@@ -474,6 +494,24 @@ button.trail__node:focus-visible {
 /* game cards (in the sheet on phones, beside the path on wide screens) */
 .home-choose {
   display: none;
+}
+
+/* wide screens: the step points at the cards beside the path with a short glow */
+.home-choose.is-nudged .plays {
+  border-radius: var(--r-xl);
+  animation: choose-nudge 1.4s ease-out;
+}
+
+@keyframes choose-nudge {
+  0% {
+    box-shadow: 0 0 0 0 rgba(108, 75, 244, 0.55);
+  }
+  30% {
+    box-shadow: 0 0 0 10px rgba(108, 75, 244, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgba(108, 75, 244, 0);
+  }
 }
 
 .home-choose__title {
@@ -823,7 +861,7 @@ button.trail__node:focus-visible {
   }
 }
 
-[data-motion="reduce"] .trail__node.is-current,
+[data-motion="reduce"] .trail__node.is-current::after,
 [data-motion="reduce"] .trail__bubble,
 [data-motion="reduce"] .home-sheet,
 [data-motion="reduce"] .home-sheet__card {
@@ -833,4 +871,11 @@ button.trail__node:focus-visible {
 [data-motion="reduce"] .play-card,
 [data-motion="reduce"] button.trail__node {
   transition: none;
+}
+
+/* reduced motion: the nudge is a steady outline instead of a growing glow */
+[data-motion="reduce"] .home-choose.is-nudged .plays {
+  animation: none;
+  outline: 4px solid var(--primary-soft);
+  outline-offset: 8px;
 }

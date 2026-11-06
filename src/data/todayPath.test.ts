@@ -113,6 +113,32 @@ describe("todayPath", () => {
     expect(p.starsToday).toBe(3);
   });
 
+  it("only rounds where the child tried to speak pass a step (listening only, or a device that dropped, does not)", () => {
+    const sessions = [
+      session(today(8), { game: "frog", attempts: 0, passed: 0 }), // only listened to the examples
+      session(today(8, 30), { game: "runner", attempts: 0, stars: 0 }), // every leg skipped
+      session(today(9), { game: "runner", attempts: 0, gate: { attempts: 2, passed: 1, meanNasal: 45, opened: false, skipped: false } }), // door tried
+      session(today(9, 30), { game: "balloon", attempts: 4 }),
+    ];
+    const p = todayPath({ dailyMinutes: 10, sessions, calibratedToday: false, now: NOW });
+    expect(p.played).toBe(2);
+    expect(p.nodes.filter((n) => n.kind === "round" && n.state === "done").map((n) => n.play)).toEqual(["gate", "balloon"]);
+  });
+
+  it("a run whose legs were all skipped is not shown as a door round", () => {
+    const skipped = { attempts: 0, passed: 0, meanNasal: null, opened: false, skipped: true };
+    const sessions = [
+      session(today(8), { game: "runner", attempts: 2, gate: skipped, choice: { kind: "route", id: "flower", label: "ทางดอกไม้" } }),
+    ];
+    const p = todayPath({ dailyMinutes: 10, sessions, calibratedToday: false, now: NOW });
+    expect(p.nodes.find((n) => n.kind === "round")?.play).toBe("runner");
+  });
+
+  it("uses the local day: 00:30 today counts, 23:30 yesterday does not", () => {
+    const sessions = [session(new Date(2026, 10, 6, 0, 30)), session(new Date(2026, 10, 5, 23, 30))];
+    expect(todayPath({ dailyMinutes: 10, sessions, calibratedToday: false, now: NOW }).played).toBe(1);
+  });
+
   it("progress never goes past 1", () => {
     const p = todayPath({ dailyMinutes: 1, sessions: [session(today(8), { durationSec: 600 })], calibratedToday: false, now: NOW });
     expect(p.progress).toBe(1);
@@ -136,6 +162,11 @@ describe("practiceDaysThisWeek — days with a saved round, Monday to Sunday (no
     const sunday = new Date(2026, 10, 8, 20);
     const sessions = [session(new Date(2026, 10, 2, 9)), session(sunday)];
     expect(practiceDaysThisWeek(sessions, sunday)).toBe(2);
+  });
+
+  it("the week starts Monday 00:00 and ends before the next Monday 00:00", () => {
+    const sessions = [session(new Date(2026, 10, 2, 0, 0)), session(new Date(2026, 10, 9, 0, 0)), session(new Date(2026, 10, 1, 23, 59))];
+    expect(practiceDaysThisWeek(sessions, NOW)).toBe(1);
   });
 
   it("only this child's rounds when a child is given", () => {

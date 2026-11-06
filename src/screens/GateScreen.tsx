@@ -79,6 +79,7 @@ function saveRunOnly(child: Child, pending: PendingRunner): void {
     attempts: pending.attempts,
     stars: pending.stars,
     gate: summarizeGate([], false, true),
+    choice: pending.choice ?? null,
     endedEarly: !pending.completed,
   });
   navigate("result");

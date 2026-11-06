@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BaffleDiagram } from "../components/Art";
-import { CareSummary } from "../components/Chrome";
+import { CareSummary, Disclaimer } from "../components/Chrome";
 import { DemoPanel } from "../components/DemoPanel";
 import { Icon } from "../components/Icon";
 import { fmtPct, fmtSec1 } from "../data/format";
@@ -9,7 +9,7 @@ import { saveCalibration, useActiveChild } from "../data/store";
 import { useFrameRender, useGameLoop } from "../lib/hooks";
 import { navigate } from "../lib/router";
 import { clampDt } from "../logic/common";
-import { signalSource } from "../signal/mock";
+import { signalSource, useSignalSource } from "../signal/mock";
 import { SignalProcessor, type SignalFrame } from "../signal/SignalProcessor";
 import { IDLE_FRAME } from "./useGameRuntime";
 import "../styles/calibrate.css";
@@ -55,6 +55,7 @@ export function CalibrateScreen() {
   const render = useFrameRender();
 
   const collecting = step === 2 || step === 3;
+  const fromDevice = useSignalSource().kind !== "mock";
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [step]);
@@ -99,8 +100,9 @@ export function CalibrateScreen() {
     if (step === 3) {
       if (separationOk && aa !== null && ma !== null) {
         saveCalibration(child.id, { at: new Date().toISOString(), aaNasal: Math.round(aa * 10) / 10, maNasal: Math.round(ma * 10) / 10, simulated: true });
-        setSaved(true);
       }
+      // redoing a step after a good save must not leave "saved" showing next to a failed result
+      setSaved(separationOk);
       setStep(4);
       return;
     }
@@ -151,7 +153,7 @@ export function CalibrateScreen() {
           </ol>
           <p className="sr-only">{step <= 3 ? `ขั้นที่ ${step} จาก 3` : "สรุปผลการปรับเครื่อง"}</p>
           <p className="cal-demo">
-            <Icon name="info" size={14} /> เดโม · จำลองการปรับเครื่อง ยังไม่ได้ใช้ฮาร์ดแวร์จริง
+            <Icon name="info" size={14} /> เดโม · จำลองการปรับเครื่อง ยังไม่ได้ปรับฮาร์ดแวร์จริง
           </p>
         </div>
 
@@ -206,7 +208,7 @@ export function CalibrateScreen() {
                   </div>
                 ))}
               </div>
-              <p className="cal-visual__cap">ค่าออกจมูกเฉลี่ยของแต่ละเสียง (จำลอง)</p>
+              <p className="cal-visual__cap">ค่าออกจมูกเฉลี่ยของแต่ละเสียง ({fromDevice ? "จากอุปกรณ์" : "จำลอง"})</p>
             </div>
           ) : null}
 
@@ -309,6 +311,7 @@ export function CalibrateScreen() {
             <DemoPanel target={{ kind: step === 3 ? "nasal" : "oral", threshold: step === 3 ? plan.gateThreshold : plan.oralThreshold }} hint={hint} />
           </div>
         </details>
+        <Disclaimer compact />
       </div>
     </div>
   );

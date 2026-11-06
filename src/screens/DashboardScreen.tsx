@@ -515,12 +515,12 @@ export function DashboardScreen() {
               {child.id} <span className={`dash-status ${status.cls}`}>{status.text}</span>
             </h1>
             <p className="dash-note">
-              <span className="badge badge--sample">ข้อมูลตัวอย่าง</span> ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
+              <span className="badge badge--sample">ข้อมูลตัวอย่าง + รอบที่เล่นในเดโม</span> ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
             </p>
           </div>
           <div className="dash-child__actions">
             <button type="button" className="btn btn--secondary" onClick={openKidView}>
-              <Icon name="external" size={18} /> เปิดหน้าเด็ก
+              <Icon name="external" size={18} /> เปิดหน้าเด็ก (เดโม)
             </button>
             <button
               type="button"
@@ -574,7 +574,7 @@ export function DashboardScreen() {
 
         {/* panels stay mounted (hidden) so an unsaved plan is not lost when switching tabs */}
         <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="dash-panel" hidden={tab !== "overview"}>
-          <div className="kpis" aria-label={`สรุป 7 วันล่าสุดของ ${child.id}`}>
+          <div className="kpis" role="group" aria-label={`สรุป 7 วันล่าสุดของ ${child.id}`}>
             <div className="kpi kpi--days">
               <span className="kpi__icon" aria-hidden="true">
                 <Icon name="flag" size={20} />
@@ -603,7 +603,7 @@ export function DashboardScreen() {
               </span>
               <span className="kpi__label">ผ่านเกณฑ์ด้านปาก (เดโม)</span>
               <span className="kpi__value">{fmtPct(passRate)}</span>
-              <span className="kpi__sub">ออกปาก ≥ {plan.oralThreshold}% ตามแผน</span>
+              <span className="kpi__sub">ออกปากถึงเกณฑ์ที่ใช้ในแต่ละรอบ</span>
             </div>
             <div className="kpi kpi--nasal">
               <span className="kpi__icon" aria-hidden="true">

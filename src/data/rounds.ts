@@ -18,6 +18,8 @@ export interface PendingRunner {
   stars: number;
   practiceMs: number;
   completed: boolean;
+  /** The route the child picked, kept for the result if the door is not played after the run. */
+  choice?: RoundChoice | null;
 }
 
 function readJSON<T>(key: string): T | null {

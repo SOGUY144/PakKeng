@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import { Bunny, CollectibleIcon, DoorPanel, GameThumb } from "../components/Art";
 import { Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
@@ -7,6 +8,7 @@ import { childSessions, COLLECTIBLES, nextCollectible, totalStars } from "../dat
 import { isSameDay } from "../data/format";
 import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
+import { isDoorAlone } from "../data/resultCards";
 import { practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
 import { hrefFor, navigate, type Route } from "../lib/router";
 import { useConnection, useSignalSource } from "../signal/mock";
@@ -74,7 +76,7 @@ function ChestArt({ open }: { open: boolean }) {
 function lastPlay(sessions: Session[], plan: Plan): Play | null {
   const last = sessions.filter((s) => s.source === "demo").at(-1);
   if (!last) return null;
-  const play: Play = last.gate && last.attempts === 0 ? "gate" : last.game;
+  const play: Play = isDoorAlone(last) ? "gate" : last.game;
   return PLAYS.find((p) => p.id === play)?.open(plan) ? play : null;
 }
 
@@ -104,7 +106,10 @@ function useDialog(onClose: () => void, firstRef: RefObject<HTMLElement | null>,
   useEffect(() => {
     close.current = onClose;
   });
+  // a passive effect on purpose: its cleanup runs after the page behind is no longer inert, so focus can go back
   useEffect(() => {
+    // returnTo is set by whoever opened the dialog *before* opening it: once the page behind turns inert the
+    // browser has already dropped focus from the opener, so document.activeElement is no longer it here
     const back = returnTo.current;
     (firstRef.current?.querySelector("button") ?? firstRef.current)?.focus();
     const key = (e: KeyboardEvent) => {
@@ -182,9 +187,14 @@ export function HomeScreen() {
   const [deviceInfo, setDeviceInfo] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [chest, setChest] = useState(false);
+  const [nudge, setNudge] = useState(false);
+  const nudgeTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(nudgeTimer.current), []);
   const startRef = useRef<HTMLButtonElement>(null);
   const chestRef = useRef<HTMLButtonElement>(null);
   const chooseRef = useRef<HTMLUListElement>(null);
+  /** Where focus goes back when the game sheet closes: the current step, or "เล่นเพิ่ม" / the chest once the day is done. */
+  const sheetOpener = useRef<HTMLElement | null>(null);
 
   const now = new Date();
   const sessions = childSessions(db, child.id);
@@ -203,8 +213,11 @@ export function HomeScreen() {
   const deviceText = conn === "connected" ? (demo ? "สัญญาณจำลอง" : "ต่ออุปกรณ์แล้ว") : conn === "connecting" ? "กำลังเชื่อมต่อ…" : "อุปกรณ์หลุด";
   const nextText = next ? `อีก ${next.stars - stars} ดาว ได้${next.name}` : "สะสมของครบทุกชิ้นแล้ว";
 
-  /** Start a round: one game → straight in; wide screens → the cards beside the path; otherwise the sheet. */
-  const start = () => {
+  /**
+   * Start a round: one game → straight in; wide screens → the cards beside the path; otherwise the sheet.
+   * `opener` is the button that asked (Safari does not focus a clicked button, so it is passed, not read from focus).
+   */
+  const start = (opener: HTMLElement | null) => {
     if (plays.length === 0) return;
     if (plays.length === 1) {
       navigate(plays[0].id as Route);
@@ -213,8 +226,13 @@ export function HomeScreen() {
     if (window.matchMedia(WIDE).matches && chooseRef.current) {
       chooseRef.current.scrollIntoView({ block: "nearest" });
       chooseRef.current.querySelector("button")?.focus();
+      // the cards are already on screen: a short glow shows where the step "went"
+      setNudge(true);
+      window.clearTimeout(nudgeTimer.current);
+      nudgeTimer.current = window.setTimeout(() => setNudge(false), 1400);
       return;
     }
+    sheetOpener.current = opener;
     setSheet(true);
   };
   const closeSheet = () => setSheet(false);
@@ -222,7 +240,7 @@ export function HomeScreen() {
 
   return (
     <div className="kid-screen">
-      <div className="kid-frame kid-frame--page home">
+      <div className="kid-frame kid-frame--page home" inert={sheet || chest ? true : undefined}>
         <div className="home-top">
           <div className="device">
             <button
@@ -303,7 +321,7 @@ export function HomeScreen() {
                       <span className="trail__bubble" aria-hidden="true">
                         {plays.length === 0 ? "รอครูเปิดเกม" : "เริ่ม!"}
                       </span>
-                      <button ref={startRef} type="button" className={cls} onClick={start} disabled={plays.length === 0} aria-label={label}>
+                      <button ref={startRef} type="button" className={cls} onClick={(e) => start(e.currentTarget)} disabled={plays.length === 0} aria-label={plays.length === 0 ? `รอบที่ ${n.round} รอครูเปิดเกม` : label}>
                         <svg className="trail__ring" viewBox="0 0 100 100" aria-hidden="true">
                           <circle cx="50" cy="50" r="46" className="trail__ring-track" />
                           <circle cx="50" cy="50" r="46" className="trail__ring-fill" strokeDasharray={`${path.progress * 289} 289`} transform="rotate(-90 50 50)" />
@@ -349,14 +367,14 @@ export function HomeScreen() {
           </ol>
           {plays.length === 0 ? <p className="home-path__note">ครูยังไม่ได้เปิดเกม ให้ผู้ใหญ่ช่วยดูแผนการฝึกนะ</p> : null}
           {path.complete && plays.length > 0 ? (
-            <button type="button" className="btn btn--secondary home-more" onClick={start}>
+            <button type="button" className="btn btn--secondary home-more" onClick={(e) => start(e.currentTarget)}>
               <Icon name="play" size={18} /> เล่นเพิ่ม
             </button>
           ) : null}
         </section>
 
         {plays.length > 0 ? (
-          <section className="home-choose" aria-labelledby="choose-title">
+          <section className={`home-choose${nudge ? " is-nudged" : ""}`} aria-labelledby="choose-title">
             <h2 id="choose-title" className="home-choose__title">
               รอบนี้เล่นอะไรดี?
             </h2>
@@ -385,13 +403,13 @@ export function HomeScreen() {
         <footer className="home-foot">
           {closed > 0 && plays.length > 0 ? <p>เกมอื่นจะเปิดเมื่อครูตั้งไว้ในแผน</p> : null}
           <p>
-            รหัสเด็ก {child.id} · เส้นทางวันนี้มี {path.rounds} รอบ ตามเวลาฝึก {plan.dailyMinutes} นาทีที่ครูตั้ง · ดาวเริ่มต้นเป็นข้อมูลตัวอย่าง
+            รหัสเด็ก {child.id} · เส้นทางวันนี้มี {path.rounds} รอบ ตามเวลาฝึก {plan.dailyMinutes} นาทีที่ครูตั้ง (นับรอบที่ได้ลองพูด) · ดาวและวันที่ฝึกมีข้อมูลตัวอย่างรวมอยู่
           </p>
           <Disclaimer />
         </footer>
       </div>
 
-      {sheet ? <GameSheet plays={plays} again={again} onClose={closeSheet} returnTo={startRef} /> : null}
+      {sheet ? <GameSheet plays={plays} again={again} onClose={closeSheet} returnTo={sheetOpener} /> : null}
       {chest ? (
         <ChestDialog
           starsToday={path.starsToday}
@@ -399,8 +417,9 @@ export function HomeScreen() {
           onMore={
             plays.length > 0
               ? () => {
-                  setChest(false);
-                  start();
+                  // close the chest first so its focus-return and the inert page are done before start() moves focus
+                  flushSync(() => setChest(false));
+                  start(chestRef.current);
                 }
               : null
           }

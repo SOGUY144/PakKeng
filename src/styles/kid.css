@@ -37,10 +37,8 @@
   .kid-frame {
     border: 1.5px solid rgba(255, 255, 255, 0.9);
     border-radius: var(--r-xl);
-    /* frosted sheet over the pastel blobs */
-    background: rgba(255, 255, 255, 0.55);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    /* a light sheet over the pastel blobs (no backdrop blur: it looked the same over soft gradients and cost GPU on older iPads) */
+    background: rgba(255, 255, 255, 0.6);
     box-shadow: var(--shadow-2);
     overflow: hidden;
   }
@@ -2507,10 +2505,11 @@ button.demo-tag {
   flex-direction: column;
   gap: var(--sp-4);
   padding: 12px 16px 28px;
-  background:
+  /* colour and blobs are separate declarations: a browser without color-mix() (Safari < 16.2) drops only the blobs */
+  background-color: var(--pick-bg);
+  background-image:
     radial-gradient(60% 34% at 100% 18%, color-mix(in srgb, var(--pick-blob) 55%, transparent) 0 70%, transparent 71%),
-    radial-gradient(52% 30% at 0% 86%, color-mix(in srgb, var(--pick-blob) 45%, transparent) 0 70%, transparent 71%),
-    var(--pick-bg);
+    radial-gradient(52% 30% at 0% 86%, color-mix(in srgb, var(--pick-blob) 45%, transparent) 0 70%, transparent 71%);
 }
 
 .pick__bar {

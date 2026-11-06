@@ -51,10 +51,6 @@
   font-size: var(--fs-xs);
 }
 
-.dash-side .viewswitch__label {
-  display: none;
-}
-
 .dash-side__title {
   margin-top: var(--sp-2);
   color: var(--ink-3);
@@ -448,6 +444,10 @@
   font-size: var(--fs-xs);
 }
 
+.dash-chart .seg__btn {
+  min-height: 44px;
+}
+
 .chart-table summary {
   display: flex;
   align-items: center;
@@ -513,7 +513,7 @@
 .rule__more summary {
   display: flex;
   align-items: center;
-  min-height: 32px;
+  min-height: 44px;
   color: var(--ink-2);
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -768,7 +768,9 @@ fieldset.field legend {
     grid-auto-flow: column;
     grid-auto-columns: minmax(170px, 1fr);
     overflow-x: auto;
-    padding-bottom: 4px;
+    /* room for the focus ring, which the scroller would otherwise clip */
+    padding: 6px;
+    margin: -6px;
   }
   .dash-tabs {
     width: 100%;

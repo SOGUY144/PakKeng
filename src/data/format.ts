@@ -39,7 +39,7 @@ export function fmtDuration(totalSec: number): string {
 
 /** Compact practice time for a small card: "0:58", "10:00". */
 export function fmtClock(totalSec: number): string {
-  const s = Math.max(0, Math.round(totalSec));
+  const s = Number.isFinite(totalSec) ? Math.max(0, Math.round(totalSec)) : 0;
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 

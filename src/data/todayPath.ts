@@ -1,10 +1,11 @@
 import { isSameDay } from "./format";
+import { isDoorAlone } from "./resultCards";
 import type { GameId, Session } from "./schema";
 
 /**
  * "Today's path" on the kid's Home: mic check → round 1…N → chest.
  * N comes from the teacher's daily minutes (about 3 minutes a round), so no new plan setting is needed.
- * A round is any game round saved today; the child still picks which game each round (see DECISIONS.md).
+ * A step is a round saved today in which the child tried to speak; the child still picks the game each round (see DECISIONS.md).
  */
 
 export type PathPlay = GameId | "gate";
@@ -41,9 +42,14 @@ export function roundsFor(dailyMinutes: number): number {
   return Math.min(MAX_ROUNDS, Math.max(1, Math.round(dailyMinutes / MIN_PER_ROUND)));
 }
 
-/** A door round (alone, attempts 0) shows as the door; a route that went on to the door shows as the route. */
+/** The child said something the game listened to: an attempt in the round, or at the door. */
+function triedToSpeak(s: Session): boolean {
+  return s.attempts > 0 || (s.gate?.attempts ?? 0) > 0;
+}
+
+/** A door round played on its own shows as the door; a route (even one that went on to the door) shows as the route. */
 function playOf(s: Session): PathPlay {
-  return s.game === "runner" && s.attempts === 0 && s.gate ? "gate" : s.game;
+  return isDoorAlone(s) ? "gate" : s.game;
 }
 
 export function todayPath(input: { dailyMinutes: number; sessions: Session[]; calibratedToday: boolean; now: Date; childId?: string }): TodayPath {
@@ -51,14 +57,17 @@ export function todayPath(input: { dailyMinutes: number; sessions: Session[]; ca
   const today = input.sessions
     .filter((s) => (childId === undefined || s.childId === childId) && isSameDay(new Date(s.startedAt), now))
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  // a step is a round the child tried to speak in: listening to examples only, all legs skipped, or a device
+  // that dropped before any try does not move the path (minutes and stars still count everything saved)
+  const tried = today.filter(triedToSpeak);
 
   const rounds = roundsFor(dailyMinutes);
-  const played = today.length;
+  const played = tried.length;
   const complete = played >= rounds;
 
   const nodes: PathNode[] = [{ kind: "mic", state: calibratedToday ? "done" : "open" }];
   for (let i = 0; i < rounds; i++) {
-    if (i < played) nodes.push({ kind: "round", state: "done", round: i + 1, play: playOf(today[i]) });
+    if (i < played) nodes.push({ kind: "round", state: "done", round: i + 1, play: playOf(tried[i]) });
     else nodes.push({ kind: "round", state: i === played ? "current" : "locked", round: i + 1 });
   }
   nodes.push({ kind: "chest", state: complete ? "open" : "locked" });

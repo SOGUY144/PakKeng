@@ -62,7 +62,7 @@ export function StarShape({ size = 28, filled = true }: { size?: number; filled?
       <path
         d="M12 2.6l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"
         fill={filled ? "var(--star)" : "var(--surface-sunken)"}
-        stroke={filled ? "var(--star-deep)" : "var(--line-strong)"}
+        stroke={filled ? "var(--star-deep)" : "var(--ink-3)"}
         strokeWidth={1.4}
         strokeLinejoin="round"
       />

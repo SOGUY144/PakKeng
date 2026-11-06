@@ -7,6 +7,14 @@
   gap: var(--sp-4);
 }
 
+/* everything beside the celebration on wide screens; one column under it on phones */
+.result__side {
+  display: grid;
+  /* minmax(0, …): a wide table in the adult details must not push the column (and the page) past the screen */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
 /* celebration scene */
 .result__scene {
   --scene-bg: var(--candy-lemon-soft);
@@ -30,8 +38,8 @@
 }
 
 .result__scene--runner {
-  --scene-bg: var(--candy-mint-soft);
-  --spark: #a6e3a0;
+  --scene-bg: var(--candy-lemon-soft);
+  --spark: var(--candy-lemon);
 }
 
 .result__scene--gate {
@@ -109,9 +117,12 @@
   text-align: center;
 }
 
-.result__head--frog,
-.result__head--runner {
+.result__head--frog {
   --title: var(--candy-mint-ink);
+}
+
+.result__head--runner {
+  --title: var(--candy-lemon-ink);
 }
 
 .result__head--balloon {
@@ -196,10 +207,14 @@
   --band-ink: #5c4300;
 }
 
-.result-card--frog,
-.result-card--runner {
+.result-card--frog {
   --band: var(--candy-mint);
   --band-ink: var(--candy-mint-ink);
+}
+
+.result-card--runner {
+  --band: var(--candy-lemon);
+  --band-ink: var(--candy-lemon-ink);
 }
 
 .result-card--balloon {
@@ -252,9 +267,12 @@
   color: #d99500;
 }
 
-.result-card--frog .result-card__body svg,
-.result-card--runner .result-card__body svg {
+.result-card--frog .result-card__body svg {
   color: var(--candy-mint-ink);
+}
+
+.result-card--runner .result-card__body svg {
+  color: var(--candy-lemon-ink);
 }
 
 .result-card--balloon .result-card__body svg {
@@ -357,13 +375,10 @@
     column-gap: var(--sp-8);
     align-items: start;
     max-width: 1240px;
-  }
-  .result > * {
-    grid-column: 2;
+    /* the frame must not be the scroll box, or the sticky scene never sticks */
+    overflow: visible;
   }
   .result > .result__scene {
-    grid-column: 1;
-    grid-row: 1 / span 12;
     position: sticky;
     top: var(--sp-6);
     height: min(calc(100dvh - 2 * var(--sp-8)), 660px);

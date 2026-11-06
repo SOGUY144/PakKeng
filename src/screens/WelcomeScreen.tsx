@@ -1,6 +1,6 @@
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
-import { GAME_NAME, POSITIONING } from "../data/copy";
+import { GAME_NAME, POSITIONING, VALIDATION_NOTE } from "../data/copy";
 import { hrefFor, navigate } from "../lib/router";
 import "../styles/welcome.css";
 
@@ -38,7 +38,10 @@ export function WelcomeScreen() {
       </button>
 
       <footer className="welcome__foot">
-        <p>{POSITIONING}</p>
+        <p>
+          <strong>{POSITIONING}</strong>
+        </p>
+        <p>{VALIDATION_NOTE}</p>
         <a href={hrefFor("dashboard")}>สำหรับครู</a>
       </footer>
     </main>

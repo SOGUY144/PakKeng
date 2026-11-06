@@ -1,5 +1,5 @@
 /**
- * ดาวสรุปรอบ: สะท้อนสัดส่วนครั้งที่ผ่าน “เกณฑ์เดโม” — ไม่ใช่ความถูกต้องของการออกเสียง
+ * ดาวสรุปรอบ: สัดส่วนสิ่งที่ทำได้ในฉากของแต่ละเกม (got/of จาก roundRating ใน data/resultCards.ts) — ไม่ใช่ความถูกต้องของการออกเสียง
  * จบรอบที่มีการพูดอย่างน้อย 1 ครั้งได้อย่างน้อย 1 ดาวเสมอ (ให้รางวัลความพยายาม)
  */
 export function roundStars(passed: number, total: number): 0 | 1 | 2 | 3 {
@@ -14,5 +14,5 @@ export function roundStars(passed: number, total: number): 0 | 1 | 2 | 3 {
 export function nextStarHint(passed: number, total: number): string | null {
   const s = roundStars(passed, total);
   if (s === 0 || s === 3) return null;
-  return s === 1 ? "รอบหน้าลองให้ผ่านครึ่งหนึ่ง จะได้ดาวดวงที่ 2" : "อีกนิดเดียวก็ได้ดาวดวงที่ 3";
+  return s === 1 ? "รอบหน้าลองให้ได้ครึ่งหนึ่ง จะได้ดาวดวงที่ 2" : "อีกนิดเดียวก็ได้ดาวดวงที่ 3";
 }
