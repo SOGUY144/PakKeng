@@ -61,7 +61,7 @@ function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => 
             <Bunny size={58} />
           </span>
         </div>
-        <p className="pick__note">พูดหนึ่งคำ กระต่ายวิ่งหนึ่งช่วง จนถึงปลายทาง</p>
+        <p className="pick__note">พูดแล้วกระต่ายวิ่งทันที หนีเพื่อนเมฆไปให้ถึงปลายทาง</p>
       </div>
     </div>
   );
@@ -82,10 +82,10 @@ function Route2D({ run, route }: { run: RouteRun; route: Route }) {
           </div>
         );
       })}
-      <div className={`route2d__bunny${run.running ? " is-running" : ""}`} aria-hidden="true">
+      <div className={`route2d__bunny${run.running || run.dashing ? " is-running" : ""}`} aria-hidden="true">
         <Bunny size={88} />
       </div>
-      <div className="route2d__pal" aria-hidden="true">
+      <div className="route2d__pal" style={{ left: `${34 - 8 - 22 * run.gap}%` }} aria-hidden="true">
         <CloudPal size={64} />
       </div>
     </div>
@@ -132,6 +132,12 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
   let line = callStatusLine(s, frame, adultModelling, kind, "", RUN_ISSUE);
   if (game.done) line = { tone: "done", icon: "star", text: `ถึง${route.destination}แล้ว!` };
   else if (game.running) line = { tone: "heard", icon: "next", text: `วิ่งไป${nextPoint}…`, sub: "ระหว่างวิ่ง เกมยังไม่ฟัง" };
+  else if (game.dashing)
+    line =
+      game.dash > 0.6
+        ? { tone: "speak", icon: "next", text: "เกือบถึงธงแล้ว!", sub: "พูดจบคำ กระต่ายจะวิ่งถึงธง" }
+        : { tone: "speak", icon: "next", text: "วิ่งเลย!", sub: "พูดจนจบคำ กระต่ายจะถึงธง" };
+  else if (line.text === "พูดได้เลย") line = { ...line, sub: "พูดแล้วกระต่ายจะวิ่งหนีเพื่อนเมฆ" };
 
   useEffect(() => {
     if (rt.paused !== null) stopExample();

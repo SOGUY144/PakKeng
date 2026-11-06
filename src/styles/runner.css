@@ -222,6 +222,7 @@
   left: 12%;
   top: 50%;
   translate: -50% 0;
+  transition: left 0.4s var(--ease-out);
 }
 
 @keyframes route-hop {
@@ -231,7 +232,13 @@
 }
 
 [data-motion="reduce"] .route2d__bunny.is-running {
-  animation: none;
+  animation: route-hop-soft 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes route-hop-soft {
+  to {
+    transform: translateY(-4px);
+  }
 }
 
 @media (min-width: 700px) and (orientation: portrait) {

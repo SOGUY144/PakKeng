@@ -66,7 +66,8 @@ export function Bunny({ drive, outfit = "" }: { drive: RefObject<BunnyDrive>; ou
     s.blink -= dt;
 
     const p = s.phase;
-    const runA = s.run * motion;
+    // the run cycle is the bunny's own feedback (no camera or scenery motion): nearly full swing even with reduced motion
+    const runA = s.run * (d.reduced ? 0.9 : 1);
     const f = Math.sin(p);
     const singBounce = Math.abs(Math.sin(s.t * 4.2)) * 0.035 * s.sing * motion;
     if (rig.current) {
