@@ -195,7 +195,7 @@ export function SourceSwitch() {
       {blocked ? (
         <p className="call-note">หน้านี้เปิดผ่าน https จึงต่อ ws:// ไม่ได้ ให้ใช้ wss:// หรือเปิดเว็บด้วย npm run dev ในวง Wi-Fi เดียวกับอุปกรณ์</p>
       ) : (
-        <p className="call-note">รูปแบบข้อมูลที่อุปกรณ์ต้องส่งอยู่ใน docs/DEVICE_PROTOCOL.md · ยังไม่ได้ทดสอบกับ ESP32 จริง</p>
+        <p className="call-note">เฟิร์มแวร์อยู่ใน firmware/ (รูปแบบข้อมูล docs/DEVICE_PROTOCOL.md) · หลุดแล้วต่อใหม่เอง · ยังไม่ได้ทดสอบกับ ESP32 จริง</p>
       )}
     </div>
   );

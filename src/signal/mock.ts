@@ -26,6 +26,14 @@ function setActive(next: SignalSource): void {
   for (const l of sourceListeners) l();
 }
 
+// Dev hot reload replaces this module: close the old device link, or it keeps reconnecting and holds one of the
+// board's few WebSocket slots.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (active !== mockSource) active.stop();
+  });
+}
+
 /** Switch to a real device over WebSocket (e.g. ws://192.168.4.1:81). */
 export function connectDevice(url: string): void {
   setActive(new WebSocketSignalSource(url));

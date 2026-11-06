@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# firmware: host test binary and arduino-cli build output
+firmware/test/test_nasal_dsp
+firmware/test/*.exe
+firmware/build
