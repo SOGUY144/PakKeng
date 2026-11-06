@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef, type ReactElement, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
-import { bump, damp, frameDt } from "../anim";
+import { bump, CALM, damp, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { C } from "../palette";
 
@@ -20,7 +20,7 @@ export interface FriendPose {
   happy: number;
   /** Incremented when a call could not be used (too quiet, device trouble): one short (~0.8 s) gentle head tilt, curious, never sad. */
   asking: number;
-  /** Reduced motion: no idle bob/breathing and no gesture motion — a calm static friendly pose. */
+  /** Reduced motion: the same gestures (turn, happy hop, listening lean) at half size, so the friend still answers. */
   reduced: boolean;
 }
 
@@ -434,7 +434,7 @@ export function Friend({ kind, pose }: { kind: FriendKind; pose: RefObject<Frien
       s.happySeen = p.happy;
       s.askSeen = p.asking;
     }
-    const motion = p.reduced ? 0 : 1;
+    const motion = p.reduced ? CALM.amp : 1;
     s.t += dt;
     s.listen = damp(s.listen, p.listening ? 1 : 0, 9, dt);
     const L = s.listen;

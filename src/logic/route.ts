@@ -4,15 +4,34 @@ import type { Attempt } from "./common";
 
 /** Legs in one round of the route (one word each, plan order). */
 export const ROUTE_LEGS = 6;
-/** How long the bunny runs from one stop to the next. The game is not listening meanwhile. */
+/** How long a whole leg takes when the bunny runs it without the voice (skip). The game is not listening meanwhile. */
 export const LEG_MS = 1700;
+/** Shortest finishing run after a word (the voice may already have carried the bunny most of the way). */
+const LEG_MIN_MS = 500;
+/**
+ * While the child speaks the bunny runs at once: about half a leg in the first second, slowing as it nears DASH_MAX
+ * (it keeps moving while the voice goes on, but only a finished, usable word takes it to the flag).
+ */
+export const DASH_MAX = 0.8;
+const DASH_RATE = 1.0;
+/**
+ * The cloud friend chases from behind (0 = right behind … 1 = far back). Purely playful: quiet time lets it creep
+ * closer, running pulls away, it never catches the bunny and nothing is ever lost.
+ */
+export const GAP_START = 0.45;
+export const GAP_MIN = 0.12;
+const GAP_CLOSE_PER_S = 0.06;
+const GAP_OPEN_PER_S = 0.45;
 
 export type RouteEvent = CallEvent | { type: "leave"; to: number } | { type: "arrive"; at: number } | { type: "finish" };
 
 /**
  * เกมวิ่งแบบเลือกทาง: รอบหนึ่งมี ROUTE_LEGS ช่วง แต่ละช่วงใช้คำหนึ่งคำตามลำดับแผน
  * - การตรวจพบเสียงใช้ตัวเดียวกับด่านเรียกเพื่อน (CallGame): เสียงตัวอย่างไม่นับ สัญญาณใช้ไม่ได้ = ขอลองใหม่ ไม่หักอะไร
- * - ได้ช่วงเสียงที่ใช้ได้ → กระต่ายวิ่งไปจุดแวะถัดไป (ระหว่างวิ่งเกมไม่ฟัง) · ข้ามช่วงก็ไปต่อได้โดยไม่เสียอะไร
+ * - เด็กเริ่มพูด → กระต่ายเริ่มวิ่งทันที (ไปได้ไม่เกิน DASH_MAX ของช่วง) · ได้ช่วงเสียงที่ใช้ได้ → วิ่งต่อจนถึงจุดแวะ
+ *   (ระหว่างวิ่งช่วงท้ายเกมไม่ฟัง) · เสียงใช้ไม่ได้ = กระต่ายหยุดตรงนั้น ไม่ถอยหลัง · ข้ามช่วงก็ไปต่อได้โดยไม่เสียอะไร
+ * - เพื่อนเมฆไล่ตามแบบเล่น ๆ: เงียบแล้วค่อย ๆ เข้ามาใกล้ วิ่งแล้วถูกทิ้งห่าง ไม่มีวันจับได้ ไม่มีแพ้
+ *   ความเร็วไม่ขึ้นกับค่าเสียงจมูก/ปาก (ขึ้นกับการตรวจพบเสียงที่สัญญาณใช้ได้เท่านั้น)
  * - เกณฑ์ออกปากของผู้เชี่ยวชาญใช้บันทึกให้ผู้ดูแลเท่านั้น (attempt.passed) ฉากไม่ตัดสินว่าพูดถูก/ผิด
  */
 export class RouteRun {
@@ -21,8 +40,14 @@ export class RouteRun {
   private readonly oralThreshold: number;
   /** Stops reached (0 = start, legs = destination). */
   reached = 0;
-  /** Running towards stop `to`, started at `start` (ms). */
-  leg: { to: number; start: number } | null = null;
+  /** Finishing run from `from` to stop `to` (started at `start`, lasts `ms`); the game does not listen meanwhile. */
+  leg: { from: number; to: number; start: number; ms: number } | null = null;
+  /** Part of the current leg already run on the child's voice (0 … DASH_MAX); kept when an attempt is not usable. */
+  dash = 0;
+  /** Running on the child's voice right now (the game is listening while this happens). */
+  dashing = false;
+  /** How far behind the cloud friend is (0 … 1); see GAP_*. */
+  gap = GAP_START;
   /** Stops reached, fractional while running — what the scene shows. */
   pos = 0;
   /** Usable attempts, judged on the expert's oral criterion for the caregiver's history. */
@@ -49,19 +74,40 @@ export class RouteRun {
 
   update(frame: SignalFrame, now: number, dtMs: number): RouteEvent[] {
     const out: RouteEvent[] = [];
+    const dt = Math.min(Math.max(dtMs, 0), 100) / 1000;
     if (this.leg) {
-      const k = Math.min(1, (now - this.leg.start) / LEG_MS);
-      this.pos = this.reached + (this.leg.to - this.reached) * (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+      const L = this.leg;
+      const k = Math.min(1, (now - L.start) / L.ms);
+      // eased only at the end: when the voice already got the bunny going, the run does not start from a standstill
+      const e = L.from > this.reached ? 1 - (1 - k) ** 2 : k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      this.pos = L.from + (L.to - L.from) * e;
+      this.gap = Math.min(1, this.gap + GAP_OPEN_PER_S * dt);
       if (k >= 1) this.arrive(out);
       return out;
     }
-    if (this.done) return out;
+    if (this.done) {
+      this.gap = Math.min(1, this.gap + GAP_OPEN_PER_S * dt);
+      return out;
+    }
     for (const ev of this.call.update(frame, now, dtMs)) {
       out.push(ev);
       if (ev.type !== "heard") continue;
       this.attempts.push({ meanNasal: ev.meanNasal, passed: 100 - ev.meanNasal >= this.oralThreshold, durationMs: ev.durationMs });
       if (ev.first) this.leave(now, out);
     }
+    if (this.leg) return out;
+
+    // the child is speaking (usable signal, not the example word): run at once; quiet turns let the cloud creep closer
+    const c = this.call.state;
+    const listening = c.phase === "turn";
+    this.dashing = listening && c.inAttempt && frame.valid;
+    if (this.dashing) {
+      this.dash += (DASH_MAX - this.dash) * (1 - Math.exp(-DASH_RATE * dt));
+      this.gap = Math.min(1, this.gap + GAP_OPEN_PER_S * dt);
+    } else if (listening) {
+      this.gap = Math.max(GAP_MIN, this.gap - GAP_CLOSE_PER_S * dt);
+    }
+    this.pos = this.reached + this.dash;
     return out;
   }
 
@@ -74,20 +120,24 @@ export class RouteRun {
     return out;
   }
 
-  /** Pause / tab hidden: an open attempt is dropped; a run in progress simply continues afterwards. */
+  /** Pause / tab hidden: an open attempt is dropped (the distance run on it stays); a run in progress continues afterwards. */
   interrupt(): void {
     this.call.interrupt();
+    this.dashing = false;
   }
 
   /** End early: whatever was reached so far is kept. */
   finish(): void {
     this.call.finish();
     this.leg = null;
+    this.dashing = false;
   }
 
   private leave(now: number, out: RouteEvent[]): void {
     const to = this.reached + 1;
-    this.leg = { to, start: now };
+    const from = this.reached + this.dash;
+    this.leg = { from, to, start: now, ms: Math.max(LEG_MIN_MS, LEG_MS * (to - from)) };
+    this.dashing = false;
     out.push({ type: "leave", to });
   }
 
@@ -98,6 +148,7 @@ export class RouteRun {
     if (this.call.heardNow) this.call.next();
     this.reached = leg.to;
     this.pos = leg.to;
+    this.dash = 0;
     this.leg = null;
     out.push({ type: "arrive", at: leg.to });
     if (this.reached >= this.legs) {

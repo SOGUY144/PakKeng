@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { bump, frameDt } from "../anim";
+import { bump, CALM, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { Cap, Crown, Scarf, Shoe } from "../models/Accessories";
 import { Balloon } from "../models/Balloon";
@@ -50,7 +50,7 @@ function Pedestal({ radius = 1.3, pond = false }: { radius?: number; pond?: bool
 
 /**
  * ฉากฉลองสั้น ๆ ในหน้าสรุปรอบ (≈3 วินาที แล้วยืนนิ่ง) — ตัวละครตรงกับเกมที่เพิ่งเล่น
- * กระต่ายใส่ของสะสมที่ปลดล็อกแล้ว; reduced motion = ท่านิ่ง ไม่มีประกาย
+ * กระต่ายใส่ของสะสมที่ปลดล็อกแล้ว; reduced motion = ท่าเดิมขนาดครึ่งเดียว ประกายน้อยลง
  */
 export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
   const kit = useKit();
@@ -67,7 +67,7 @@ export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
     const dt = frameDt(dtRaw);
     const s = tl.current;
     s.t += dt;
-    if (reduced) return;
+    const amp = reduced ? CALM.amp : 1; // reduced motion: the same cheer, half the size
     while (s.beats < BEATS.length && s.t >= BEATS[s.beats]) {
       s.beats += 1;
       bunny.current.cheer += 1;
@@ -82,7 +82,7 @@ export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
       let y = 0;
       for (const b of BEATS) {
         const k = (s.t - b) / 0.5;
-        if (k > 0 && k < 1) y = bump(k) * 0.45;
+        if (k > 0 && k < 1) y = bump(k) * 0.45 * amp;
       }
       const wasAir = frogPose.current.airborne;
       frogPose.current.airborne = y > 0.02;
@@ -90,7 +90,7 @@ export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
       frogPose.current.crouch = !frogPose.current.airborne && BEATS.some((b) => s.t > b - 0.25 && s.t < b);
       frogRoot.current.position.y = 0.04 + y;
     }
-    if (game === "balloon" && craft.current) craft.current.position.y = 0.55 + Math.sin(s.t * 1.6) * 0.08;
+    if (game === "balloon" && craft.current) craft.current.position.y = 0.55 + Math.sin(s.t * 1.6) * 0.08 * amp;
   }, -1);
 
   return (

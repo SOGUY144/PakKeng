@@ -23,6 +23,13 @@ export function bump(t: number): number {
   return Math.sin(Math.PI * clamp01(t));
 }
 
+/**
+ * Reduced motion (OS setting, or “ลดลง” in the demo tools) keeps every essential movement but calm, instead of
+ * cutting straight to the end state: one-shot moves (hop, run, door) take `slow`× longer, gestures and idle
+ * loops play at `amp` size, the camera glides more slowly and never swings. Decorative effects stay smaller or off.
+ */
+export const CALM = { slow: 1.5, amp: 0.5 } as const;
+
 /** Delta time for scene animation: capped so a long frame (tab switch, GC) never jumps the scene. */
 export function frameDt(dt: number): number {
   return Math.min(dt, 0.05);

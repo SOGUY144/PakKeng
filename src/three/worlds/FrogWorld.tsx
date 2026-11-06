@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { FriendId } from "../../data/callWords";
-import { damp, easeInOutSine, frameDt, seeded } from "../anim";
+import { CALM, damp, easeInOutSine, frameDt, seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Frog, type FrogPose } from "../models/Frog";
 import { Friend, type FriendPose } from "../models/Friends";
@@ -233,18 +233,16 @@ export function FrogWorld({ gameRef, frameRef, reduced, tier, friends: friendLis
     for (let k = 0; k < n; k++) {
       const word = s.words[k];
       const want = word && (word.heard || word.skipped || k < s.index) ? FACE_CHILD : FACE_AWAY;
-      w.face[k] = reduced ? want : damp(w.face[k], want, 6, dt);
+      w.face[k] = damp(w.face[k], want, reduced ? 3 : 6, dt);
       const shown = done || k <= s.index ? 1 : 0;
-      w.show[k] = reduced ? shown : damp(w.show[k], shown, 7, dt);
+      w.show[k] = damp(w.show[k], shown, reduced ? 4 : 7, dt);
       const slot = heardIds.indexOf(ids[k]);
       const home = gathering && slot >= 0 ? bankSpot(slot, heardIds.length, ids[k], n) : friendPos(k, ids[k]);
       const sp = w.spot[k];
-      if (reduced) sp.copy(home);
-      else {
-        sp.x = damp(sp.x, home.x, 3, dt);
-        sp.y = damp(sp.y, home.y, 3, dt);
-        sp.z = damp(sp.z, home.z, 3, dt);
-      }
+      const glide = reduced ? 1.8 : 3;
+      sp.x = damp(sp.x, home.x, glide, dt);
+      sp.y = damp(sp.y, home.y, glide, dt);
+      sp.z = damp(sp.z, home.z, glide, dt);
       const p = poses[k].current;
       p.reduced = reduced;
       p.listening = !done && k === s.index && s.inAttempt && f.valid;
@@ -259,19 +257,19 @@ export function FrogWorld({ gameRef, frameRef, reduced, tier, friends: friendLis
     }
     if (gathering) w.cheered = true;
 
-    // frog hop
+    // frog hop (reduced motion: the same hop, slower and lower — never a jump cut)
     const fp = frogPose.current;
     fp.reduced = reduced;
     fp.crouch = false;
     let airborne = false;
     const m = w.move;
     if (m) {
-      m.t += reduced ? Math.max(1, -m.t + 1) : dt / HOP_S;
+      m.t += dt / (reduced ? HOP_S * CALM.slow : HOP_S);
       const k = THREE.MathUtils.clamp(m.t, 0, 1);
       const e = easeInOutSine(k);
       w.pos.lerpVectors(m.from, m.to, e);
-      w.pos.y = THREE.MathUtils.lerp(m.from.y, m.to.y, e) + Math.sin(Math.PI * k) * 0.75 * (reduced ? 0 : 1);
-      airborne = m.t > 0 && m.t < 1 && !reduced;
+      w.pos.y = THREE.MathUtils.lerp(m.from.y, m.to.y, e) + Math.sin(Math.PI * k) * (reduced ? 0.3 : 0.75);
+      airborne = m.t > 0 && m.t < 1;
       fp.crouch = m.t < 0;
       if (m.t >= 1) {
         fp.land += 1;
@@ -287,7 +285,7 @@ export function FrogWorld({ gameRef, frameRef, reduced, tier, friends: friendLis
     const look = done ? padPos(n + 1, n) : friendPos(current, ids[current]);
     const lookAt = w.move ? w.move.to : look;
     const wantFace = Math.atan2(lookAt.x - w.pos.x, lookAt.z - w.pos.z);
-    w.frogFace = reduced ? wantFace : damp(w.frogFace, wantFace, 9, dt);
+    w.frogFace = damp(w.frogFace, wantFace, reduced ? 5 : 9, dt);
     if (frog.current) {
       frog.current.position.copy(w.pos);
       frog.current.rotation.y = w.frogFace;
@@ -308,7 +306,7 @@ export function FrogWorld({ gameRef, frameRef, reduced, tier, friends: friendLis
       ring.current.visible = !done;
       if (!done) {
         ring.current.position.set(rp.x, ids[current] === "fish" ? 0.02 : 0.15, rp.z);
-        const pulse = reduced || speakingNow ? 0 : Math.sin(w.t * 3) * 0.03;
+        const pulse = speakingNow ? 0 : Math.sin(w.t * 3) * 0.03 * (reduced ? CALM.amp : 1);
         ring.current.scale.setScalar(1 + pulse + (speakingNow ? 0.08 : 0));
         ringMat.color.lerpColors(ringIdle, ringLive, listeningNow ? 1 : 0);
       }
@@ -316,7 +314,7 @@ export function FrogWorld({ gameRef, frameRef, reduced, tier, friends: friendLis
     if (glow.current) {
       glow.current.position.set(rp.x, ids[current] === "fish" ? 0.03 : 0.155, rp.z);
       const want = done ? 0 : listeningNow ? (speakingNow ? 0.85 : 0.6) : 0.12;
-      glowMat.opacity = reduced ? want : damp(glowMat.opacity, want, 6, dt);
+      glowMat.opacity = damp(glowMat.opacity, want, 6, dt);
     }
 
     // keep the HTML speech bubble above the friend's head (never over it, and never as a texture)
@@ -351,12 +349,11 @@ export function FrogWorld({ gameRef, frameRef, reduced, tier, friends: friendLis
     const want = new THREE.Vector3(focus.x * 0.3 + 0.05, 0.3, focus.z - (done ? 0.5 : 1.6)).add(CAM_DIR.clone().multiplyScalar(dist));
     if (!w.cam) w.cam = want.clone();
     else if (settled) {
-      if (reduced) w.cam.copy(want);
-      else {
-        w.cam.x = damp(w.cam.x, want.x, 2.4, dt);
-        w.cam.y = damp(w.cam.y, want.y, 2.4, dt);
-        w.cam.z = damp(w.cam.z, want.z, 2.4, dt);
-      }
+      // reduced motion: the same glide, slower (no cut)
+      const glide = reduced ? 1.2 : 2.4;
+      w.cam.x = damp(w.cam.x, want.x, glide, dt);
+      w.cam.y = damp(w.cam.y, want.y, glide, dt);
+      w.cam.z = damp(w.cam.z, want.z, glide, dt);
     }
     camera.position.copy(w.cam);
     camera.lookAt(w.cam.x - CAM_DIR.x * dist, w.cam.y - CAM_DIR.y * dist, w.cam.z - CAM_DIR.z * dist);

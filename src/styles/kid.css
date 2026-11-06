@@ -2586,6 +2586,49 @@ button.demo-tag {
   object-fit: contain;
 }
 
+/* the chosen friend hops for joy and the others step back, then the pond opens (FriendChoices) */
+.pick-pad.is-picked::before {
+  transform: scale(1.06);
+}
+
+.pick-pad.is-picked .pick-pad__pic {
+  animation: pick-hop 0.42s var(--ease-out) both;
+}
+
+.pick-pad.is-picked .pick-pad__name {
+  box-shadow:
+    0 0 0 4px #ffd877,
+    var(--shadow-clay);
+}
+
+.pick__list.has-pick .pick-pad {
+  pointer-events: none;
+}
+
+.pick__list.has-pick .pick-pad:not(.is-picked) {
+  opacity: 0.45;
+  transition: opacity var(--dur-3) ease;
+}
+
+@keyframes pick-hop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(4%) scale(1.06, 0.92);
+  }
+  65% {
+    transform: translateY(-18%) scale(0.96, 1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+[data-motion="reduce"] .pick-pad.is-picked .pick-pad__pic {
+  animation: none;
+}
+
 .pick-pad__name {
   position: absolute;
   bottom: 6%;

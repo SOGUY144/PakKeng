@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { LOCK_BEADS, type DoorId } from "../../data/doors";
-import { bump, clamp01, damp, easeOutCubic, frameDt } from "../anim";
+import { bump, CALM, clamp01, damp, easeOutCubic, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { C } from "../palette";
 import { Field, type Placement } from "../parts";
@@ -211,15 +211,15 @@ export function Gate({ drive, look }: { drive: RefObject<GateDrive>; look: GateL
       s.lit = lit;
     }
     s.live = damp(s.live, d.open ? 1 : d.live, 10, dt);
-    const pulse = d.reduced ? 0 : Math.sin(s.t * 9) * 0.06 * s.live;
+    const pulse = Math.sin(s.t * 9) * 0.06 * s.live * (d.reduced ? CALM.amp : 1);
     const r = ring.current;
     if (r) {
       (r.material as THREE.MeshBasicMaterial).opacity = 0.22 + 0.78 * Math.min(1, s.live + pulse);
       r.scale.setScalar(1 + 0.1 * s.live + pulse);
     }
 
-    // open: the bolt slides back, then both leaves swing out; reduced motion shows the end state at once
-    s.openT = d.open ? (d.reduced ? 99 : s.openT + dt) : 0;
+    // open: the bolt slides back, then both leaves swing out (reduced motion: the same, slower)
+    s.openT = d.open ? s.openT + dt / (d.reduced ? CALM.slow : 1) : 0;
     const slide = easeOutCubic(clamp01(s.openT / BOLT_S));
     const swing = easeOutCubic(clamp01((s.openT - SWING_DELAY_S) / SWING_S));
     bolt.current?.position.setX(BOLT_X - BOLT_TRAVEL * slide);
@@ -227,7 +227,7 @@ export function Gate({ drive, look }: { drive: RefObject<GateDrive>; look: GateL
     doorR.current?.rotation.set(0, OPEN_ANGLE * swing, 0);
     const f = flash.current;
     if (f) {
-      const k = d.reduced ? 0 : bump(clamp01((s.openT - SWING_DELAY_S) / 1.2));
+      const k = bump(clamp01((s.openT - SWING_DELAY_S) / 1.2)) * (d.reduced ? 0.5 : 1);
       (f.material as THREE.MeshBasicMaterial).opacity = 0.85 * k;
       f.visible = k > 0.01;
     }

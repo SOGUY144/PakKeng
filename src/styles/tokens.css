@@ -133,10 +133,11 @@
   --tap-lg: 60px;
 }
 
-/* data-motion is set from prefers-reduced-motion (or the demo override) by src/lib/motion.ts */
+/* data-motion is set from prefers-reduced-motion (or the demo override) by src/lib/motion.ts.
+   Reduced motion keeps short, calm transitions (no overshoot) instead of cutting: things still fade and settle. */
 :root[data-motion="reduce"] {
-  --dur-1: 1ms;
-  --dur-2: 1ms;
-  --dur-3: 1ms;
-  --ease-spring: linear;
+  --dur-1: 90ms;
+  --dur-2: 140ms;
+  --dur-3: 200ms;
+  --ease-spring: var(--ease-out);
 }

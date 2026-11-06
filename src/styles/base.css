@@ -533,3 +533,40 @@ svg {
   font-weight: 600;
   text-underline-offset: 3px;
 }
+
+/* ---------- Changing screens: a soft cross-fade (View Transitions API, see src/lib/transition.ts) ----------
+   Browsers without it switch at once. Reduced motion: a shorter fade with no movement. */
+::view-transition-old(root) {
+  animation: vt-out 200ms ease-in both;
+}
+
+::view-transition-new(root) {
+  animation: vt-in 360ms var(--ease-out) both;
+}
+
+:root[data-motion="reduce"]::view-transition-old(root) {
+  animation: vt-out 160ms ease both;
+}
+
+:root[data-motion="reduce"]::view-transition-new(root) {
+  animation: vt-fade 220ms ease both;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}

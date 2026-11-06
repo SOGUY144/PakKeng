@@ -4,7 +4,7 @@ import { MOCK_DEFAULTS, mockReading } from "../signal/MockSignalSource";
 import { SignalProcessor } from "../signal/SignalProcessor";
 import type { DeviceReading } from "../signal/types";
 import type { CallItem } from "./call";
-import { LEG_MS, RouteRun, type RouteEvent } from "./route";
+import { DASH_MAX, GAP_MIN, GAP_START, LEG_MS, RouteRun, type RouteEvent } from "./route";
 
 const words = ["ปา", "ตา", "กา"];
 const items = (n: number): CallItem[] => Array.from({ length: n }, (_, k) => ({ id: String(k), word: words[k % words.length], resonance: "oral" }));
@@ -102,6 +102,76 @@ describe("Route run (เลือกทางวิ่ง): one usable word = on
     expect(g.attempts.map((x) => x.passed)).toEqual([true, false]);
     // both words moved the bunny: the scene never treats the criterion as a fail
     expect(g.reached).toBe(2);
+  });
+});
+
+describe("Route run: the bunny runs on the child's voice, the cloud friend chases (never catches)", () => {
+  it("starts running as soon as the child speaks, before the word is over, and the word finishes the leg", () => {
+    const g = new RouteRun(items(3), 70);
+    const a = run(g, [hush(), say(300)]); // still speaking
+    expect(g.dashing).toBe(true);
+    expect(g.running).toBe(false); // still listening: the finishing run has not started
+    expect(g.pos).toBeGreaterThan(0.05);
+    expect(g.pos).toBeLessThanOrEqual(DASH_MAX);
+    expect(g.reached).toBe(0);
+    const b = run(g, [hush(), legRest()], a.t);
+    expect(b.events).toContainEqual({ type: "arrive", at: 1 });
+    expect(g.reached).toBe(1);
+    expect(g.dash).toBe(0);
+    expect(g.dashing).toBe(false);
+  });
+
+  it("the voice alone never reaches the next stop: a long word keeps the bunny going, slower, short of the flag", () => {
+    const g = new RouteRun(items(3), 70);
+    const a = run(g, [hush(), say(2000)]);
+    const at2s = g.pos;
+    run(g, [say(2000)], a.t);
+    expect(g.pos).toBeGreaterThan(at2s); // still moving while the voice goes on
+    expect(g.pos).toBeLessThan(DASH_MAX);
+    expect(g.pos).toBeGreaterThan(0.6);
+    expect(g.reached).toBe(0);
+  });
+
+  it("an attempt that is too short does not count, and the bunny keeps the ground it ran (nothing taken away)", () => {
+    const g = new RouteRun(items(3), 70);
+    const a = run(g, [hush(), say(90), hush(600)]);
+    expect(g.reached).toBe(0);
+    expect(g.running).toBe(false);
+    const kept = g.pos;
+    expect(kept).toBeGreaterThan(0);
+    expect(kept).toBeLessThan(DASH_MAX);
+    run(g, [hush(2000)], a.t);
+    expect(g.pos).toBe(kept);
+  });
+
+  it("the cloud creeps closer while the child is quiet, stops at a distance, and falls back when the bunny runs", () => {
+    const g = new RouteRun(items(3), 70);
+    expect(g.gap).toBe(GAP_START);
+    const a = run(g, [hush(3000)]);
+    expect(g.gap).toBeLessThan(GAP_START);
+    const b = run(g, [hush(20_000)], a.t);
+    expect(g.gap).toBe(GAP_MIN); // never closer than this, and nothing happens there
+    expect(g.reached).toBe(0);
+    expect(g.call.state.phase).toBe("turn");
+    run(g, [say(500), hush(), legRest()], b.t);
+    expect(g.gap).toBeGreaterThan(GAP_MIN + 0.4);
+  });
+
+  it("the example word moves neither the bunny nor the cloud", () => {
+    const g = new RouteRun(items(3), 70);
+    g.call.listenStart("model");
+    run(g, [say(900)]);
+    expect(g.pos).toBe(0);
+    expect(g.dashing).toBe(false);
+    expect(g.gap).toBe(GAP_START);
+  });
+
+  it("speed never depends on the nasal value: the same speech runs the same distance", () => {
+    const low = new RouteRun(items(3), 70);
+    const high = new RouteRun(items(3), 70);
+    run(low, [hush(), say(400, 10)]);
+    run(high, [hush(), say(400, 60)]);
+    expect(high.pos).toBeCloseTo(low.pos, 6);
   });
 });
 

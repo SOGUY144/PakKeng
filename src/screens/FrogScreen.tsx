@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Frog, LilyPad, StarShape } from "../components/Art";
 import { FriendPicture, WordTable, WordTableNote } from "../components/CallParts";
 import { PauseOverlay } from "../components/GameParts";
@@ -9,9 +9,11 @@ import { callWordsFor, orderFrom, type CallWord, type FriendId } from "../data/c
 import { finishRound } from "../data/rounds";
 import { useActiveChild } from "../data/store";
 import { useReducedMotion } from "../lib/hooks";
+import { motionReduced } from "../lib/motion";
 import { navigate } from "../lib/router";
 import { exampleKind, playExample, stopExample, subscribeVoices } from "../lib/speech";
 import { showToast } from "../lib/toast";
+import { withViewTransition } from "../lib/transition";
 import { CallGame, wordSummary, type CallEvent, type CallState, type WordStat } from "../logic/call";
 import { useConnection, useSignalSource } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
@@ -21,13 +23,33 @@ import { useGameRuntime } from "./useGameRuntime";
 
 const fid = (w: { id: string }) => w.id as FriendId;
 
-/** Lily-pad choice list (first friend, or "who next?"). */
+/**
+ * Lily-pad choice list (first friend, or "who next?"). The chosen friend does a happy hop (the others step back)
+ * before the game moves on, so the tap visibly leads to "the frog goes to this friend".
+ */
 function FriendChoices({ words, onPick, label }: { words: { id: string; word: string }[]; onPick: (id: FriendId) => void; label: (w: string) => string }) {
+  const [picked, setPicked] = useState<FriendId | null>(null);
+  // the game re-renders every frame: keep the latest callback without restarting the hop timer
+  const pickRef = useRef(onPick);
+  useEffect(() => {
+    pickRef.current = onPick;
+  });
+  useEffect(() => {
+    if (picked === null) return;
+    const id = setTimeout(() => pickRef.current(picked), motionReduced() ? 160 : 420);
+    return () => clearTimeout(id);
+  }, [picked]);
   return (
-    <ul className="pick__list">
+    <ul className={`pick__list${picked ? " has-pick" : ""}`}>
       {words.map((w) => (
         <li key={w.id}>
-          <button type="button" className="pick-pad" onClick={() => onPick(fid(w))} aria-label={label(w.word)}>
+          <button
+            type="button"
+            className={`pick-pad${picked === fid(w) ? " is-picked" : ""}`}
+            onClick={() => setPicked((p) => p ?? fid(w))}
+            aria-label={label(w.word)}
+            aria-pressed={picked === fid(w)}
+          >
             <span className="pick-pad__pic">
               <FriendPicture id={fid(w)} word={w.word} />
             </span>
@@ -480,24 +502,25 @@ export function FrogScreen() {
   const [first, setFirst] = useState<FriendId | null>(solo ? words[0].id : null);
   const [round, setRound] = useState(0);
   const ordered = useMemo(() => orderFrom(words, first), [words, first]);
+  // picker → pond and back: a soft cross-fade, like changing screens
+  const startWith = useCallback((id: FriendId) => {
+    withViewTransition(() => {
+      setFirst(id);
+      setRound((r) => r + 1);
+    });
+  }, []);
   if (first === null) {
-    return (
-      <FriendPicker
-        words={words}
-        onPick={(id) => {
-          setFirst(id);
-          setRound((r) => r + 1);
-        }}
-      />
-    );
+    return <FriendPicker words={words} onPick={startWith} />;
   }
   return (
     <CallRound
       key={round}
       words={ordered}
       onPlayAgain={() => {
-        if (solo) setRound((r) => r + 1);
-        else setFirst(null);
+        withViewTransition(() => {
+          if (solo) setRound((r) => r + 1);
+          else setFirst(null);
+        });
       }}
     />
   );

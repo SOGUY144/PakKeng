@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { bump, damp, frameDt } from "../anim";
+import { bump, CALM, damp, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { C } from "../palette";
 import type { CloudDrive } from "./drives";
@@ -30,7 +30,7 @@ export function CloudPal({ drive }: { drive: RefObject<CloudDrive> }) {
     const dt = frameDt(dtRaw);
     const d = drive.current;
     const s = st.current;
-    const motion = d.reduced ? 0 : 1;
+    const motion = d.reduced ? CALM.amp : 1;
     s.excite = damp(s.excite, d.excite, 3, dt);
     s.t += dt * (1 + s.excite * 0.6);
     if (d.wave !== s.waveSeen) {

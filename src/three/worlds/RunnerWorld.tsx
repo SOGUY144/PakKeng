@@ -2,8 +2,8 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { routeById } from "../../data/routes";
-import { ROUTE_LEGS } from "../../logic/route";
-import { frameDt, seeded } from "../anim";
+import { GAP_START, ROUTE_LEGS } from "../../logic/route";
+import { damp, frameDt, seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Bunny } from "../models/Bunny";
 import { CloudPal } from "../models/CloudPal";
@@ -15,6 +15,8 @@ import type { RunnerSpec } from "../spec";
 
 /** Hero stands on the middle lane; the garden scrolls past one leg at a time (camera never moves). */
 export const BUNNY_X = -1.3;
+/** How far behind the bunny the cloud friend floats for a chase gap (0 = right behind … 1 = left far back, off screen). */
+const chaseBehind = (gap: number) => 0.95 + 1.6 * gap;
 /** World units between two stops of the route. */
 const LEG_UNITS = 3.1;
 const SPAN = 30;
@@ -109,6 +111,8 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
   const bunny = useRef(bunnyDrive({ reduced }));
   const cloud = useRef(cloudDrive({ reduced }));
   const pal = useRef<THREE.Group>(null);
+  const chaser = useRef<THREE.Group>(null);
+  const chase = useRef(chaseBehind(GAP_START));
   const flags = useRef<(THREE.Group | null)[]>([]);
   const goal = useRef<THREE.Group>(null);
   const wheel = useRef<THREE.Group>(null);
@@ -127,8 +131,9 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
     const call = g.call.state;
     if (seen.current.game !== g) seen.current = { game: g, reached: g.reached, off: null }; // new round / restart
 
-    // where the bunny is on the route: eased run from the logic; reduced motion cuts straight to the next stop
-    const want = (reduced && g.leg ? g.leg.to : g.pos) * LEG_UNITS;
+    // where the bunny is on the route: the eased run from the logic (reduced motion too: no cut to the next stop,
+    // only the parallax, dust and flag sway stay off)
+    const want = g.pos * LEG_UNITS;
     const prev = seen.current.off ?? want;
     seen.current.off = want;
     offset.current = want;
@@ -140,8 +145,10 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
     b.reduced = reduced;
     b.speed = Math.min(1.6, v / 2.6);
     b.boost = false;
-    b.pose = g.done ? "wave" : g.running ? "run" : "stand";
-    moving.current = g.running && !reduced;
+    // the bunny runs while the child speaks (dash) and on the finishing run after the word
+    const runningNow = g.running || g.dashing;
+    b.pose = g.done ? "wave" : runningNow ? "run" : "stand";
+    moving.current = runningNow && !reduced;
 
     if (g.reached > seen.current.reached) {
       // arrived at a stop: a small cheer, the cloud friend waves
@@ -150,7 +157,10 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
       fire.current = { seq: fire.current.seq + 1, x: BUNNY_X, y: 1.75, z: 0 };
       seen.current.reached = g.reached;
     }
-    cloud.current.excite = g.running ? 0.8 : 0.3;
+    // the cloud friend chases: closer while the child is quiet, left behind while the bunny runs (it never catches up)
+    chase.current = damp(chase.current, chaseBehind(g.gap), reduced ? 2.5 : 4, dt);
+    chaser.current?.position.setX(BUNNY_X - chase.current);
+    cloud.current.excite = runningNow ? 0.9 : g.gap < 0.3 ? 0.65 : 0.3;
     cloud.current.reduced = reduced;
     pal.current?.position.setY(0.85 + (reduced ? 0 : Math.sin(far.current * 9) * 0.04));
 
@@ -227,10 +237,12 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
           <Bunny drive={bunny} outfit={outfit} />
         </group>
         <BlobShadow at={[BUNNY_X, 0, 0.04]} size={[0.95, 0.75]} />
-        <group ref={pal} position={[BUNNY_X - 1.45, 0.95, 0.5]} rotation-y={Math.PI / 2 - 0.5} scale={0.7}>
-          <CloudPal drive={cloud} />
+        <group ref={chaser} position={[BUNNY_X - chaseBehind(GAP_START), 0, 0]}>
+          <group ref={pal} position={[0, 0.95, 0.5]} rotation-y={Math.PI / 2 - 0.5} scale={0.7}>
+            <CloudPal drive={cloud} />
+          </group>
+          <BlobShadow at={[0, 0, 0.5]} size={[0.85, 0.6]} materialKey="soft" opacity={0.5} />
         </group>
-        <BlobShadow at={[BUNNY_X - 1.45, 0, 0.5]} size={[0.85, 0.6]} materialKey="soft" opacity={0.5} />
         <Dust on={moving} drift={drift} at={[BUNNY_X - 0.1, 0.02, 0]} reduced={reduced} />
         <Burst fire={fire} reduced={reduced} />
       </group>
