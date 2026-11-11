@@ -1,4 +1,4 @@
-export type GameId = "runner" | "balloon" | "frog";
+export type GameId = "runner" | "balloon" | "frog" | "kick";
 export type Level = 1 | 2 | 3;
 
 /** แผนการฝึกที่นักแก้ไขการพูดตั้งต่อเด็กหนึ่งคน — แหล่งเดียวของเกณฑ์ทุกค่าในเกม */
@@ -34,6 +34,8 @@ export interface Child {
 
 export interface GateSummary {
   attempts: number;
+  /** Attempts whose signal was usable (not clipped, not too quiet); older rounds have none. */
+  usable?: number;
   passed: number;
   meanNasal: number | null;
   opened: boolean;
@@ -51,6 +53,13 @@ export interface BalloonSummary {
 export interface FrogSummary {
   steps: number;
   target: number;
+}
+
+/** One round of penalty kicks: goals scored by voice out of the balls in the round, against the team the child picked. */
+export interface KickSummary {
+  goals: number;
+  shots: number;
+  team: string;
 }
 
 /** สรุปรายคำของด่านเรียกเพื่อน — เก็บเท่าที่จำเป็น: ไม่มีเสียงดิบ มีแต่จำนวนครั้งและค่าเฉลี่ย */
@@ -82,7 +91,7 @@ export interface CallSummary {
 
 /** What the child picked at the start of a round (friend order, balloon trip, route, door) — shown back on the result screen. */
 export interface RoundChoice {
-  kind: "friends" | "trip" | "route" | "door";
+  kind: "friends" | "trip" | "route" | "door" | "team";
   /** Stable id of the choice (e.g. "crab,dog,fish", "lighthouse", "river", "flower"). */
   id: string;
   /** Short Thai name the child saw, e.g. "ประภาคาร". */
@@ -92,8 +101,11 @@ export interface RoundChoice {
 export interface Session {
   id: string;
   childId: string;
-  /** "sample" = seeded example history, "demo" = played in this demo. */
-  source: "sample" | "demo";
+  /**
+   * Where the round came from: "sample" = seeded example history (never counted as progress), "demo" = played in this
+   * app on the labelled simulated signal, "device" = played on a real device. Rewards and summaries keep them apart.
+   */
+  source: "sample" | SignalKind;
   startedAt: string;
   durationSec: number;
   game: GameId;
@@ -113,6 +125,14 @@ export interface Session {
   frog: FrogSummary | null;
   /** Present on rounds of the call-a-friend level. */
   call?: CallSummary | null;
+  /** Present on penalty-kick rounds. */
+  kick?: KickSummary | null;
+  /**
+   * Detected speech attempts with usable signal in this round (never the example word, never silence/clipping/lost data).
+   * Not a count of correct words — there is no speech recognition. The only thing rewards (eggs, garden, clothes) grow
+   * on. Older rounds have none: see sessionAttempts() in rewards.ts.
+   */
+  usableAttempts?: number;
   /** The child's own pick for this round (older sessions have none). */
   choice?: RoundChoice | null;
   stars: number;
@@ -128,6 +148,42 @@ export interface Calibration {
   simulated: true;
 }
 
+export type AvatarSpecies = "bunny" | "puppy" | "dino" | "kitty";
+export type PetKind = "puppy" | "kitten" | "chick" | "dino" | "dragon" | "unicorn";
+export type EggKind = "sun" | "leaf" | "sky" | "star";
+export type PlantKind = "carrot" | "sunflower" | "strawberry" | "starfruit";
+export type WearId = "cap" | "shoes" | "scarf" | "crown" | "jersey" | "cape" | "hoodie" | "dress";
+
+/** Where a round's signal came from: the labelled demo (simulated) source or a real device. */
+export type SignalKind = "demo" | "device";
+
+/**
+ * One pool of rewards (เกาะของฉัน). There is one pool per signal kind, so play with the simulated demo signal never
+ * mixes with practice on the real device. Only the child's own picks are stored here — progress (how close the egg is,
+ * how big a plant is, which clothes are unlocked) is always computed from saved rounds, so it can only grow from
+ * usable spoken words, and saving or reopening a round twice cannot add anything.
+ */
+export interface RewardLedger {
+  /** The egg being warmed and from when its words count. */
+  egg: { kind: EggKind; since: string } | null;
+  /** Pets the child has (starter pet + hatched eggs), in order. */
+  pets: PetKind[];
+  /** The pet that comes along in the games. */
+  buddy: PetKind | null;
+  /** Garden beds: what is planted and from when its words count. */
+  beds: ({ kind: PlantKind; since: string } | null)[];
+  /** Picked harvest per plant. */
+  harvest: Partial<Record<PlantKind, number>>;
+}
+
+/** รางวัลของเด็กหนึ่งคน: ตัวละครและชุดที่เลือก (ใช้ร่วมกัน) + กองรางวัลแยกตามชนิดสัญญาณ ไม่มีของสุ่ม เงิน หรือการลงโทษวันที่ไม่ได้เล่น */
+export interface RewardState {
+  species: AvatarSpecies;
+  /** Items the child chose to wear; null = never chose (wear every unlocked classic collectible, as before). */
+  wear: WearId[] | null;
+  ledgers: Partial<Record<SignalKind, RewardLedger>>;
+}
+
 export interface DemoDB {
   version: 1;
   seededAt: string;
@@ -135,12 +191,15 @@ export interface DemoDB {
   children: Child[];
   sessions: Session[];
   calibrations: Record<string, Calibration>;
+  /** Per child id; absent in older saved data (= nothing chosen yet). */
+  rewards?: Record<string, RewardState>;
 }
 
 export const GAME_LABEL: Record<GameId, string> = {
   runner: "กระต่ายวิ่ง",
   balloon: "บอลลูน",
   frog: "กบข้ามบึง",
+  kick: "ยิงจุดโทษ",
 };
 
 export const LEVEL_LABEL: Record<Level, string> = {

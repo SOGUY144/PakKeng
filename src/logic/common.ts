@@ -12,6 +12,8 @@ export interface Attempt {
   meanNasal: number;
   passed: boolean;
   durationMs: number;
+  /** false = the signal was too loud (clipped) or too quiet to use; absent = usable (games that only keep usable ones). */
+  usable?: boolean;
 }
 
 export interface SegmentTotals {

@@ -6,7 +6,7 @@ import { BEACH_SEA, doorById, type Door, type DoorPlace } from "../../data/doors
 import { CALM, clamp01, damp, easeInOutSine, easeOutCubic, frameDt, lerp, seeded } from "../anim";
 import type { Kit } from "../kit";
 import { useKit } from "../kitContext";
-import { Bunny } from "../models/Bunny";
+import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { CloudPal } from "../models/CloudPal";
 import { bunnyDrive, cloudDrive } from "../models/drives";
 import { EmblemField, Gate, type GateDrive, type GateLook } from "../models/Gate";
@@ -443,7 +443,7 @@ function Beyond({ door, reduced }: { door: Door | undefined; reduced: boolean })
  * - เหตุการณ์เปิด: สลักเลื่อน บานเหวี่ยงออก แสงจากอีกฝั่งส่องลงทางเดิน กล้องเลื่อนไปที่ช่องประตูให้เห็นปลายทาง
  *   (สวนดอกไม้ / ฟ้าเต็มดาว / ชายหาด) กระต่ายกับเพื่อนเมฆหันไปมองด้วย · ลดการเคลื่อนไหว = ตัดภาพไปที่ปลายทางทันที
  */
-export function GateWorld({ gameRef, frameRef, outfit, reduced, tier, door: doorId }: GateSpec) {
+export function GateWorld({ gameRef, frameRef, outfit, species, reduced, tier, door: doorId }: GateSpec) {
   const kit = useKit();
   const door = doorById(doorId);
   const look = useMemo(() => lookOf(door), [door]);
@@ -615,7 +615,7 @@ export function GateWorld({ gameRef, frameRef, outfit, reduced, tier, door: door
         />
 
         <group ref={bunnyRoot} position={BUNNY} rotation-y={BUNNY_FACE}>
-          <Bunny drive={bunny} outfit={outfit} />
+          <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
         </group>
         <BlobShadow at={BUNNY} size={[0.95, 0.75]} />
         <group ref={cloudRoot} position={CLOUD} rotation-y={CLOUD_FACE}>

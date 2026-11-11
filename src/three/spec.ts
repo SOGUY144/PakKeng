@@ -2,6 +2,7 @@ import type { RefObject } from "react";
 import type { BalloonGame } from "../logic/balloon";
 import type { CallGame } from "../logic/call";
 import type { GateGame } from "../logic/gate";
+import type { KickMatch } from "../logic/kick";
 import type { RouteRun } from "../logic/route";
 import type { SignalFrame } from "../signal/SignalProcessor";
 import type { Tier } from "./gfx";
@@ -27,6 +28,8 @@ export interface RunnerSpec extends GameWorld<RouteRun> {
   kind: "runner";
   /** Unlocked collectibles worn by the bunny, e.g. "cap,scarf". */
   outfit: string;
+  /** Character the child picked on the island ("bunny" | "puppy" | "dino" | "kitty"); absent = bunny. */
+  species?: string;
   /** Route the child picked on the map (id in src/data/routes.ts): its flags and destination. */
   route: string;
 }
@@ -34,6 +37,7 @@ export interface RunnerSpec extends GameWorld<RouteRun> {
 export interface GateSpec extends GameWorld<GateGame> {
   kind: "gate";
   outfit: string;
+  species?: string;
   /** Door the child picked (its pattern and what waits behind it); absent = the classic gate. */
   door?: string;
 }
@@ -45,6 +49,9 @@ export interface BalloonSpec extends GameWorld<BalloonGame> {
   labelRef: RefObject<HTMLElement | null>;
   /** Where the child is sending the balloons (its pin and balloon colours); absent = the classic sky. */
   destination?: string;
+  /** What the character wears and which character it is (picked on the island). */
+  outfit?: string;
+  species?: string;
 }
 
 /** The pond of the call-a-friend level (adapted from กบข้ามบึง). */
@@ -56,10 +63,48 @@ export interface FrogSpec extends GameWorld<CallGame> {
   bubbleRef: RefObject<HTMLElement | null>;
 }
 
-export interface CelebrateSpec extends WorldCommon {
-  kind: "celebrate";
-  game: "runner" | "balloon" | "frog";
+/** The penalty-kick pitch (ยิงจุดโทษ). */
+export interface KickSpec extends GameWorld<KickMatch> {
+  kind: "kick";
+  /** Unlocked collectibles worn by the kicker, e.g. "cap,scarf". */
   outfit: string;
+  species?: string;
+  /** The pet that comes along (shown on the touchline); "" = none. */
+  buddy?: string;
+  /** The team the child plays against (id in src/data/teams.ts): its goalie, colours and crowd. */
+  team: string;
 }
 
-export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | CelebrateSpec;
+/**
+ * เกาะของฉัน: ตัวละครที่เลือก (ชนิด + ชุด) สัตว์ที่พาไปด้วย ไข่ และแปลงผัก — ทุกอย่างมาจากรางวัลที่คำนวณจากรอบที่บันทึก
+ * (src/data/rewards.ts) ส่งเป็นค่า primitive: เปลี่ยนเมื่อเด็กเลือก/ฟัก/ปลูก/เก็บ ไม่ใช่ทุกเฟรม
+ */
+export interface IslandSpec extends WorldCommon {
+  kind: "island";
+  species: string;
+  outfit: string;
+  /** Pet that walks with the character ("" = none). */
+  buddy: string;
+  /** Other pets the child has, comma separated (they idle around the island). */
+  pets: string;
+  /** "kind:crack:ready" of the egg being warmed, or "" when there is none. */
+  egg: string;
+  /** Beds left to right as "kind:stage" or "" for an empty bed, comma separated, e.g. "carrot:1,,sunflower:3". */
+  beds: string;
+  /** Which part of the island the child is looking at (camera framing). */
+  focus: "me" | "pets" | "garden";
+  /** Increment to play: the egg hatching / a plant being picked (index) / the character cheering after a change. */
+  hatchSeq: number;
+  pickSeq: number;
+  pickBed: number;
+  cheerSeq: number;
+}
+
+export interface CelebrateSpec extends WorldCommon {
+  kind: "celebrate";
+  game: "runner" | "balloon" | "frog" | "kick";
+  outfit: string;
+  species?: string;
+}
+
+export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | IslandSpec | CelebrateSpec;

@@ -7,6 +7,8 @@ import { CelebrateWorld } from "./worlds/Showcase";
 import { BalloonWorld } from "./worlds/BalloonWorld";
 import { FrogWorld } from "./worlds/FrogWorld";
 import { GateWorld } from "./worlds/GateWorld";
+import { IslandWorld } from "./worlds/IslandWorld";
+import { KickWorld } from "./worlds/KickWorld";
 import { RunnerWorld } from "./worlds/RunnerWorld";
 
 const MAX_DPR: Record<Tier, number> = { high: 2, medium: 1.5, low: 1 };
@@ -54,6 +56,10 @@ function World(spec: WorldSpec) {
       return <BalloonWorld {...spec} />;
     case "frog":
       return <FrogWorld {...spec} />;
+    case "kick":
+      return <KickWorld {...spec} />;
+    case "island":
+      return <IslandWorld {...spec} />;
     case "celebrate":
       return <CelebrateWorld {...spec} />
   }

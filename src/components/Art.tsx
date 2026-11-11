@@ -205,7 +205,23 @@ export function BaffleDiagram() {
   );
 }
 
-export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" }) {
+export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" }) {
+  if (game === "kick")
+    return (
+      <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">
+        <rect width="120" height="84" fill="var(--grass)" />
+        <path d="M0 30h120M0 58h120" stroke="rgba(255,255,255,.18)" strokeWidth="14" />
+        <path d="M30 14h60v26H30z" fill="rgba(255,255,255,.55)" stroke="#fff" strokeWidth="3" strokeLinejoin="round" />
+        <path d="M36 14v26M44 14v26M52 14v26M60 14v26M68 14v26M76 14v26M84 14v26M30 22h60M30 31h60" stroke="#fff" strokeWidth="1" opacity=".7" />
+        <path d="M14 76l18-36h56l18 36" stroke="#fff" strokeWidth="2" fill="none" opacity=".8" />
+        <circle cx="60" cy="62" r="2.5" fill="#fff" />
+        <g transform="translate(70 26)">
+          <circle r="9" fill="#fff" stroke={LINE} strokeWidth="2" />
+          <path d="M0 -4l4 3-1.5 4.5h-5L-4 -1z" fill={LINE} />
+        </g>
+        <path d="M60 60C64 46 68 36 70 30" stroke="#fff" strokeWidth="2" strokeDasharray="3 4" fill="none" opacity=".9" />
+      </svg>
+    );
   if (game === "runner")
     return (
       <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">

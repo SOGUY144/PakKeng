@@ -10,7 +10,7 @@ export const DEFAULT_PLAN: Omit<Plan, "updatedAt"> = {
   dailyMinutes: 10,
   balloonHoldSec: 3,
   level: 3,
-  games: { runner: true, balloon: true, frog: true },
+  games: { runner: true, balloon: true, frog: true, kick: true },
   gateEnabled: true,
   callWords: [...DEFAULT_CALL_WORDS],
 };
@@ -92,7 +92,7 @@ export function validatePlan(d: PlanDraft): { ok: true; plan: Omit<Plan, "update
   const nasalWords = d.nasalWords.map(cleanWord).filter(Boolean);
   if (d.gateEnabled && nasalWords.length < 1) errors.nasalWords = "เปิดด่านประตูอยู่ ต้องมีคำนาสิกอย่างน้อย 1 คำ";
 
-  if (!d.games.runner && !d.games.balloon && !d.games.frog) errors.games = "เปิดอย่างน้อย 1 เกม";
+  if (!d.games.runner && !d.games.balloon && !d.games.frog && !d.games.kick) errors.games = "เปิดอย่างน้อย 1 เกม";
   if (![1, 2, 3].includes(d.level)) errors.level = "เลือกด่าน";
   const callWords = CALL_WORDS.map((w) => w.id).filter((id) => d.callWords.includes(id));
   if (d.games.frog && callWords.length < 1) errors.callWords = "เปิดกบข้ามบึงอยู่ ต้องเลือกคำเรียกเพื่อนอย่างน้อย 1 คำ";
@@ -120,6 +120,7 @@ export function missionGame(p: Plan): GameId | null {
   if (p.games.runner) return "runner";
   if (p.games.balloon) return "balloon";
   if (p.games.frog) return "frog";
+  if (p.games.kick) return "kick";
   return null;
 }
 
@@ -132,6 +133,7 @@ export function promptFor(word: string, level: Level): string {
 
 export function promptInstruction(game: GameId, level: Level): string {
   if (game === "frog") return "ฟังคำ แล้วเรียกเพื่อน";
+  if (game === "kick") return "พูดคำนี้ แล้วเตะลูกเข้าประตู";
   if (game === "balloon") return "พูดลากเสียงค้างไว้ ให้บอลลูนอยู่ในโซน";
   if (level === 1) return "พูดคำนี้ ลากเสียงให้ยาว";
   if (level === 2) return "พูดคำนี้ หนึ่งครั้ง";

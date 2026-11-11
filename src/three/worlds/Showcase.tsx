@@ -5,7 +5,8 @@ import { bump, CALM, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { Cap, Crown, Scarf, Shoe } from "../models/Accessories";
 import { Balloon } from "../models/Balloon";
-import { Bunny } from "../models/Bunny";
+import { Bunny, type AvatarSpecies } from "../models/Bunny";
+import { BALL_R, Goal, SoccerBall, Trophy, type NetDrive } from "../models/Football";
 import { CloudPal } from "../models/CloudPal";
 import { bunnyDrive, cloudDrive, type BunnyPose } from "../models/drives";
 import { Frog, type FrogPose } from "../models/Frog";
@@ -52,7 +53,7 @@ function Pedestal({ radius = 1.3, pond = false }: { radius?: number; pond?: bool
  * ฉากฉลองสั้น ๆ ในหน้าสรุปรอบ (≈3 วินาที แล้วยืนนิ่ง) — ตัวละครตรงกับเกมที่เพิ่งเล่น
  * กระต่ายใส่ของสะสมที่ปลดล็อกแล้ว; reduced motion = ท่าเดิมขนาดครึ่งเดียว ประกายน้อยลง
  */
-export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
+export function CelebrateWorld({ game, outfit, species, reduced, tier }: CelebrateSpec) {
   const kit = useKit();
   const bunny = useRef(bunnyDrive({ pose: game === "balloon" ? "ride" : "stand", reduced }));
   const cloud = useRef(cloudDrive({ reduced }));
@@ -105,7 +106,7 @@ export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
       {game === "runner" ? (
         <>
           <group rotation-y={0.25}>
-            <Bunny drive={bunny} outfit={outfit} />
+            <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
           </group>
           <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
           <group position={[-1.05, 0.95, -0.35]} rotation-y={0.5} scale={0.65}>
@@ -113,9 +114,23 @@ export function CelebrateWorld({ game, outfit, reduced, tier }: CelebrateSpec) {
           </group>
         </>
       ) : null}
+      {game === "kick" ? (
+        <>
+          <group rotation-y={0.25}>
+            <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
+          </group>
+          <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
+          <group position={[0.95, 0, 0.1]} rotation-y={-0.35}>
+            <Trophy />
+          </group>
+          <group position={[-0.8, BALL_R, 0.35]}>
+            <SoccerBall />
+          </group>
+        </>
+      ) : null}
       {game === "balloon" ? (
         <group ref={craft} position={[0, 0.55, 0]}>
-          <Balloon bunny={bunny} outfit={outfit} reduced={reduced} />
+          <Balloon bunny={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} reduced={reduced} />
         </group>
       ) : null}
       {game === "frog" ? (
@@ -135,20 +150,26 @@ export type StudioSubject =
   | "thumb-runner"
   | "thumb-balloon"
   | "thumb-frog"
-  | "avatar-bunny"
+  | "thumb-kick"
+  | `avatar-${AvatarSpecies}`
   | "item-cap"
   | "item-shoes"
   | "item-scarf"
   | "item-crown"
   | `friend-${FriendKind}`
   | `friend-${FriendKind}-back`
-  | "hero-bunny"
+  | `hero-${AvatarSpecies}`
   | `hero-${FriendKind}`;
 
 /** Still subjects rendered once (dev tool) into the images used by Home, Result and the call-a-friend cards. */
 export function StudioScene({ subject }: { subject: StudioSubject }) {
   const kit = useKit();
-  const bunny = useRef(bunnyDrive({ pose: subject === "thumb-runner" ? "run" : subject === "hero-bunny" ? "wave" : "stand", speed: 1.3, boost: true }));
+  // avatar-<species> / hero-<species>: the child's own character (Home shows the one the child picked on the island)
+  const me = /^(avatar|hero)-(bunny|puppy|dino|kitty)$/.exec(subject);
+  const bunny = useRef(
+    bunnyDrive({ pose: subject === "thumb-runner" || subject === "thumb-kick" ? "run" : me?.[1] === "hero" ? "wave" : "stand", speed: 1.3, boost: true }),
+  );
+  const net = useRef<NetDrive>({ x: 0, y: 0, push: 0 });
   const ride = useRef(bunnyDrive({ pose: "ride" }));
   const cloud = useRef(cloudDrive({ reduced: true }));
   const frogPose = useRef<FrogPose>({ crouch: false, airborne: false, land: 0, reduced: true });
@@ -173,7 +194,46 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
       </group>
     );
   }
+  if (me) {
+    const species = me[2] as AvatarSpecies;
+    return me[1] === "hero" ? (
+      <group dispose={null}>
+        {lights}
+        <FitCamera target={[0, 0.82, 0]} dir={[0.1, 0.16, 1]} width={1.5} height={2} />
+        <Bunny drive={bunny} outfit="cap" species={species} />
+        <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
+      </group>
+    ) : (
+      <group dispose={null}>
+        {lights}
+        <FitCamera target={[0, 1.12, 0]} dir={[0.08, 0.1, 1]} width={1.25} height={1.2} />
+        <Bunny drive={bunny} outfit="cap" species={species} />
+      </group>
+    );
+  }
   switch (subject) {
+    case "thumb-kick":
+      // the goal faces the camera (most recognisable), the ball on the spot, the bunny running in from the right
+      return (
+        <group dispose={null}>
+          {lights}
+          <FitCamera target={[0, 0.68, 0.2]} dir={[0.12, 0.3, 1]} width={3.7} height={2.4} />
+          <mesh geometry={kit.geo("studio-pitch", () => new THREE.PlaneGeometry(14, 9))} material={kit.clay(C.grass)} rotation-x={-Math.PI / 2} position={[0, 0, -1.5]} />
+          <mesh geometry={kit.geo("studio-goal-line", () => new THREE.BoxGeometry(4.2, 0.012, 0.07))} material={kit.clay(C.white)} position={[0, 0.006, -1.6]} />
+          <group position={[0, 0, -1.6]} scale={0.75}>
+            <Goal net={net} color="#8fd3a0" deep="#3f9a5c" shadows />
+          </group>
+          <group position={[-0.4, BALL_R, 0.45]}>
+            <SoccerBall />
+          </group>
+          <BlobShadow at={[-0.4, 0, 0.45]} size={[0.32, 0.3]} />
+          <group position={[0.8, 0, 0.7]} rotation-y={-1.13}>
+            <Bunny drive={bunny} outfit="cap" />
+          </group>
+          <BlobShadow at={[0.8, 0, 0.74]} size={[0.9, 0.7]} />
+          <Field geometry={kit.geo("tree", S.tree)} items={[{ x: -2.9, z: -3.6, s: 1.2 }, { x: 2.7, z: -3.4, s: 1.1, ry: 2 }]} />
+        </group>
+      );
     case "thumb-runner":
       return (
         <group dispose={null}>
@@ -216,23 +276,6 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
           <group position={[0, 0.04, 0]} rotation-y={0.3}>
             <Frog pose={frogPose} />
           </group>
-        </group>
-      );
-    case "hero-bunny":
-      return (
-        <group dispose={null}>
-          {lights}
-          <FitCamera target={[0, 0.82, 0]} dir={[0.1, 0.16, 1]} width={1.5} height={2} />
-          <Bunny drive={bunny} outfit="cap" />
-          <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
-        </group>
-      );
-    case "avatar-bunny":
-      return (
-        <group dispose={null}>
-          {lights}
-          <FitCamera target={[0, 1.12, 0]} dir={[0.08, 0.1, 1]} width={1.25} height={1.2} />
-          <Bunny drive={bunny} outfit="cap" />
         </group>
       );
     default:

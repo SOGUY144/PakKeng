@@ -1,5 +1,7 @@
 import { useKit } from "../kitContext";
 import { C } from "../palette";
+import { capeGeo, capeTieGeo, dressTopGeo, hoodGeo, hoodieSleeveGeo, hoodieTorsoGeo, jerseySleeveGeo, jerseyTorsoGeo, skirtGeo } from "./avatarGeo";
+import { Painted } from "./avatarParts";
 
 type V3 = [number, number, number];
 
@@ -57,4 +59,56 @@ export function Shoe() {
       <Ball at={[0, -0.03, 0.04]} s={[0.125, 0.04, 0.17]} color={C.white} />
     </group>
   );
+}
+
+/*
+ * ชุดแต่งตัวใหม่: เสื้อบอลสีฟ้าขอบขาวเบอร์ 1, ฮู้ดไดโนเสาร์, ชุดเจ้าหญิงสีชมพูมีโบว์, ผ้าคลุมฮีโร่สีแดงมีดาวทอง
+ * แต่ละชิ้นรวมเป็น geometry ก้อนเดียว (หนึ่ง draw call) ตำแหน่งตามโครงตัวละครใน Bunny.tsx ใช้ได้ทุกแบบ (กระต่าย หมา ไดโนเสาร์ แมว)
+ */
+
+/** What can be worn on the torso (one at a time; see outfitFlags). */
+export type TopKind = "jersey" | "hoodie" | "dress";
+
+/** Torso garment, origin = the character's feet: football shirt, hoodie body, or the dress bodice with its sash and bow. */
+export function Top({ kind }: { kind: TopKind }) {
+  const kit = useKit();
+  const geo =
+    kind === "jersey"
+      ? kit.geo("avatar-jersey", () => jerseyTorsoGeo(kit.seg))
+      : kind === "hoodie"
+        ? kit.geo("avatar-hoodie", () => hoodieTorsoGeo(kit.seg))
+        : kit.geo("avatar-dress-top", () => dressTopGeo(kit.seg));
+  return <Painted geo={geo} />;
+}
+
+/** The matching sleeve, inside an arm's swinging group (origin = the shoulder joint). */
+export function Sleeve({ kind }: { kind: TopKind }) {
+  const kit = useKit();
+  if (kind === "dress") return <mesh geometry={kit.sphere()} material={kit.clay(C.pinkSoft)} position={[0, -0.02, 0]} scale={[0.1, 0.085, 0.1]} />;
+  const geo = kind === "jersey" ? kit.geo("avatar-jersey-sleeve", () => jerseySleeveGeo(kit.seg)) : kit.geo("avatar-hoodie-sleeve", () => hoodieSleeveGeo(kit.seg));
+  return <Painted geo={geo} />;
+}
+
+/** Flared princess skirt with a lace hem; origin = SKIRT_PIVOT (it sways about the waist). */
+export function Skirt() {
+  const kit = useKit();
+  return <Painted geo={kit.geo("avatar-skirt", () => skirtGeo(kit.seg))} />;
+}
+
+/** Dino hood in head space; `spikes` along its top: 4, 3 under a crown, 0 on the dino itself. */
+export function Hood({ spikes }: { spikes: number }) {
+  const kit = useKit();
+  return <Painted geo={kit.geo(`avatar-hood|${spikes}`, () => hoodGeo(kit.seg, spikes))} />;
+}
+
+/** Hero cape with a gold star; origin = CAPE_PIVOT (back of the neck). The cloth is drawn from both sides. */
+export function Cape() {
+  const kit = useKit();
+  return <Painted geo={kit.geo("avatar-cape", () => capeGeo(kit.seg))} doubleSide />;
+}
+
+/** Gold cord tying the cape at the front of the neck; origin = the character's feet. */
+export function CapeTie() {
+  const kit = useKit();
+  return <Painted geo={kit.geo("avatar-cape-tie", () => capeTieGeo(kit.seg))} />;
 }

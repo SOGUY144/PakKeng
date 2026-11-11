@@ -1,10 +1,11 @@
-import { CollectibleIcon, StarShape } from "../components/Art";
+import { CollectibleIcon, GameThumb, StarShape } from "../components/Art";
 import { BarChart, type ChartBar } from "../components/BarChart";
 import { FriendPicture, WordTable, WordTableNote } from "../components/CallParts";
 import { CareSummary, Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
-import { COLLECTIBLES, nextCollectible, outfitFor, totalStars } from "../data/analytics";
+import { COLLECTIBLES, nextCollectible } from "../data/analytics";
+import { outfitOf, rewardsOf, starsFor } from "../data/rewards";
 import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
@@ -15,7 +16,7 @@ import type { FriendId } from "../data/callWords";
 import { doorById } from "../data/doors";
 import { routeById } from "../data/routes";
 import { GAME_LABEL, LEVEL_LABEL, type Session } from "../data/schema";
-import { findChild, useDB } from "../data/store";
+import { findChild, storagePersisted, useDB } from "../data/store";
 import { navigate, type Route } from "../lib/router";
 import { nextStarHint, roundStars } from "../logic/scoring";
 import "../styles/result.css";
@@ -44,8 +45,13 @@ function achieved(s: Session): { title: string; sub: string } {
     const r = routeById(c.id);
     return s.endedEarly ? { title: `วิ่ง${r.name}ไปได้ ${s.stars} ช่วง`, sub: `รอบหน้าไปให้ถึง${r.destination}กันนะ` } : { title: `ถึง${r.destination}แล้ว!`, sub: `วิ่ง${r.name}ครบทุกช่วง` };
   }
+  if (s.game === "kick" && s.kick) {
+    return s.kick.goals > 0
+      ? { title: `ยิงเข้า ${s.kick.goals} ลูก!`, sub: c?.kind === "team" ? `เตะกับ${c.label}` : "ได้ถ้วยแล้ว" }
+      : { title: "จบรอบแล้ว", sub: "รอบหน้ามายิงประตูกันใหม่นะ" };
+  }
   if (isGateRound(s)) return { title: "ลองเปิดประตูแล้ว", sub: "ไว้รอบหน้ามาลองใหม่นะ" };
-  return { title: "จบรอบแล้ว", sub: `พูดไป ${s.attempts} ครั้ง` };
+  return { title: "จบรอบแล้ว", sub: `ลองพูด ${s.attempts} ครั้ง` };
 }
 
 /** Per-game metric for the "5 ครั้งล่าสุด" chart. */
@@ -87,7 +93,7 @@ export function ResultScreen() {
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
   const upto = same.slice(0, same.findIndex((x) => x.id === session.id) + 1);
   const recent = upto.slice(-5);
-  const roundToday = upto.filter((x) => x.source === "demo" && isSameDay(new Date(x.startedAt), now)).length;
+  const roundToday = upto.filter((x) => x.source !== "sample" && isSameDay(new Date(x.startedAt), now)).length;
   const hasSample = recent.some((x) => x.source === "sample");
 
   const isBalloon = session.game === "balloon";
@@ -101,7 +107,7 @@ export function ResultScreen() {
       label,
       value: v,
       tone: current ? "current" : x.source === "sample" ? "sample" : "past",
-      tip: `${label}: ${valueText}${x.source === "sample" ? " (ข้อมูลตัวอย่าง)" : " (เล่นในเดโม)"}`,
+      tip: `${label}: ${valueText}${x.source === "sample" ? " (ข้อมูลตัวอย่าง)" : x.source === "device" ? " (อุปกรณ์จริง)" : " (โหมดสาธิต)"}`,
     };
   });
   const prev = bars.slice(0, -1).filter((b) => b.value !== null).map((b) => b.value as number);
@@ -113,7 +119,8 @@ export function ResultScreen() {
         ? "กำลังดีขึ้น"
         : "ฝึกต่อเรื่อย ๆ นะ";
 
-  const totalNow = totalStars(db, child);
+  // stars of this round's own source (demo includes the sample stars, as on Home and the island)
+  const totalNow = starsFor(db, child, session.source === "device" ? "device" : "demo");
   const before = totalNow - session.stars;
   const newly = COLLECTIBLES.find((c) => c.stars > before && c.stars <= totalNow) ?? null;
   const next = nextCollectible(totalNow);
@@ -123,7 +130,9 @@ export function ResultScreen() {
   const did = roundDid(session);
   // colour and icon of the game the card speaks for (a door the child never reached does not recolour a run)
   const tone = did.kind === "other" ? session.game : did.kind;
-  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : "mic";
+  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : "mic";
+  const kept = storagePersisted();
+  const sourceLabel = session.source === "device" ? "อุปกรณ์จริง" : session.source === "sample" ? "ข้อมูลตัวอย่าง" : "โหมดสาธิต";
   const met = call ? call.words.filter((w) => w.heard) : [];
   const again: Route = isGateRound(session) ? "gate" : session.game;
 
@@ -135,9 +144,9 @@ export function ResultScreen() {
             <span key={i} className={`result__spark result__spark--${i}`} />
           ))}
           {mode.kind === "3d" ? (
-            <World3D kind="celebrate" game={session.game} outfit={outfitFor(totalNow)} tier={mode.tier} active reduced={reduced} />
+            <World3D kind="celebrate" game={session.game} outfit={outfitOf(db, child, session.source === "device" ? "device" : "demo")} species={rewardsOf(db, child.id).species} tier={mode.tier} active reduced={reduced} />
           ) : (
-            <RenderImg name={`thumb-${session.game}`} fallback={null} />
+            <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" ? <GameThumb game="kick" /> : null} />
           )}
         </div>
 
@@ -351,9 +360,28 @@ export function ResultScreen() {
         )}
           </div>
         </details>
-        <p className="result__saved">
-          <Icon name="check" size={16} /> บันทึกแล้ว ครูดูได้ในแดชบอร์ด (เดโม) · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
-        </p>
+        {kept ? (
+          <p className="result__saved">
+            <Icon name="check" size={16} /> บันทึกในเครื่องนี้แล้ว ({sourceLabel}) ครูดูได้ในแดชบอร์ด · ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
+          </p>
+        ) : (
+          <div className="result__saved result__saved--warn" role="status">
+            <p>
+              <Icon name="alert" size={16} /> เบราว์เซอร์นี้เก็บข้อมูลถาวรไม่ได้ รอบนี้อยู่ได้เฉพาะตอนเปิดหน้านี้ ปิดหน้าแล้วจะหายและไม่ได้นับรางวัลต่อ ·
+              ผลตามเกณฑ์เดโม ไม่ใช่ผลประเมินทางคลินิก
+            </p>
+            <button
+              type="button"
+              className="quiet-btn"
+              onClick={() => {
+                const text = `${GAME_LABEL[session.game]} · ${new Date(session.startedAt).toLocaleString("th-TH")} · ${sourceLabel} · ตรวจพบการลองพูด ${session.attempts} ครั้ง · ถึงเกณฑ์ตามแผน ${session.passed} ครั้ง · ดาว ${session.stars}`;
+                void navigator.clipboard?.writeText(text);
+              }}
+            >
+              <Icon name="save" size={16} /> คัดลอกสรุปรอบนี้
+            </button>
+          </div>
+        )}
         </div>
         <Disclaimer compact />
       </div>

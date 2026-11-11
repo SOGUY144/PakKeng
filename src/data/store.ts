@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { createSeed } from "./seed";
-import type { Calibration, Child, DemoDB, Plan, Session } from "./schema";
+import type { Calibration, Child, DemoDB, Plan, RewardState, Session } from "./schema";
 
 /**
  * Demo data in localStorage (no personal data: child codes only, no audio).
@@ -18,23 +18,54 @@ function isDB(x: unknown): x is DemoDB {
   return o.version === 1 && Array.isArray(o.children) && Array.isArray(o.sessions) && typeof o.activeChildId === "string";
 }
 
+/**
+ * Data saved by an older version keeps all its history: games added later (ยิงจุดโทษ) start switched on in each
+ * child's plan unless the therapist has already set them.
+ */
+export function migrate(d: DemoDB): DemoDB {
+  let out = d;
+  if (d.children.some((c) => typeof (c.plan.games as Partial<Plan["games"]>).kick !== "boolean")) {
+    out = {
+      ...out,
+      children: out.children.map((c) => {
+        const g = c.plan.games as Partial<Plan["games"]>;
+        return { ...c, plan: { ...c.plan, games: { runner: !!g.runner, balloon: !!g.balloon, frog: !!g.frog, kick: g.kick ?? true } } };
+      }),
+    };
+  }
+  // rounds saved before the source told device from demo: a call round on the real device says so in its summary
+  if (d.sessions.some((s) => s.source === "demo" && s.call?.source === "device")) {
+    out = { ...out, sessions: out.sessions.map((s) => (s.source === "demo" && s.call?.source === "device" ? { ...s, source: "device" as const } : s)) };
+  }
+  return out;
+}
+
 function readStorage(): DemoDB | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    return isDB(parsed) ? parsed : null;
+    return isDB(parsed) ? migrate(parsed) : null;
   } catch {
     return null;
   }
 }
 
+let persisted = true;
+
 function persist(next: DemoDB): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    persisted = true;
   } catch {
-    // Private mode / quota: keep working in memory.
+    // Private mode / quota / blocked: keep working in memory, and say so where a save is reported.
+    persisted = false;
   }
+}
+
+/** False when the last save did not reach the browser's storage: rounds then live only while this page stays open. */
+export function storagePersisted(): boolean {
+  return persisted;
 }
 
 function emit(): void {
@@ -104,8 +135,14 @@ export function savePlan(childId: string, plan: Omit<Plan, "updatedAt">): Plan {
   return saved;
 }
 
+/** Saving the same round again (same id) changes nothing — rewards are counted from sessions, so they cannot double. */
 export function addSession(s: Session): void {
-  commit((d) => ({ ...d, sessions: [...d.sessions, s] }));
+  commit((d) => (d.sessions.some((x) => x.id === s.id) ? d : { ...d, sessions: [...d.sessions, s] }));
+}
+
+/** Change one child's rewards (picks only; progress is computed from sessions). */
+export function updateRewards(childId: string, f: (r: RewardState | undefined) => RewardState): void {
+  commit((d) => (d.children.some((c) => c.id === childId) ? { ...d, rewards: { ...d.rewards, [childId]: f(d.rewards?.[childId]) } } : d));
 }
 
 export function saveCalibration(childId: string, cal: Calibration): void {
@@ -123,10 +160,18 @@ export function clearSampleData(): void {
 
 /** ลบรอบที่เล่นในเดโมและค่าปรับเครื่องจำลอง */
 export function clearDemoPlays(): void {
-  commit((d) => ({ ...d, sessions: d.sessions.filter((s) => s.source !== "demo"), calibrations: {} }));
+  commit((d) => ({
+    ...d,
+    sessions: d.sessions.filter((s) => s.source !== "demo"),
+    calibrations: {},
+    // the demo rewards those rounds grew go with them (device practice and the picked character/clothes stay)
+    rewards: d.rewards
+      ? Object.fromEntries(Object.entries(d.rewards).map(([id, r]) => [id, { ...r, ledgers: { device: r.ledgers.device } }]))
+      : undefined,
+  }));
 }
 
-/** คืนค่าทั้งหมดเป็นข้อมูลตัวอย่างเริ่มต้น */
+/** คืนค่าทั้งหมดเป็นข้อมูลตัวอย่างเริ่มต้น (รวมรางวัลที่เลือกไว้) */
 export function resetAllDemoData(): void {
   commit(() => createSeed(new Date()));
 }

@@ -1,5 +1,5 @@
 import "../styles/balloon.css";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, useMemo } from "react";
 import { Bunny, StarShape } from "../components/Art";
 import { PauseOverlay } from "../components/GameParts";
 import { Icon, type IconName } from "../components/Icon";
@@ -9,8 +9,9 @@ import { TripBalloon, TripLandmark, TripPicture, TripPin } from "../components/T
 import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
 import { fmtSec1 } from "../data/format";
 import { promptFor } from "../data/plan";
+import { outfitOf, rewardsOf } from "../data/rewards";
 import { finishRound } from "../data/rounds";
-import { useActiveChild } from "../data/store";
+import { useActiveChild, useDB } from "../data/store";
 import { TRIPS, tripById, type Trip, type TripId } from "../data/trips";
 import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
@@ -18,12 +19,13 @@ import { playSuccessChime, stopSfx } from "../lib/sfx";
 import { exampleKind, playExample, stopExample, subscribeVoices, type ExampleKind } from "../lib/speech";
 import { showToast } from "../lib/toast";
 import { BALLOONS_PER_ROUND, BalloonGame, type BalloonIssue } from "../logic/balloon";
-import { useConnection } from "../signal/mock";
+import { useConnection, signalKind } from "../signal/mock";
 import type { SignalFrame } from "../signal/SignalProcessor";
 import { signalProblem, type MeterStatus } from "../signal/status";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { useGameRuntime } from "./useGameRuntime";
+import { useSourceGuard } from "./useSourceGuard";
 
 type Tone = "listen" | "speak" | "heard" | "retry" | "warn" | "done";
 
@@ -170,6 +172,7 @@ function Balloon2D({ g, trip }: { g: BalloonGame; trip: Trip }) {
 
 function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void }) {
   const child = useActiveChild();
+  const db = useDB();
   const plan = child.plan;
   const reduced = useReducedMotion();
   const mode = stageMode(useGfx());
@@ -287,6 +290,7 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
     finishRound({
       child,
       game: "balloon",
+      source: signalKind(),
       startedAt: startedAt.current,
       practiceMs: st.practiceMs,
       attempts: st.attempts,
@@ -319,6 +323,10 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
     rt.restart();
   };
 
+  // one round = one signal source: switching demo <-> device mid-round starts the round again (nothing is mixed)
+  const source = useSourceGuard(restart);
+  const look = useMemo(() => ({ outfit: outfitOf(db, child, source), species: rewardsOf(db, child.id).species }), [db, child, source]);
+
   const is3d = mode.kind === "3d";
   const blocked = rt.paused !== null || rt.ended;
 
@@ -339,6 +347,8 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
                 <World3D
                   kind="balloon"
                   destination={trip.id}
+                  outfit={look.outfit}
+                  species={look.species}
                   tier={mode.tier}
                   active={rt.paused === null}
                   reduced={reduced}

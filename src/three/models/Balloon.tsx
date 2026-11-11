@@ -5,7 +5,7 @@ import { frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { C } from "../palette";
 import { balloonEnvelope, colored } from "../shapes";
-import { Bunny } from "./Bunny";
+import { Bunny, type AvatarSpecies } from "./Bunny";
 import type { BunnyDrive } from "./drives";
 
 /** Basket bottom is the model origin; envelope top ≈ 2.0 above it. */
@@ -41,6 +41,7 @@ function paintGores(g: THREE.BufferGeometry, colors: string[]): THREE.BufferGeom
 export function Balloon({
   bunny,
   outfit = "",
+  species,
   reduced,
   colors,
   parcel,
@@ -48,6 +49,8 @@ export function Balloon({
   /** Rider in the basket (absent = no rider). */
   bunny?: RefObject<BunnyDrive>;
   outfit?: string;
+  /** The rider's character (the one the child picked on the island). */
+  species?: AvatarSpecies;
   reduced: boolean;
   /** Envelope gores, repeating; absent = pink / cream / butter as in the 2D art. */
   colors?: readonly string[];
@@ -110,7 +113,7 @@ export function Balloon({
       {/* the bunny rides in the basket: only head, ears and paws show above the rim */}
       {bunny ? (
         <group position={[0, 0.02, 0.02]} scale={0.42}>
-          <Bunny drive={bunny} outfit={outfit} />
+          <Bunny drive={bunny} outfit={outfit} species={species} />
         </group>
       ) : null}
     </group>

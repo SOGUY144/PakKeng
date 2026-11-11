@@ -11,6 +11,7 @@ import { PLAN_LIMITS, planToDraft, validatePlan, wordError, type PlanDraft, type
 import { GAME_LABEL, LEVEL_LABEL, type Child, type GameId, type Level } from "../data/schema";
 import { clearDemoPlays, clearSampleData, findChild, resetAllDemoData, savePlan, setActiveChild, useDB } from "../data/store";
 import { navigate } from "../lib/router";
+import { attemptsOnDay, dayKey } from "../data/rewards";
 
 const STATE_BADGE: Record<RuleState | "review", { cls: string; text: string }> = {
   review: { cls: "badge--warn", text: "ควรทบทวน" },
@@ -254,7 +255,7 @@ function PlanForm({ child }: { child: Child }) {
     showToast(`บันทึกแผนของ ${child.id} แล้ว · ภารกิจฝั่งเด็กเปลี่ยนตามทันที`);
   };
 
-  const gameIds: GameId[] = ["runner", "balloon", "frog"];
+  const gameIds: GameId[] = ["runner", "balloon", "frog", "kick"];
   const updated = new Date(child.plan.updatedAt);
 
   return (
@@ -515,7 +516,7 @@ export function DashboardScreen() {
               {child.id} <span className={`dash-status ${status.cls}`}>{status.text}</span>
             </h1>
             <p className="dash-note">
-              <span className="badge badge--sample">ข้อมูลตัวอย่าง + รอบที่เล่นในเดโม</span> ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
+              <span className="badge badge--sample">ข้อมูลตัวอย่าง + รอบที่เล่น (โหมดสาธิตและอุปกรณ์รวมกัน)</span> ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
             </p>
           </div>
           <div className="dash-child__actions">
@@ -574,6 +575,14 @@ export function DashboardScreen() {
 
         {/* panels stay mounted (hidden) so an unsaved plan is not lost when switching tabs */}
         <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="dash-panel" hidden={tab !== "overview"}>
+          <p className="dash-today" aria-label="วันนี้">
+            <Icon name="mic" size={18} />
+            <span>
+              <strong>วันนี้ตรวจพบการลองพูดที่สัญญาณใช้ได้</strong> · อุปกรณ์จริง {attemptsOnDay(db, child.id, "device", dayKey(Date.now()))} ครั้ง ·
+              โหมดสาธิต {attemptsOnDay(db, child.id, "demo", dayKey(Date.now()))} ครั้ง
+              <small>นับช่วงเสียงที่ใช้ได้ ไม่ใช่จำนวนคำที่พูดถูก (ไม่มีระบบรู้จำคำ) · ของรางวัลในเกาะของเด็กโตจากตัวเลขนี้ แยกตามแหล่ง</small>
+            </span>
+          </p>
           <div className="kpis" role="group" aria-label={`สรุป 7 วันล่าสุดของ ${child.id}`}>
             <div className="kpi kpi--days">
               <span className="kpi__icon" aria-hidden="true">
@@ -590,7 +599,7 @@ export function DashboardScreen() {
               <span className="kpi__icon" aria-hidden="true">
                 <Icon name="mic" size={20} />
               </span>
-              <span className="kpi__label">ครั้งที่พูด · คำด้านปาก</span>
+              <span className="kpi__label">ครั้งที่ลองพูด · คำด้านปาก</span>
               <span className="kpi__value">
                 {wk.attempts}
                 <small>ครั้ง</small>
@@ -759,7 +768,7 @@ export function DashboardScreen() {
                           <td className="num t-nasal">{fmtPct(s.meanNasalOral)}</td>
                           <td className="num t-nasal">{s.call ? fmtPct(callGroupNasal(s.call, "nasal").mean) : s.gate ? fmtPct(s.gate.meanNasal) : "—"}</td>
                           <td>
-                            <span className={`badge ${s.source === "sample" ? "badge--sample" : "badge--demo"}`}>{s.source === "sample" ? "ตัวอย่าง" : "เล่นในเดโม"}</span>
+                            <span className={`badge ${s.source === "sample" ? "badge--sample" : "badge--demo"}`}>{s.source === "sample" ? "ตัวอย่าง" : s.source === "device" ? "อุปกรณ์จริง" : "โหมดสาธิต"}</span>
                             {s.endedEarly ? <span className="badge">จบก่อนครบ</span> : null}
                           </td>
                         </tr>

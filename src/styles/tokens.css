@@ -55,6 +55,10 @@
   --candy-lilac: #c7b5ff;
   --candy-lilac-soft: #eee8ff;
   --candy-lilac-ink: #4b2fa8;
+  /* ยิงจุดโทษ: เขียวสนามโทนเหลือง (ต่างจากมิ้นต์ของกบ, ไม่ใช่น้ำเงิน/ส้ม) */
+  --candy-lime: #c9ec7e;
+  --candy-lime-soft: #f0fadb;
+  --candy-lime-ink: #355408;
 
   /* Actions: bright violet pill with a darker "toy" edge (white text ≥ 4.5:1) */
   --primary: #6c4bf4;

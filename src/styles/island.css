@@ -1,0 +1,427 @@
+/* เกาะของฉัน — ตัวละคร สัตว์เลี้ยง สวน และตู้เสื้อผ้า (หน้า HTML ล้วน ใช้ได้เท่ากันทุกจอ) */
+
+.island {
+  display: grid;
+  gap: var(--sp-4, 16px);
+  padding-bottom: 32px;
+}
+
+.island__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.island__title {
+  margin: 0;
+  flex: 1;
+  font-size: var(--fs-h1, 1.6rem);
+  color: var(--ink);
+}
+
+.island__source {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-small, 0.9rem);
+  font-weight: 700;
+  background: var(--warn-soft);
+  color: var(--warn-text);
+}
+
+.island__source--device {
+  background: var(--ok-soft);
+  color: var(--ok-text);
+}
+
+.island__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-lg, 24px);
+  background: linear-gradient(180deg, #e9f7ff 0%, #dff3d4 70%, #c8e8b0 100%);
+  box-shadow: var(--shadow-1);
+}
+
+.island__stage {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.island__buddy {
+  margin-left: -18px;
+}
+
+.island__today {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.island__count {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink-2);
+}
+
+.island__count strong {
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.island__countlabel {
+  margin: 0 0 6px;
+  color: var(--ink-2);
+}
+
+.island__tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-muted);
+}
+
+.island__tab {
+  flex: 1;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.island__tab[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--primary-text);
+  box-shadow: var(--shadow-1);
+}
+
+.island__tab:focus-visible,
+.island-tile:focus-visible,
+.island-chip:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.island-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.island-panel__title {
+  margin: 8px 0 0;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.island-panel__hint {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small, 0.9rem);
+}
+
+.island-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.island-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.island-grid--species {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.island-tile {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 6px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-md, 18px);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.island-tile[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 2px var(--primary-soft);
+}
+
+.island-tile.is-locked {
+  cursor: default;
+  opacity: 0.62;
+  background: var(--surface-muted);
+}
+
+.island-tile.is-locked svg {
+  filter: grayscale(0.85);
+}
+
+.island-tile__name {
+  font-weight: 700;
+  text-align: center;
+}
+
+.island-tile__state {
+  color: var(--ink-3);
+  font-size: var(--fs-small, 0.85rem);
+  text-align: center;
+}
+
+.island-egg {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: var(--r-md, 18px);
+  background: var(--surface);
+  border: 2px solid var(--line);
+}
+
+.island-egg__text {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  justify-items: start;
+}
+
+.island-egg__line {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.island-meter {
+  width: 100%;
+  height: 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.island-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--candy-lemon), var(--star));
+  transition: width 0.4s ease-out;
+}
+
+.island-beds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.island-bed {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 10px 6px 12px;
+  border-radius: var(--r-md, 18px);
+  background: #f7f1e3;
+  border: 2px solid #ead9b5;
+  text-align: center;
+}
+
+.island-bed__name {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.island-bed__state {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-small, 0.88rem);
+}
+
+.island-bed__choose {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.island-chip {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 2px solid var(--pad-deep);
+  border-radius: var(--r-pill);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.island__note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--fs-small, 0.88rem);
+}
+
+.island-demo {
+  padding: 10px 12px;
+  border-radius: var(--r-md, 18px);
+  border: 2px dashed var(--line-strong);
+  color: var(--ink-2);
+  font-size: var(--fs-small, 0.88rem);
+}
+
+.island-demo p {
+  margin: 0 0 6px;
+}
+
+.island-demo__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 520px) {
+  .island__hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .island__today {
+    justify-items: center;
+  }
+
+  .island-grid--species {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .island-beds {
+    grid-template-columns: 1fr;
+  }
+
+  .island-egg {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .island-egg__text {
+    justify-items: center;
+  }
+}
+
+@media (min-width: 1100px) {
+  /* the page frame is a 480px phone column elsewhere: on a desktop the island gets the width it needs for
+     the 3D stage on the left and the choices on the right (two columns inside 480px squeezed the stage to ~180px) */
+  .kid-frame.island {
+    max-width: min(1200px, calc(100vw - 64px));
+  }
+
+  .island {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    column-gap: 24px;
+  }
+
+  .island__bar,
+  .island__note,
+  .island-demo {
+    grid-column: 1 / -1;
+  }
+
+  .island__hero {
+    grid-column: 1;
+    grid-row: 2 / span 3;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    min-height: 420px;
+  }
+
+  .island__today {
+    justify-items: center;
+  }
+
+  .island__tabs,
+  #island-panel {
+    grid-column: 2;
+  }
+}
+
+/* ฉาก 3D ของเกาะเป็นภาพหลัก (2D เป็นทางสำรองเมื่อ WebGL ใช้ไม่ได้) */
+.island__hero--3d {
+  grid-template-columns: 1fr;
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #e9f7ff 0%, #cfeefd 100%);
+}
+
+.island__stage--3d {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: clamp(260px, 46vh, 440px);
+  min-height: 0;
+}
+
+.island__hero--3d .island__today {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  justify-items: start;
+  padding: 12px 16px 16px;
+  text-align: left;
+}
+
+.island__hero--3d .island__countlabel {
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .island__hero--3d .island__today {
+    grid-template-columns: auto 1fr;
+  }
+
+  .island__hero--3d .island__today .btn {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+}
+
+@media (min-width: 1100px) {
+  .island__hero--3d {
+    min-height: 0;
+  }
+
+  .island__stage--3d {
+    height: clamp(360px, 62vh, 620px);
+  }
+}
+
+.island-panel__title:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 6px;
+}

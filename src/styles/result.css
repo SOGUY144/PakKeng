@@ -403,3 +403,24 @@
 [data-motion="reduce"] .result__spark {
   animation: none;
 }
+
+/* เก็บถาวรไม่ได้: บอกตามจริง พร้อมทางคัดลอกสรุป */
+.result__saved--warn {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--warn-soft);
+  color: var(--warn-text);
+  font-size: 13px;
+}
+
+.result__saved--warn p {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+}
+
+.result__saved--warn svg {
+  color: var(--warn-text);
+}

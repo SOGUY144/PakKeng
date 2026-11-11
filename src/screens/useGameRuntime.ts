@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useFrameRender, useGameLoop, useOnHidden } from "../lib/hooks";
 import { recordRenderDelay } from "../signal/latency";
 import { signalSource } from "../signal/mock";
@@ -78,6 +78,16 @@ export function useGameRuntime<G extends Interruptible>(
   const end = useCallback(() => {
     gameRef.current?.interrupt();
     setEnded(true);
+  }, []);
+
+  // dev builds only: QA reads the live game state next to the screenshot (the scene must follow this, never the reverse)
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const w = window as unknown as { __pakkengGame?: RefObject<G | null> };
+    w.__pakkengGame = gameRef;
+    return () => {
+      if (w.__pakkengGame === gameRef) delete w.__pakkengGame;
+    };
   }, []);
 
   return {

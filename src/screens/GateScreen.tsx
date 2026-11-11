@@ -7,7 +7,7 @@ import { Icon, type IconName } from "../components/Icon";
 import { Meter } from "../components/Meter";
 import { StageNote } from "../components/StageNote";
 import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
-import { outfitFor, totalStars } from "../data/analytics";
+import { outfitOf, rewardsOf } from "../data/rewards";
 import { DOORS, LOCK_BEADS, doorById, type Door, type DoorId } from "../data/doors";
 import { fmtPct } from "../data/format";
 import { finishRound, getPendingRunner, summarizeGate, type PendingRunner } from "../data/rounds";
@@ -19,12 +19,13 @@ import { exampleKind, playExample, stopExample, subscribeVoices, type ExampleKin
 import { showToast } from "../lib/toast";
 import { totals } from "../logic/common";
 import { GATE_OPEN_MS, GATE_SKIP_AFTER, GateGame, type GateState } from "../logic/gate";
-import { useConnection } from "../signal/mock";
+import { useConnection, signalKind } from "../signal/mock";
 import type { SignalFrame } from "../signal/SignalProcessor";
 import { signalProblem, type MeterStatus } from "../signal/status";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { useGameRuntime } from "./useGameRuntime";
+import { useSourceGuard } from "./useSourceGuard";
 
 type Tone = "listen" | "speak" | "heard" | "retry" | "warn" | "done";
 
@@ -74,6 +75,7 @@ function saveRunOnly(child: Child, pending: PendingRunner): void {
   finishRound({
     child,
     game: "runner",
+    source: pending.source ?? signalKind(),
     startedAt: pending.startedAt,
     practiceMs: pending.practiceMs,
     attempts: pending.attempts,
@@ -202,7 +204,9 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
   const [showDone, setShowDone] = useState(false);
   const [, setVoices] = useState(0);
   const word = plan.nasalWords[0] ?? "มา";
-  const outfit = useMemo(() => outfitFor(totalStars(db, child)), [db, child]);
+  const sourceNow = signalKind();
+  const outfit = useMemo(() => outfitOf(db, child, sourceNow), [db, child, sourceNow]);
+  const species = useMemo(() => rewardsOf(db, child.id).species, [db, child.id]);
 
   // Thai voices load asynchronously: re-render when the list changes so "ฟังคำ" knows what it can play.
   useEffect(() => subscribeVoices(() => setVoices((n) => n + 1)), []);
@@ -276,9 +280,44 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
   const finish = (skipped: boolean, then: "result" | "again") => {
     const st = (rt.gameRef.current ?? game).state;
     stopExample();
+    const source = signalKind();
+    if (pending && (pending.source ?? source) !== source) {
+      // the run and the door were played on different signal sources: never one round — the run is saved alone under
+      // its own source, the door alone under the current one
+      finishRound({
+        child,
+        game: "runner",
+        source: pending.source ?? source,
+        startedAt: pending.startedAt,
+        practiceMs: pending.practiceMs,
+        attempts: pending.attempts,
+        stars: pending.stars,
+        gate: summarizeGate([], false, true),
+        choice: pending.choice ?? null,
+        endedEarly: !pending.completed,
+      });
+      finishRound({
+        child,
+        game: "runner",
+        source,
+        startedAt: startedAt.current ?? new Date().toISOString(),
+        practiceMs: st.practiceMs,
+        attempts: [],
+        stars: st.open ? 1 : 0,
+        gate: summarizeGate(st.attempts, st.open, skipped),
+        choice: { kind: "door", id: door.id, label: door.name },
+        endedEarly: false,
+      });
+      if (then === "again") {
+        showToast("บันทึกรอบนี้แล้ว เลือกประตูบานใหม่ได้เลย");
+        onAgain();
+      } else navigate("result");
+      return;
+    }
     finishRound({
       child,
       game: "runner",
+      source,
       startedAt: pending?.startedAt ?? startedAt.current ?? new Date().toISOString(),
       practiceMs: (pending?.practiceMs ?? 0) + st.practiceMs,
       attempts: pending?.attempts ?? [],
@@ -300,6 +339,9 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
     startedAt.current = new Date().toISOString();
     rt.restart();
   };
+
+  // one round = one signal source: switching demo <-> device mid-round starts the round again (nothing is mixed)
+  useSourceGuard(restart);
 
   const is3d = mode.kind === "3d";
   const blocked = rt.paused !== null || rt.ended;
@@ -325,6 +367,7 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
                 gameRef={rt.gameRef}
                 frameRef={rt.frameRef}
                 outfit={outfit}
+                species={species}
               />
             ) : (
               <Gate2D s={s} door={door} />

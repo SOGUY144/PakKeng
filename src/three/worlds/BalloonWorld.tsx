@@ -6,7 +6,7 @@ import { BALLOONS_PER_ROUND } from "../../logic/balloon";
 import { bump, clamp01, damp, frameDt, seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Balloon } from "../models/Balloon";
-import { Bunny } from "../models/Bunny";
+import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { bunnyDrive } from "../models/drives";
 import { C } from "../palette";
 import { BlobShadow, Burst, Field, FitCamera, Lights, ScrollField, type BurstFire, type Placement } from "../parts";
@@ -203,7 +203,7 @@ function layout(id: TripId | null) {
  * - เปลวไฟเหลืองนวล = เกมได้ยินเสียงที่ใช้ได้ วงแหวนน้ำเงินรอบตะกร้า = เสียงผ่านเกณฑ์ด้านปากของผู้เชี่ยวชาญ (สีน้ำเงินสื่อค่าด้านปาก)
  * - จุดบนทางขึ้นสว่างตามความคืบหน้า บอลลูนที่ส่งแล้วผูกรวมกันที่จุดหมาย ป้ายชื่อจุดหมายเป็น HTML (ไม่ใช่ texture) อยู่กับที่
  */
-export function BalloonWorld({ gameRef, frameRef, labelRef, reduced, tier, destination }: BalloonSpec) {
+export function BalloonWorld({ gameRef, frameRef, labelRef, reduced, tier, destination, outfit = "", species }: BalloonSpec) {
   const kit = useKit();
   const trip = tripById(destination);
   const id = trip?.id ?? null;
@@ -480,7 +480,7 @@ export function BalloonWorld({ gameRef, frameRef, labelRef, reduced, tier, desti
 
         {/* the bunny sends the balloons off from the ground and cheers when one arrives */}
         <group position={BUNNY_AT} rotation-y={0.45} scale={0.72}>
-          <Bunny drive={bunny} />
+          <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
         </group>
         <BlobShadow at={BUNNY_AT} size={[0.62, 0.52]} />
         <Burst fire={fire} reduced={reduced} max={18} />

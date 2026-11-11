@@ -177,7 +177,7 @@ export function practiceSecToday(d: DemoDB, childId: string, now: Date): number 
 }
 
 export function totalStars(d: DemoDB, child: Child): number {
-  return child.sampleStars + d.sessions.filter((s) => s.childId === child.id && s.source === "demo").reduce((n, s) => n + s.stars, 0);
+  return child.sampleStars + d.sessions.filter((s) => s.childId === child.id && s.source !== "sample").reduce((n, s) => n + s.stars, 0);
 }
 
 export interface Collectible {

@@ -9,12 +9,15 @@ import { StudioScene, type StudioSubject } from "./worlds/Showcase";
  * Home and Result show these files, so those pages never need to load three.js.
  */
 const FRIENDS = ["crab", "dog", "fish", "bird", "turtle"] as const;
+/** The child's character choices (Home shows the one picked on the island). */
+const SPECIES = ["bunny", "puppy", "dino", "kitty"] as const;
 
 const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   { name: "thumb-runner", w: 360, h: 252 },
   { name: "thumb-balloon", w: 360, h: 252 },
   { name: "thumb-frog", w: 360, h: 252 },
-  { name: "avatar-bunny", w: 176, h: 176 },
+  { name: "thumb-kick", w: 360, h: 252 },
+  ...SPECIES.map((s) => ({ name: `avatar-${s}` as const, w: 176, h: 176 })),
   { name: "item-cap", w: 128, h: 128 },
   { name: "item-shoes", w: 128, h: 128 },
   { name: "item-scarf", w: 128, h: 128 },
@@ -24,13 +27,13 @@ const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
     { name: `friend-${f}-back` as const, w: 200, h: 200 },
   ]),
   // welcome screen: bigger, so they stay sharp on tablets and desktops
-  { name: "hero-bunny", w: 440, h: 580 },
+  ...SPECIES.map((s) => ({ name: `hero-${s}` as const, w: 440, h: 580 })),
   ...FRIENDS.map((f) => ({ name: `hero-${f}` as const, w: 360, h: 360 })),
 ];
 
-/** `/?studio&only=friend` re-renders just the shots whose name starts with "friend". */
+/** `/?studio&only=friend` re-renders just the shots whose name starts with "friend" (several: `only=thumb-kick,hero-dino`). */
 const only = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("only") : null;
-const SHOTS = only ? ALL_SHOTS.filter((s) => s.name.startsWith(only)) : ALL_SHOTS;
+const SHOTS = only ? ALL_SHOTS.filter((s) => only.split(",").some((p) => s.name.startsWith(p))) : ALL_SHOTS;
 
 function Capture({ onShot }: { onShot: (dataUrl: string) => void }) {
   const frames = useRef(0);

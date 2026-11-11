@@ -331,6 +331,12 @@ button.trail__node:focus-visible {
   --ink-node: var(--candy-lilac-ink);
 }
 
+.trail__node--kick.is-done {
+  --face: var(--candy-lime);
+  --edge: #95c44a;
+  --ink-node: var(--candy-lime-ink);
+}
+
 .trail__node--mic.is-open {
   --face: var(--surface);
   --edge: #cfc6f3;
@@ -579,6 +585,11 @@ button.trail__node:focus-visible {
 .play-card--gate {
   --card-bg: var(--candy-lilac);
   --card-ink: var(--candy-lilac-ink);
+}
+
+.play-card--kick {
+  --card-bg: var(--candy-lime);
+  --card-ink: var(--candy-lime-ink);
 }
 
 .play-card__again {
@@ -878,4 +889,52 @@ button.trail__node:focus-visible {
   animation: none;
   outline: 4px solid var(--primary-soft);
   outline-offset: 8px;
+}
+
+/* วันนี้: เวลาที่บันทึกเป็นข้อมูลรอง (เส้นทางนับรอบที่ได้ลองพูด) */
+.home-today__minutes {
+  margin: 6px 0 0;
+  /* on the card's purple / done-green: the card's own light text, a little softer (gray ink was unreadable there) */
+  color: inherit;
+  opacity: 0.88;
+  font-size: var(--fs-small, 0.85rem);
+}
+
+/* ทางรองไปเกาะของฉัน: ไม่แย่งปุ่มเริ่มเล่น */
+.home-island {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-radius: var(--r-md, 18px);
+  border: 2px solid var(--line);
+  background: linear-gradient(90deg, #eef9e6, #fff);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.home-island:hover {
+  border-color: var(--pad);
+}
+
+.home-island:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.home-island__pic {
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.home-island__text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+
+.home-island__text small {
+  color: var(--ink-2);
 }

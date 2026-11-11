@@ -79,6 +79,15 @@ describe("roundDid — the 'what you did' card of the kid's result", () => {
   });
 });
 
+describe("penalty kicks on the result", () => {
+  it("shows goals out of the balls and rates goals by voice (no stars without a voiced goal)", () => {
+    const s = session({ game: "kick", attempts: 4, passed: 1, stars: 4, kick: { goals: 4, shots: 5, team: "crab" } });
+    expect(roundDid(s)).toEqual({ kind: "kick", label: "ยิงเข้าประตู", value: "4/5 ลูก" });
+    expect(roundRating(s)).toEqual({ got: 4, of: 5 });
+    expect(roundRating(session({ game: "kick", kick: { goals: 0, shots: 5, team: "crab" } }))).toEqual({ got: 0, of: 0 });
+  });
+});
+
 describe("roundDid — which game the card speaks for", () => {
   const skippedGate = { attempts: 0, passed: 0, meanNasal: null, opened: false, skipped: true };
 

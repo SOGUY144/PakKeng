@@ -4,14 +4,17 @@ import { Bunny, CollectibleIcon, DoorPanel, GameThumb } from "../components/Art"
 import { Disclaimer } from "../components/Chrome";
 import { Icon } from "../components/Icon";
 import { RenderImg } from "../components/RenderImg";
-import { childSessions, COLLECTIBLES, nextCollectible, totalStars } from "../data/analytics";
+import { childSessions, COLLECTIBLES, nextCollectible } from "../data/analytics";
+import { EggArt, PetArt } from "../components/IslandArt";
+import type { AvatarSpecies } from "../data/schema";
+import { BEDS, bedView, eggView, ledgerOf, nowMs, PET_NAME, rewardsOf, starsFor } from "../data/rewards";
 import { isSameDay } from "../data/format";
 import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
 import { isDoorAlone } from "../data/resultCards";
 import { practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
 import { hrefFor, navigate, type Route } from "../lib/router";
-import { useConnection, useSignalSource } from "../signal/mock";
+import { signalKind, useConnection, useSignalSource } from "../signal/mock";
 import "../styles/home.css";
 
 type Play = PathPlay;
@@ -21,6 +24,7 @@ const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean 
   { id: "frog", verb: "เรียกเพื่อน", name: "กบข้ามบึง", open: (p) => p.games.frog },
   { id: "balloon", verb: "พาบอลลูนไปส่ง", name: "บอลลูน", open: (p) => p.games.balloon },
   { id: "runner", verb: "เลือกทางวิ่ง", name: "กระต่ายวิ่ง", open: (p) => p.games.runner },
+  { id: "kick", verb: "ยิงจุดโทษ", name: "ฟุตบอล", open: (p) => p.games.kick },
   { id: "gate", verb: "เปิดประตู", name: "ประตูเสียงก้องจมูก", open: (p) => p.gateEnabled },
 ];
 const VERB: Record<Play, string> = Object.fromEntries(PLAYS.map((p) => [p.id, p.verb])) as Record<Play, string>;
@@ -74,7 +78,7 @@ function ChestArt({ open }: { open: boolean }) {
 
 /** The last round played in this demo, if its game is still in the plan: marked "play on" among the choices. */
 function lastPlay(sessions: Session[], plan: Plan): Play | null {
-  const last = sessions.filter((s) => s.source === "demo").at(-1);
+  const last = sessions.filter((s) => s.source !== "sample").at(-1);
   if (!last) return null;
   const play: Play = isDoorAlone(last) ? "gate" : last.game;
   return PLAYS.find((p) => p.id === play)?.open(plan) ? play : null;
@@ -141,16 +145,22 @@ function GameSheet({ plays, again, onClose, returnTo }: { plays: typeof PLAYS; a
   );
 }
 
-function ChestDialog({ starsToday, nextText, onMore, onClose, returnTo }: { starsToday: number; nextText: string; onMore: (() => void) | null; onClose: () => void; returnTo: RefObject<HTMLElement | null> }) {
+/** The child's own character (picked on the island), full body · falls back to the bunny, then to nothing. */
+function MeImg({ species }: { species: AvatarSpecies }) {
+  const bunny = <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />;
+  return species === "bunny" ? bunny : <RenderImg key={species} name={`hero-${species}`} fallback={bunny} />;
+}
+
+function ChestDialog({ starsToday, nextText, onMore, onClose, returnTo, me }: { starsToday: number; nextText: string; onMore: (() => void) | null; onClose: () => void; returnTo: RefObject<HTMLElement | null>; me: AvatarSpecies }) {
   const card = useRef<HTMLDivElement>(null);
   useDialog(onClose, card, returnTo);
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={card} className="overlay__card home-chest" role="dialog" aria-modal="true" aria-labelledby="chest-title">
         <span className="home-chest__bunny" aria-hidden="true">
-          <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+          <MeImg species={me} />
         </span>
-        <h2 id="chest-title">ครบแล้ววันนี้!</h2>
+        <h2 id="chest-title">ครบรอบวันนี้แล้ว!</h2>
         <p className="home-chest__stars">
           <Icon name="star" size={22} /> วันนี้ได้ {starsToday} ดาว
         </p>
@@ -202,7 +212,23 @@ export function HomeScreen() {
   const calToday = cal ? isSameDay(new Date(cal.at), now) : false;
   const path = todayPath({ dailyMinutes: plan.dailyMinutes, sessions, calibratedToday: calToday, now });
   const weekDays = practiceDaysThisWeek(sessions, now);
-  const stars = totalStars(db, child);
+  // stars of the current signal source only (demo play and real-device practice are kept apart)
+  const source = signalKind();
+  const stars = starsFor(db, child, source);
+  const ledger = ledgerOf(rewardsOf(db, child.id), source);
+  // the child's character (chosen on the island) stands on the path and in the header
+  const me = rewardsOf(db, child.id).species;
+  const egg = eggView(db, child.id, source, ledger);
+  const ripe = Array.from({ length: BEDS }, (_, i) => bedView(db, child.id, source, ledger, i, nowMs(source))).filter((b) => b.ready).length;
+  const islandHint = egg?.ready
+    ? "ไข่พร้อมฟักแล้ว!"
+    : ripe > 0
+      ? "มีผักพร้อมเก็บแล้ว!"
+      : egg
+        ? `ลองพูดอีก ${egg.need - egg.tries} ครั้ง ${PET_NAME[egg.pet]}จะออกมา`
+        : ledger.pets.length === 0
+          ? "เลือกสัตว์เลี้ยงตัวแรกได้เลย"
+          : "สัตว์เลี้ยง สวน และตู้เสื้อผ้า";
   const next = nextCollectible(stars);
   const plays = PLAYS.filter((p) => p.open(plan));
   const closed = PLAYS.length - plays.length;
@@ -270,7 +296,7 @@ export function HomeScreen() {
 
         <header className="home-head">
           <span className="avatar" aria-hidden="true">
-            <RenderImg name="avatar-bunny" fallback={<Bunny size={40} cap />} />
+            <RenderImg key={me} name={`avatar-${me}`} fallback={<RenderImg name="avatar-bunny" fallback={<Bunny size={40} cap />} />} />
           </span>
           <div className="home-head__who">
             {named ? <p className="home-head__hello">สวัสดี</p> : null}
@@ -289,13 +315,16 @@ export function HomeScreen() {
         <section className={`home-today${path.complete ? " is-complete" : ""}`} aria-label="วันนี้">
           <p className="home-today__text">
             <strong>
-              วันนี้ {Math.floor(path.practiceSec / 60)} / {plan.dailyMinutes} นาที
+              วันนี้ {Math.min(path.played, path.rounds)} / {path.rounds} รอบ
             </strong>
-            <span>{path.complete ? "ครบแล้ววันนี้!" : `อีก ${path.rounds - path.played} รอบ`}</span>
+            <span>{path.complete ? "ครบรอบที่ตั้งไว้แล้ว!" : `อีก ${path.rounds - path.played} รอบ`}</span>
           </p>
-          <div className="progress home-today__bar" role="progressbar" aria-label="เวลาฝึกวันนี้" aria-valuemin={0} aria-valuemax={path.targetSec} aria-valuenow={Math.round(path.practiceSec)}>
-            <div className="progress__fill" style={{ transform: `scaleX(${path.progress})` }} />
+          <div className="progress home-today__bar" role="progressbar" aria-label="รอบฝึกวันนี้" aria-valuemin={0} aria-valuemax={path.rounds} aria-valuenow={Math.min(path.played, path.rounds)}>
+            <div className="progress__fill" style={{ transform: `scaleX(${Math.min(1, path.played / Math.max(1, path.rounds))})` }} />
           </div>
+          <p className="home-today__minutes">
+            เวลาฝึกที่บันทึก {Math.floor(path.practiceSec / 60)} นาที · ครูตั้งไว้ {plan.dailyMinutes} นาที ({path.rounds} รอบ)
+          </p>
         </section>
 
         <section className="home-path" aria-labelledby="path-title">
@@ -329,7 +358,7 @@ export function HomeScreen() {
                         <Icon name="play" size={34} />
                       </button>
                       <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
-                        <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+                        <MeImg species={me} />
                       </span>
                     </>
                   ) : null}
@@ -348,7 +377,7 @@ export function HomeScreen() {
                         </button>
                         {/* the day is done: the bunny comes to stand by the chest */}
                         <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
-                          <RenderImg name="hero-bunny" fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+                          <MeImg species={me} />
                         </span>
                       </>
                     ) : (
@@ -400,6 +429,17 @@ export function HomeScreen() {
           </ul>
         </section>
 
+        <a className="home-island" href={hrefFor("island")}>
+          <span className="home-island__pic" aria-hidden="true">
+            {egg ? <EggArt kind={egg.kind} crack={egg.crack} size={52} /> : ledger.buddy ? <PetArt kind={ledger.buddy} size={52} /> : <PetArt kind="puppy" size={52} />}
+          </span>
+          <span className="home-island__text">
+            <strong>เกาะของฉัน</strong>
+            <small>{islandHint}</small>
+          </span>
+          <Icon name="next" size={20} />
+        </a>
+
         <footer className="home-foot">
           {closed > 0 && plays.length > 0 ? <p>เกมอื่นจะเปิดเมื่อครูตั้งไว้ในแผน</p> : null}
           <p>
@@ -412,6 +452,7 @@ export function HomeScreen() {
       {sheet ? <GameSheet plays={plays} again={again} onClose={closeSheet} returnTo={sheetOpener} /> : null}
       {chest ? (
         <ChestDialog
+          me={me}
           starsToday={path.starsToday}
           nextText={nextText}
           onMore={

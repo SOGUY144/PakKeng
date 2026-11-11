@@ -35,6 +35,11 @@ if (import.meta.hot) {
 }
 
 /** Switch to a real device over WebSocket (e.g. ws://192.168.4.1:81). */
+/** Where data comes from right now, as saved with each round: the labelled simulated demo, or a real device. */
+export function signalKind(): "demo" | "device" {
+  return signalSource().kind === "mock" ? "demo" : "device";
+}
+
 export function connectDevice(url: string): void {
   setActive(new WebSocketSignalSource(url));
 }

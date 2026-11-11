@@ -15,11 +15,12 @@ import { exampleKind, playExample, stopExample, subscribeVoices } from "../lib/s
 import { showToast } from "../lib/toast";
 import { withViewTransition } from "../lib/transition";
 import { CallGame, wordSummary, type CallEvent, type CallState, type WordStat } from "../logic/call";
-import { useConnection, useSignalSource } from "../signal/mock";
+import { useConnection, useSignalSource, signalKind } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { callStatusLine } from "./callStatus";
 import { useGameRuntime } from "./useGameRuntime";
+import { useSourceGuard } from "./useSourceGuard";
 
 const fid = (w: { id: string }) => w.id as FriendId;
 
@@ -245,6 +246,7 @@ function CallRound({ words, onPlayAgain }: { words: CallWord[]; onPlayAgain: () 
     finishRound({
       child,
       game: "frog",
+      source: signalKind(),
       startedAt: startedAt.current,
       practiceMs: st.practiceMs,
       attempts: [],
@@ -272,6 +274,9 @@ function CallRound({ words, onPlayAgain }: { words: CallWord[]; onPlayAgain: () 
     setHeardAt(null);
     rt.restart();
   };
+
+  // one round = one signal source: switching demo <-> device mid-round starts the round again (nothing is mixed)
+  useSourceGuard(restart);
 
   const is3d = mode.kind === "3d";
   // the scene places friends in round order; the child's "who next" reorders only friends still waiting (hidden)

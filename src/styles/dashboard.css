@@ -830,3 +830,28 @@ fieldset.field legend {
 .chart > svg {
   max-width: 100%;
 }
+
+/* วันนี้: ช่วงพูดที่ตรวจพบ แยกอุปกรณ์จริง / โหมดสาธิต */
+.dash-today {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.dash-today small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-3);
+}
+
+.dash-today svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--primary);
+}

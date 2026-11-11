@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bunny, CloudPal, StarShape } from "../components/Art";
+import { SpeciesArt } from "../components/IslandArt";
 import { PauseOverlay } from "../components/GameParts";
 import { Icon, type IconName } from "../components/Icon";
 import { Destination, RouteBranch, RouteFlag } from "../components/RouteArt";
 import { StageNote } from "../components/StageNote";
 import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
-import { outfitFor, totalStars } from "../data/analytics";
+import { outfitOf, rewardsOf, speciesName } from "../data/rewards";
 import { promptFor } from "../data/plan";
 import { finishRound, setPendingRunner } from "../data/rounds";
 import { ROUTES, routeById, routePoints, type Route, type RouteId } from "../data/routes";
@@ -16,11 +17,12 @@ import { exampleKind, playExample, stopExample, subscribeVoices } from "../lib/s
 import { showToast } from "../lib/toast";
 import type { CallIssue, CallItem } from "../logic/call";
 import { ROUTE_LEGS, RouteRun } from "../logic/route";
-import { useConnection, useSignalSource } from "../signal/mock";
+import { useConnection, useSignalSource, signalKind } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { callStatusLine } from "./callStatus";
 import { useGameRuntime } from "./useGameRuntime";
+import { useSourceGuard } from "./useSourceGuard";
 import "../styles/runner.css";
 
 const RUN_ISSUE: Record<CallIssue, string> = {
@@ -32,6 +34,9 @@ const RUN_ISSUE: Record<CallIssue, string> = {
 
 /** "วันนี้จะวิ่งไปทางไหน" — a fork in the road; each branch shows its stops and where it ends. */
 function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => void }) {
+  const child = useActiveChild();
+  const db = useDB();
+  const species = rewardsOf(db, child.id).species;
   return (
     <div className="kid-screen kid-screen--pick">
       <div className="pick pick--map">
@@ -58,10 +63,10 @@ function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => 
             </button>
           ))}
           <span className="route-map__start" aria-hidden="true">
-            <Bunny size={58} />
+            {species === "bunny" ? <Bunny size={58} /> : <SpeciesArt id={species} size={58} />}
           </span>
         </div>
-        <p className="pick__note">พูดแล้วกระต่ายวิ่งทันที หนีเพื่อนเมฆไปให้ถึงปลายทาง</p>
+        <p className="pick__note">พูดแล้ว{speciesName(species)}วิ่งทันที หนีเพื่อนเมฆไปให้ถึงปลายทาง</p>
       </div>
     </div>
   );
@@ -105,6 +110,8 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
   const [adultModel, setAdultModel] = useState(false);
   const [, setVoices] = useState(0);
   const points = useMemo(() => routePoints(route, ROUTE_LEGS), [route]);
+  // the line under the word names the child's own character (กระต่าย / ลูกหมา / ไดโน / แมวเหมียว)
+  const hero = useMemo(() => speciesName(rewardsOf(db, child.id).species), [db, child.id]);
   const items = useMemo<CallItem[]>(() => {
     const prompts = (plan.words.length ? plan.words : ["ปา"]).map((w) => promptFor(w, plan.level));
     return Array.from({ length: ROUTE_LEGS }, (_, k) => ({ id: String(k), word: prompts[k % prompts.length], resonance: "oral" }));
@@ -135,9 +142,9 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
   else if (game.dashing)
     line =
       game.dash > 0.6
-        ? { tone: "speak", icon: "next", text: "เกือบถึงธงแล้ว!", sub: "พูดจบคำ กระต่ายจะวิ่งถึงธง" }
-        : { tone: "speak", icon: "next", text: "วิ่งเลย!", sub: "พูดจนจบคำ กระต่ายจะถึงธง" };
-  else if (line.text === "พูดได้เลย") line = { ...line, sub: "พูดแล้วกระต่ายจะวิ่งหนีเพื่อนเมฆ" };
+        ? { tone: "speak", icon: "next", text: "เกือบถึงธงแล้ว!", sub: `พูดจบคำ ${hero}จะวิ่งถึงธง` }
+        : { tone: "speak", icon: "next", text: "วิ่งเลย!", sub: `พูดจนจบคำ ${hero}จะถึงธง` };
+  else if (line.text === "พูดได้เลย") line = { ...line, sub: `พูดแล้ว${hero}จะวิ่งหนีเพื่อนเมฆ` };
 
   useEffect(() => {
     if (rt.paused !== null) stopExample();
@@ -192,11 +199,11 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
     }
     const practiceMs = g.call.state.practiceMs;
     if (then === "gate") {
-      setPendingRunner({ childId: child.id, startedAt: startedAt.current, attempts: g.attempts, stars: g.stars, practiceMs, completed: g.done, choice });
+      setPendingRunner({ childId: child.id, startedAt: startedAt.current, attempts: g.attempts, stars: g.stars, practiceMs, completed: g.done, choice, source });
       navigate("gate");
       return;
     }
-    finishRound({ child, game: "runner", startedAt: startedAt.current, practiceMs, attempts: g.attempts, stars: g.stars, gate: null, choice, endedEarly });
+    finishRound({ child, game: "runner", source: signalKind(), startedAt: startedAt.current, practiceMs, attempts: g.attempts, stars: g.stars, gate: null, choice, endedEarly });
     if (then === "again") {
       showToast("บันทึกรอบนี้แล้ว เลือกทางใหม่ได้เลย");
       onPlayAgain();
@@ -213,6 +220,10 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
     startedAt.current = new Date().toISOString();
     rt.restart();
   };
+
+  // one round = one signal source: switching demo <-> device mid-round starts the round again (nothing is mixed)
+  const source = useSourceGuard(restart);
+  const look = useMemo(() => ({ outfit: outfitOf(db, child, source), species: rewardsOf(db, child.id).species }), [db, child, source]);
 
   const is3d = mode.kind === "3d";
   const blocked = rt.paused !== null || rt.ended;
@@ -238,7 +249,8 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
                 reduced={reduced}
                 gameRef={rt.gameRef}
                 frameRef={rt.frameRef}
-                outfit={outfitFor(totalStars(db, child))}
+                outfit={look.outfit}
+                species={look.species}
               />
             ) : (
               <Route2D run={game} route={route} />
@@ -343,11 +355,11 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
           issue={s.issue}
           demo={{
             target: { kind: "oral", threshold: plan.oralThreshold },
-            hint: "กดค้าง “กดค้างเพื่อพูด” แล้วปล่อย = พูดหนึ่งคำ กระต่ายวิ่งหนึ่งช่วง",
+            hint: "กดค้าง “กดค้างเพื่อพูด” แล้วปล่อย = พูดหนึ่งคำ ตัวละครวิ่งหนึ่งช่วง",
           }}
         >
           <p className="call-note">
-            กระต่ายวิ่งต่อเมื่อเกมได้ยินเสียงที่สัญญาณใช้ได้ ข้ามช่วงได้โดยไม่เสียอะไร เกณฑ์ออกปาก {plan.oralThreshold}% ของผู้เชี่ยวชาญใช้บันทึกในหน้าผู้ดูแลเท่านั้น
+            ตัวละครวิ่งต่อเมื่อเกมได้ยินเสียงที่สัญญาณใช้ได้ ข้ามช่วงได้โดยไม่เสียอะไร เกณฑ์ออกปาก {plan.oralThreshold}% ของผู้เชี่ยวชาญใช้บันทึกในหน้าผู้ดูแลเท่านั้น
             ไม่ได้ใช้ตัดสินในฉาก
           </p>
           <p className="call-note">

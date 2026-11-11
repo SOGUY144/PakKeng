@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { playSuccessChime, scheduleSuccessChime, stopSfx, SUCCESS_NOTES } from "./sfx";
+import { playKickThump, playSuccessChime, scheduleKickThump, scheduleSuccessChime, stopSfx, SUCCESS_NOTES } from "./sfx";
 
 /** Minimal stand-in for the Web Audio nodes the chime uses; records each oscillator's frequency and start time. */
 function fakeContext() {
@@ -35,6 +35,7 @@ function fakeContext() {
 describe("sound effects", () => {
   it("does nothing, and never throws, before the first tap unlocks audio", () => {
     expect(playSuccessChime()).toBe(false);
+    expect(playKickThump()).toBe(false);
     expect(() => stopSfx()).not.toThrow();
   });
 
@@ -53,5 +54,14 @@ describe("sound effects", () => {
     const end = Math.max(...played.map((p) => p.until));
     expect(end - 2).toBeLessThan(1.5);
     expect(end - 2).toBeGreaterThan(0.8);
+  });
+
+  it("kick thump: short (under 0.3 s) and low, starting at the requested time", () => {
+    const { ctx, played } = fakeContext();
+    const count = scheduleKickThump(ctx, {} as AudioNode, 1);
+    expect(count).toBe(played.length);
+    expect(Math.min(...played.map((p) => p.at))).toBe(1);
+    expect(Math.max(...played.map((p) => p.until)) - 1).toBeLessThan(0.3);
+    expect(played.some((p) => p.freq <= 200)).toBe(true);
   });
 });

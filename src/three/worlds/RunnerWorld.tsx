@@ -5,7 +5,7 @@ import { routeById } from "../../data/routes";
 import { GAP_START, ROUTE_LEGS } from "../../logic/route";
 import { damp, frameDt, seeded } from "../anim";
 import { useKit } from "../kitContext";
-import { Bunny } from "../models/Bunny";
+import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { CloudPal } from "../models/CloudPal";
 import { bunnyDrive, cloudDrive } from "../models/drives";
 import { C } from "../palette";
@@ -61,7 +61,7 @@ function layout() {
  * - เพื่อนเมฆวิ่งตามเป็นเพื่อนร่วมทาง ไม่ไล่ ไม่มีการชน ไม่มีสถานะแพ้
  * - วงแหวนใต้เท้ากระต่ายบอกว่าเกมกำลังฟัง (ทอง = มีเสียงเข้ามา) และหายไประหว่างวิ่ง
  */
-export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }: RunnerSpec) {
+export function RunnerWorld({ gameRef, frameRef, outfit, species, reduced, tier, route }: RunnerSpec) {
   const kit = useKit();
   const L = useMemo(() => layout(), []);
   const r = routeById(route);
@@ -234,7 +234,7 @@ export function RunnerWorld({ gameRef, frameRef, outfit, reduced, tier, route }:
 
         <mesh ref={ring} geometry={kit.torus(0.62, 0.035)} material={ringMat} rotation-x={-Math.PI / 2} position={[BUNNY_X, 0.02, 0]} />
         <group position={[BUNNY_X, 0, 0]} rotation-y={Math.PI / 2 - 0.6}>
-          <Bunny drive={bunny} outfit={outfit} />
+          <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
         </group>
         <BlobShadow at={[BUNNY_X, 0, 0.04]} size={[0.95, 0.75]} />
         <group ref={chaser} position={[BUNNY_X - chaseBehind(GAP_START), 0, 0]}>

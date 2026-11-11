@@ -2,7 +2,7 @@ import type { Attempt } from "../logic/common";
 import { totals } from "../logic/common";
 import { callGroupNasal } from "./callWords";
 import { addSession } from "./store";
-import type { BalloonSummary, CallSummary, Child, FrogSummary, GameId, GateSummary, RoundChoice, Session } from "./schema";
+import type { BalloonSummary, CallSummary, Child, FrogSummary, GameId, GateSummary, KickSummary, RoundChoice, Session, SignalKind } from "./schema";
 
 /**
  * Hand-off between screens of one round (เลือกทางวิ่ง → ด่านประตู → สรุป).
@@ -20,6 +20,8 @@ export interface PendingRunner {
   completed: boolean;
   /** The route the child picked, kept for the result if the door is not played after the run. */
   choice?: RoundChoice | null;
+  /** Signal source of the run: the door never merges a run from another source into its own round. */
+  source?: SignalKind;
 }
 
 function readJSON<T>(key: string): T | null {
@@ -65,8 +67,23 @@ interface FinishArgs {
   balloon?: BalloonSummary | null;
   frog?: FrogSummary | null;
   call?: CallSummary | null;
+  kick?: KickSummary | null;
   choice?: RoundChoice | null;
   endedEarly?: boolean;
+  /** Signal source of the round (labelled demo vs real device): saved as the round's source; rewards keep them apart. */
+  source: SignalKind;
+}
+
+/** One id per round (game + start time): saving the same round twice (double tap, back and save again) keeps one session. */
+export function roundId(game: GameId, startedAt: string): string {
+  const ms = Date.parse(startedAt);
+  return `d-${game}-${(Number.isFinite(ms) ? ms : 0).toString(36)}`;
+}
+
+/** Detected speech attempts with usable signal: call rounds count them per word; the other games keep only usable utterances. */
+function usableAttemptsOf(call: CallSummary | null, attempts: number, gate: GateSummary | null): number {
+  if (call) return call.words.reduce((n, w) => n + w.usable, 0);
+  return attempts + (gate?.usable ?? gate?.attempts ?? 0);
 }
 
 const round1 = (v: number | null) => (v === null ? null : Math.round(v * 10) / 10);
@@ -77,9 +94,9 @@ export function finishRound(a: FinishArgs): Session {
   const p = a.child.plan;
   const call = a.call ?? null;
   const session: Session = {
-    id: `d-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`,
+    id: roundId(a.game, a.startedAt),
     childId: a.child.id,
-    source: "demo",
+    source: a.source,
     startedAt: a.startedAt,
     durationSec: Math.round(a.practiceMs / 1000),
     game: a.game,
@@ -95,6 +112,8 @@ export function finishRound(a: FinishArgs): Session {
     balloon: a.balloon ?? null,
     frog: a.frog ?? null,
     call,
+    kick: a.kick ?? null,
+    usableAttempts: usableAttemptsOf(call, t.attempts, a.gate ?? null),
     choice: a.choice ?? null,
     stars: a.stars,
     endedEarly: a.endedEarly ?? false,
@@ -109,6 +128,7 @@ export function summarizeGate(attempts: Attempt[], opened: boolean, skipped: boo
   const t = totals(attempts);
   return {
     attempts: t.attempts,
+    usable: attempts.filter((a) => a.usable !== false).length,
     passed: t.passed,
     meanNasal: t.meanNasal === null ? null : Math.round(t.meanNasal * 10) / 10,
     opened,

@@ -1,4 +1,5 @@
 import type { SignalFrame } from "../signal/SignalProcessor";
+import { QUALITY_DEFAULTS } from "../signal/quality";
 import { type Attempt, clampDt, practiceDelta } from "./common";
 import { ThresholdLatch } from "./latch";
 import { SpeechSegmenter } from "./segmenter";
@@ -46,7 +47,11 @@ export interface GateState {
   listens: number;
 }
 
+/** Share of clipped frames that makes a door attempt unusable for rewards (same as the call games). */
+const GATE_CLIP_SHARE = 0.2;
+
 export class GateGame {
+  private acc: { frames: number; clipFrames: number; peakDb: number | null; known: boolean } | null = null;
   readonly cfg: GateConfig;
   state: GateState;
   private settleMs: number;
@@ -133,6 +138,15 @@ export class GateGame {
 
     let attempts = s.attempts;
     const ev = this.seg.update(frame, now);
+    // signal quality of the attempt in progress (same rule as the call games: clipped or too quiet = not usable)
+    if (ev?.type === "start") this.acc = { frames: 0, clipFrames: 0, peakDb: null, known: frame.quality.known };
+    if (this.acc && frame.speaking) {
+      const a = this.acc;
+      a.frames += 1;
+      if (frame.quality.clip) a.clipFrames += 1;
+      if (frame.quality.levelDb !== null) a.peakDb = a.peakDb === null ? frame.quality.levelDb : Math.max(a.peakDb, frame.quality.levelDb);
+      a.known = a.known && frame.quality.known;
+    }
     // The utterance that opened the door is still open: close and count it now.
     const finished = ev?.type === "end" ? ev : justOpened ? this.seg.flush() : null;
     if (finished?.type === "end") {
@@ -140,7 +154,9 @@ export class GateGame {
         meanNasal: finished.stats.meanNasal,
         passed: finished.stats.meanNasal >= this.cfg.nasalThreshold,
         durationMs: finished.stats.durationMs,
+        usable: this.usable(),
       };
+      this.acc = null;
       attempts = [...attempts, attempt];
       events.push({ type: "attempt", attempt });
     }
@@ -167,5 +183,14 @@ export class GateGame {
   private drop(): void {
     this.seg.reset();
     this.latch.reset();
+    this.acc = null;
+  }
+
+  /** Unknown levels cannot be judged, so they pass (as in CallGame.classify). */
+  private usable(): boolean {
+    const a = this.acc;
+    if (!a || !a.known || a.frames === 0) return true;
+    if (a.clipFrames / a.frames >= GATE_CLIP_SHARE) return false;
+    return a.peakDb !== null && a.peakDb >= QUALITY_DEFAULTS.quietDb;
   }
 }

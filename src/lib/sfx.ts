@@ -98,6 +98,43 @@ export function playSuccessChime(): boolean {
   }
 }
 
+/**
+ * Schedules a soft "thump" of a foot on a ball: a quick downward pitch sweep (≈0.18 s). Returns oscillators started.
+ * Pure scheduling (tested with a fake context).
+ */
+export function scheduleKickThump(c: BaseAudioContext, out: AudioNode, at: number): number {
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(0.9, at + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+  g.connect(out);
+  const o = c.createOscillator();
+  o.type = "triangle";
+  o.frequency.setValueAtTime(190, at);
+  o.frequency.exponentialRampToValueAtTime(70, at + 0.16);
+  o.connect(g);
+  o.start(at);
+  o.stop(at + 0.2);
+  // a short leather "tick" on top
+  return 1 + tone(c, out, 900, at, 0.04, 0.15);
+}
+
+/** Plays the kick thump (the game is not listening while the ball flies). Returns false when nothing could play. */
+export function playKickThump(): boolean {
+  if (!ctx || ctx.state !== "running") return false;
+  try {
+    stopSfx();
+    const b = ctx.createGain();
+    b.gain.value = MASTER;
+    b.connect(ctx.destination);
+    bus = b;
+    scheduleKickThump(ctx, b, ctx.currentTime + 0.01);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Fades out whatever sound effect is still ringing (call before the game listens to the mics again). */
 export function stopSfx(): void {
   const b = bus;
