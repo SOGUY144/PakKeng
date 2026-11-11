@@ -47,39 +47,3 @@ export function Destination({ route, size = 72 }: { route: Route; size?: number 
     </svg>
   );
 }
-
-/** Map points of one branch of the fork (y 64–322): start at the fork (bottom inner corner), the last stop on top under the destination. */
-const LEFT: [number, number][] = [
-  [150, 318],
-  [70, 286],
-  [118, 240],
-  [52, 200],
-  [112, 158],
-  [56, 120],
-  [86, 86],
-];
-
-/**
- * One branch of the map: a winding path from the fork up to the destination, with a flag at every stop.
- * The two branches mirror each other, so side by side they read as one fork in the road.
- */
-export function RouteBranch({ route, side, stops }: { route: Route; side: "left" | "right"; stops: number }) {
-  const pts = LEFT.map(([x, y]) => [side === "left" ? x : 160 - x, y] as const);
-  const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join(" ");
-  const flags = pts.slice(1, 1 + Math.min(stops, pts.length - 2));
-  return (
-    <svg className="route-branch" viewBox="0 64 160 258" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-      <path d={d} fill="none" stroke="#e6cf9f" strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={d} fill="none" stroke="#f5e4c0" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={d} fill="none" stroke="#fff" strokeWidth="3" strokeDasharray="2 9" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-      {flags.map(([x, y], i) => (
-        <g key={i} transform={`translate(${x - 13} ${y - 34})`}>
-          <ellipse cx="13" cy="34" rx="7" ry="2.4" fill="#000" opacity="0.12" />
-          <rect x="11.4" y="8" width="3" height="26" rx="1.5" fill="#c48d5c" />
-          <path d="M14.4 9.5 L30 14 L14.4 19 Z" fill={route.flag} />
-          <circle cx="12.9" cy="8" r="2.4" fill="#ffd877" />
-        </g>
-      ))}
-    </svg>
-  );
-}

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bunny, CloudPal, StarShape } from "../components/Art";
 import { DoorArt } from "../components/DoorArt";
 import { PauseOverlay } from "../components/GameParts";
+import { RenderImg } from "../components/RenderImg";
 import { Icon, type IconName } from "../components/Icon";
 import { Meter } from "../components/Meter";
 import { StageNote } from "../components/StageNote";
@@ -87,7 +88,11 @@ function saveRunOnly(child: Child, pending: PendingRunner): void {
   navigate("result");
 }
 
-/** "อยากเปิดประตูบานไหน" — the pick sets the door's look and what waits behind it (the word and the target stay the plan's). */
+/**
+ * "อยากเปิดประตูบานไหน" — the pick sets the door's look and what waits behind it (the word and the target stay the plan's).
+ * Each door is a still rendered from the round's own 3D gate (its own crest: flower · star · shell), all at one scale.
+ * Phones: the first door gets the wide card and the other two share the row under it; wider screens: three in a row.
+ */
 function DoorPicker({ opened, fromRun, onPick, onBack }: { opened: DoorId[]; fromRun: boolean; onPick: (id: DoorId) => void; onBack: () => void }) {
   return (
     <div className="kid-screen kid-screen--pick">
@@ -99,25 +104,34 @@ function DoorPicker({ opened, fromRun, onPick, onBack }: { opened: DoorId[]; fro
           <DemoTag />
         </header>
         <h1 className="pick__title">อยากเปิดประตูบานไหน?</h1>
-        <ul className="pick__list">
+        <ul className="door-cards">
           {DOORS.map((d) => {
             const done = opened.includes(d.id);
             return (
               <li key={d.id}>
                 <button
                   type="button"
-                  className="pick-door"
+                  className={`door-card${done ? " is-done" : ""}`}
+                  style={{ ["--door" as string]: d.leaf, ["--door-soft" as string]: d.soft, ["--door-deep" as string]: d.leafDeep }}
                   onClick={() => onPick(d.id)}
                   aria-label={done ? `เปิด${d.name}อีกครั้ง ข้างหลังคือ${d.behind.name}` : `เปิด${d.name}`}
                 >
-                  <span className="pick-door__pic">
-                    <DoorArt door={d} open={done} />
+                  <span className="door-card__pic">
+                    <RenderImg
+                      name={`door-${d.id}`}
+                      fallback={
+                        <span className="door-card__flat">
+                          <DoorArt door={d} open={done} />
+                          <span className="door-card__flat-note">ฉาก 3D ยังไม่พร้อม ใช้ภาพเบาแทนได้</span>
+                        </span>
+                      }
+                    />
                   </span>
-                  <span className="pick-door__name" lang="th">
+                  <span className="door-card__name" lang="th" aria-hidden="true">
                     {d.short}
                   </span>
                   {done ? (
-                    <span className="pick-door__done">
+                    <span className="door-card__done" aria-hidden="true">
                       <Icon name="check" size={14} />
                       {d.behind.name}
                     </span>

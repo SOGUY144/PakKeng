@@ -85,17 +85,6 @@ export function RunnerWorld({ gameRef, frameRef, outfit, species, reduced, tier,
       ground: kit.geo("ground-80x40", () => new THREE.PlaneGeometry(80, 40)),
       path: kit.geo("path-80", () => new THREE.BoxGeometry(80, 0.3, 3.3)),
       edge: kit.geo("path-edge-80", () => new THREE.BoxGeometry(80, 0.32, 0.16)),
-      pole: kit.cylinder(0.035, 0.045, 1.5, 8),
-      banner: kit.geo("flag-banner", () => {
-        const sh = new THREE.Shape();
-        sh.moveTo(0, 0);
-        sh.lineTo(0.62, -0.17);
-        sh.lineTo(0, -0.36);
-        sh.closePath();
-        return new THREE.ExtrudeGeometry(sh, { depth: 0.05, bevelEnabled: false });
-      }),
-      knob: kit.ball(0.07),
-      base: kit.cylinder(0.2, 0.24, 0.1, 14),
     }),
     [kit],
   );
@@ -221,10 +210,7 @@ export function RunnerWorld({ gameRef, frameRef, outfit, species, reduced, tier,
         {Array.from({ length: legs }, (_, k) =>
           k === 0 ? null : (
             <group key={k} ref={(el) => void (flags.current[k] = el)} position={[BUNNY_X + FLAG_AHEAD + k * LEG_UNITS, 0, FLAG_Z]} visible={false}>
-              <mesh geometry={geo.base} material={kit.clay(C.creamShade)} position={[0, 0.05, 0]} receiveShadow />
-              <mesh geometry={geo.pole} material={kit.clay(C.wood)} position={[0, 0.75, 0]} castShadow={shadows} />
-              <mesh geometry={geo.knob} material={kit.clay(C.butter)} position={[0, 1.52, 0]} scale={0.07} />
-              <mesh geometry={geo.banner} material={kit.clay(r.flag)} position={[0.03, 1.45, -0.025]} castShadow={shadows} />
+              <StopFlag color={r.flag} shadows={shadows} />
             </group>
           ),
         )}
@@ -250,8 +236,29 @@ export function RunnerWorld({ gameRef, frameRef, outfit, species, reduced, tier,
   );
 }
 
+/** A stop on the route: a clay flag in the route colour on a small round base (scene and picker stills). */
+export function StopFlag({ color, shadows = true }: { color: string; shadows?: boolean }) {
+  const kit = useKit();
+  const banner = kit.geo("flag-banner", () => {
+    const sh = new THREE.Shape();
+    sh.moveTo(0, 0);
+    sh.lineTo(0.62, -0.17);
+    sh.lineTo(0, -0.36);
+    sh.closePath();
+    return new THREE.ExtrudeGeometry(sh, { depth: 0.05, bevelEnabled: false });
+  });
+  return (
+    <>
+      <mesh geometry={kit.cylinder(0.2, 0.24, 0.1, 14)} material={kit.clay(C.creamShade)} position={[0, 0.05, 0]} receiveShadow />
+      <mesh geometry={kit.cylinder(0.035, 0.045, 1.5, 8)} material={kit.clay(C.wood)} position={[0, 0.75, 0]} castShadow={shadows} />
+      <mesh geometry={kit.ball(0.07)} material={kit.clay(C.butter)} position={[0, 1.52, 0]} scale={0.07} />
+      <mesh geometry={banner} material={kit.clay(color)} position={[0.03, 1.45, -0.025]} castShadow={shadows} />
+    </>
+  );
+}
+
 /** Destination of the flower route: a small clay ferris wheel in the route colour (turns slowly). */
-function FerrisWheel({ wheel, color, deep }: { wheel: RefObject<THREE.Group | null>; color: string; deep: string }) {
+export function FerrisWheel({ wheel, color, deep }: { wheel: RefObject<THREE.Group | null>; color: string; deep: string }) {
   const kit = useKit();
   const cabins = 8;
   return (
@@ -278,7 +285,7 @@ function FerrisWheel({ wheel, color, deep }: { wheel: RefObject<THREE.Group | nu
 }
 
 /** Destination of the mushroom route: a big clay mushroom house with a door and a round window. */
-function MushroomHouse({ color, deep }: { color: string; deep: string }) {
+export function MushroomHouse({ color, deep }: { color: string; deep: string }) {
   const kit = useKit();
   return (
     <group scale={1.1}>

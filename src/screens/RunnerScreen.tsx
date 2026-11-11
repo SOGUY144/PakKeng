@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bunny, CloudPal, StarShape } from "../components/Art";
-import { SpeciesArt } from "../components/IslandArt";
 import { PauseOverlay } from "../components/GameParts";
 import { Icon, type IconName } from "../components/Icon";
-import { Destination, RouteBranch, RouteFlag } from "../components/RouteArt";
+import { RenderImg } from "../components/RenderImg";
+import { Destination, RouteFlag } from "../components/RouteArt";
 import { StageNote } from "../components/StageNote";
 import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
 import { outfitOf, rewardsOf, speciesName } from "../data/rewards";
@@ -32,11 +32,16 @@ const RUN_ISSUE: Record<CallIssue, string> = {
   channel: "รอผู้ใหญ่ช่วยดูไมค์แป๊บหนึ่ง",
 };
 
-/** "วันนี้จะวิ่งไปทางไหน" — a fork in the road; each branch shows its stops and where it ends. */
+/**
+ * "วันนี้จะวิ่งไปทางไหน" — two routes as two little worlds (stills rendered from the round's own 3D models:
+ * the same flags, landmark and the child's character). Phones stack them, wider screens set them side by side.
+ * While a still loads its card keeps its shape; if it cannot load, a light 2D picture stands in (the pick still works).
+ */
 function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => void }) {
   const child = useActiveChild();
   const db = useDB();
   const species = rewardsOf(db, child.id).species;
+  const hero = speciesName(species);
   return (
     <div className="kid-screen kid-screen--pick">
       <div className="pick pick--map">
@@ -47,26 +52,42 @@ function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => 
           <DemoTag />
         </header>
         <h1 className="pick__title">วันนี้จะวิ่งไปทางไหน?</h1>
-        <div className="route-map">
-          {ROUTES.map((r, i) => (
-            <button key={r.id} type="button" className={`route-map__branch route-map__branch--${i === 0 ? "left" : "right"}`} onClick={() => onPick(r.id)}>
-              <span className="route-map__dest">
-                <Destination route={r} size={84} />
-                <span className="route-map__destname" lang="th">
-                  {r.destination}
+        <ul className="route-cards">
+          {ROUTES.map((r) => (
+            <li key={r.id}>
+              <button
+                type="button"
+                className={`route-card route-card--${r.id}`}
+                style={{ ["--flag" as string]: r.flag, ["--flag-deep" as string]: r.flagDeep }}
+                onClick={() => onPick(r.id)}
+                aria-label={`${r.name} วิ่งผ่าน ${legs - 1} ธง ไปถึง${r.destination}`}
+              >
+                <span className="route-card__pic">
+                  <RenderImg
+                    key={species}
+                    name={`route-${r.id}-${species}`}
+                    fallback={
+                      <span className="route-card__flat">
+                        <Destination route={r} size={96} />
+                        <span className="route-card__flat-note">ฉาก 3D ยังไม่พร้อม ใช้ภาพเบาแทนได้</span>
+                      </span>
+                    }
+                  />
                 </span>
-              </span>
-              <RouteBranch route={r} side={i === 0 ? "left" : "right"} stops={legs - 1} />
-              <span className="route-map__name" lang="th" style={{ ["--flag" as string]: r.flag }}>
-                {r.name}
-              </span>
-            </button>
+                <span className="route-card__text" aria-hidden="true">
+                  <span className="route-card__name" lang="th">
+                    {r.name}
+                  </span>
+                  <span className="route-card__dest" lang="th">
+                    <RouteFlag color={r.flag} size={22} />
+                    ไป{r.destination}
+                  </span>
+                </span>
+              </button>
+            </li>
           ))}
-          <span className="route-map__start" aria-hidden="true">
-            {species === "bunny" ? <Bunny size={58} /> : <SpeciesArt id={species} size={58} />}
-          </span>
-        </div>
-        <p className="pick__note">พูดแล้ว{speciesName(species)}วิ่งทันที หนีเพื่อนเมฆไปให้ถึงปลายทาง</p>
+        </ul>
+        <p className="pick__note">พูดแล้ว{hero}วิ่งทันที หนีเพื่อนเมฆไปให้ถึงปลายทาง</p>
       </div>
     </div>
   );

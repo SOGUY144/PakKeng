@@ -9,7 +9,8 @@ import { useKit } from "../kitContext";
 import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { CloudPal } from "../models/CloudPal";
 import { bunnyDrive, cloudDrive } from "../models/drives";
-import { EmblemField, Gate, type GateDrive, type GateLook } from "../models/Gate";
+import { EmblemField, Gate, type GateDrive } from "../models/Gate";
+import { CLASSIC_PLACE, lookOf } from "../models/gateLook";
 import { C } from "../palette";
 import { BlobShadow, Burst, Field, Lights, type BurstFire, type Placement } from "../parts";
 import * as S from "../shapes";
@@ -39,7 +40,8 @@ interface View {
 const FOV = 34;
 const TAN = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
 /** The whole gate with the bunny and its friend in front. */
-const VIEW_GATE: View = { target: [0, 1.85, 0.4], dir: [0.32, 0.34, 1], width: 6.2, height: 5.4 };
+/** Headroom above the arch: the door's crest (flower · star · shell) stays clear of the round's top bar. */
+const VIEW_GATE: View = { target: [0, 2.1, 0.4], dir: [0.32, 0.34, 1], width: 6.2, height: 5.9 };
 /** After the door opens: the doorway and what is behind it fill the view. */
 const VIEW_DOOR: View = { target: [0, 1.15, GATE_Z - 0.35], dir: [0.16, 0.22, 1], width: 3.3, height: 3.0 };
 /** The camera starts moving once the leaves are swinging. */
@@ -61,18 +63,6 @@ const SHORE_Z = -1.08;
 /** Positions on the tilted sky (x across, y up its slope). */
 const MOON: [number, number] = [-0.42, 0.55];
 const SUN: [number, number] = [0.5, 0.62];
-const CLASSIC_PLACE: DoorPlace = { name: "", skyTop: "#fff6df", skyLow: "#e9f5dc", ground: "#b3de8d", light: "#fff3d6" };
-const CLASSIC_LOOK: GateLook = {
-  leaf: C.wood,
-  leafLight: "#cf9a68",
-  leafDeep: C.woodDeep,
-  soft: "#b3a5c9",
-  emblem: null,
-  emblemColor: C.cream,
-  emblemDeep: C.gold,
-  light: CLASSIC_PLACE.light,
-};
-
 const scratch = new THREE.Object3D();
 const camTarget = new THREE.Vector3();
 const camDir = new THREE.Vector3();
@@ -82,20 +72,6 @@ const MOTE_PATH = new THREE.QuadraticBezierCurve3(
   new THREE.Vector3(-0.5, 3.6, 0.9),
   new THREE.Vector3(...EMBLEM),
 );
-
-function lookOf(door: Door | undefined): GateLook {
-  if (!door) return CLASSIC_LOOK;
-  return {
-    leaf: door.leaf,
-    leafLight: door.leafLight,
-    leafDeep: door.leafDeep,
-    soft: door.soft,
-    emblem: door.id,
-    emblemColor: door.emblem,
-    emblemDeep: door.emblemDeep,
-    light: door.behind.light,
-  };
-}
 
 /** Same framing rule as FitCamera, blended between two views (k = 0 → gate, 1 → doorway). */
 function placeCamera(camera: THREE.PerspectiveCamera, aspect: number, k: number): void {

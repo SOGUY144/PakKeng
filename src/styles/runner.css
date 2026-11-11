@@ -1,6 +1,7 @@
 /* ---------- เลือกทางวิ่ง (route runner) ----------
-   Picker: a fork in the road on a meadow map. Round: the shared world layout (kid.css) with a route trail
-   in the top bar and the next stop named once in the dock. */
+   Picker: the two routes as two little worlds (stills rendered from the round's own 3D models), stacked on
+   phones and side by side on wider screens; same picture scale and baseline. Round: the shared world layout
+   (kid.css) with a route trail in the top bar and the next stop named once in the dock. */
 
 .pick.pick--map {
   --pick-bg: var(--candy-lemon-soft);
@@ -8,98 +9,147 @@
   --pick-ink: var(--candy-lemon-ink);
 }
 
-.route-map {
-  position: relative;
+.route-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
   width: 100%;
-  max-width: 460px;
-  margin: 0 auto;
-  padding-bottom: 34px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.route-map__branch {
+.route-card {
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  justify-items: center;
-  min-height: 0;
-  padding: 10px 6px 6px;
-  border: 3px solid transparent;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 8px 10px;
+  border: 3px solid var(--surface);
   border-radius: var(--r-xl);
-  background: none;
-  color: var(--pond-ink);
+  /* soft wash of the route's flag colour (white first: browsers without color-mix keep a plain card) */
+  background: var(--surface);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--flag) 26%, #fff), color-mix(in srgb, var(--flag) 12%, #fff));
+  box-shadow: var(--shadow-clay);
+  color: var(--ink);
   font: inherit;
+  text-align: start;
   cursor: pointer;
   transition:
-    background var(--dur-2),
-    transform var(--dur-2) var(--ease-spring);
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-1);
 }
 
-.route-map__branch:hover,
-.route-map__branch:focus-visible {
-  background: rgba(255, 255, 255, 0.35);
+.route-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--flag);
 }
 
-.route-map__branch:active {
-  transform: scale(0.98);
+.route-card:active {
+  transform: scale(0.985);
 }
 
-.route-map__dest {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
+.route-card:focus-visible {
+  outline: 4px solid var(--ink);
+  outline-offset: 3px;
 }
 
-.route-map__destname {
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.94);
-  font-size: 1.3rem;
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.6;
+/* the window onto the route's world: a soft sky behind the still (its sky is transparent); keeps its shape while loading */
+.route-card__pic {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: calc(var(--r-xl) - 6px);
+  background: radial-gradient(130% 100% at 50% 0%, #fffdf7 0 40%, color-mix(in srgb, var(--flag) 30%, #fff8ec) 100%);
+  background-color: #fff8ec;
 }
 
-.route-branch {
+.route-card__pic img {
   display: block;
   width: 100%;
-  max-width: 180px;
-  height: clamp(190px, 36dvh, 320px);
-  margin-top: -6px;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 60%;
 }
 
-.route-map__name {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  padding: 2px 14px;
-  border-radius: var(--r-pill);
-  background: #fff;
-  box-shadow: inset 0 -4px 0 var(--flag);
-  font-size: 1.15rem;
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.7;
-}
-
-/* where the two branches meet: the bunny's start */
-.route-map__start {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  translate: -50% 0;
+.route-card__flat {
   display: grid;
   place-items: center;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 3px solid #fff;
-  background: #fff8ec;
-  box-shadow: var(--shadow-2);
-  pointer-events: none;
+  align-content: center;
+  gap: 4px;
+  height: 100%;
+  padding: 8px;
+  text-align: center;
+}
+
+.route-card__flat-note {
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+}
+
+.route-card__text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 0 6px;
+}
+
+.route-card__name {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.route-card__dest {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px 0 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: inset 0 -3px 0 var(--flag);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.9;
+}
+
+/* short phones: flatter windows so both routes still fit without scrolling */
+@media (max-height: 740px) and (max-width: 599px) {
+  .route-card__pic {
+    aspect-ratio: 2 / 1;
+  }
+}
+
+@media (min-width: 600px) {
+  .route-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .route-cards {
+    max-width: 1040px;
+    margin-inline: auto;
+    gap: 24px;
+  }
+  .route-card {
+    padding: 10px 10px 14px;
+  }
+  .route-card__name {
+    font-size: 1.7rem;
+  }
+  .route-card__dest {
+    font-size: 1.15rem;
+  }
+}
+
+[data-motion="reduce"] .route-card {
+  transition: none;
 }
 
 /* ---------- Round ---------- */
@@ -238,40 +288,5 @@
 @keyframes route-hop-soft {
   to {
     transform: translateY(-4px);
-  }
-}
-
-@media (min-width: 700px) and (orientation: portrait) {
-  .route-map {
-    max-width: 640px;
-  }
-  .route-branch {
-    max-width: 250px;
-    height: min(40dvh, 440px);
-  }
-  .route-map__dest svg {
-    width: 124px;
-    height: 124px;
-  }
-  .route-map__destname,
-  .route-map__name {
-    font-size: 1.5rem;
-  }
-}
-
-@media (min-width: 900px) and (orientation: landscape) {
-  .route-map {
-    max-width: 760px;
-  }
-  .route-branch {
-    max-width: 230px;
-    height: min(44dvh, 400px);
-  }
-  .route-map__destname {
-    font-size: 1.5rem;
-  }
-  .route-map__dest svg {
-    width: 110px;
-    height: 110px;
   }
 }

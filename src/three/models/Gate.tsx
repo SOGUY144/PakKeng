@@ -135,6 +135,24 @@ function emblemGeometry(kind: DoorId, color: string, deep: string, flat = false)
   return g;
 }
 
+/**
+ * The door's own silhouette (so the three doors differ in shape, not only in colour): a big emblem standing on
+ * top of the arch (round flower · pointed star · wide shell fan) and a small one on each pillar cap.
+ * Scales keep the crest top ≈ 4.4 (the round's camera keeps it below the top bar, see VIEW_GATE in GateWorld).
+ */
+const ARCH_TOP = 2.4 + 1.26 + 0.21;
+const CREST: Record<DoorId, { s: number; lift: number }> = {
+  flower: { s: 0.32, lift: 0.32 },
+  star: { s: 0.34, lift: 0.28 },
+  shell: { s: 0.32, lift: 0.32 },
+};
+
+function crestColors(kind: DoorId, look: GateLook): [string, string] {
+  if (kind === "flower") return [look.leaf, look.emblemDeep];
+  if (kind === "star") return [look.emblemColor, look.emblemDeep];
+  return [look.leaf, look.leafDeep];
+}
+
 /** Emblems lying on the ground (shells and starfish on the beach behind the shell door) — one draw call. */
 export function EmblemField({ kind, color, deep, items }: { kind: DoorId; color: string; deep: string; items: Placement[] }) {
   const kit = useKit();
@@ -169,6 +187,8 @@ export function Gate({ drive, look }: { drive: RefObject<GateDrive>; look: GateL
   );
   const kind = look.emblem;
   const emblem = kind ? kit.geo(`gate-emblem|${kind}|${look.emblemColor}|${look.emblemDeep}`, () => emblemGeometry(kind, look.emblemColor, look.emblemDeep)) : null;
+  const crestPair = kind ? crestColors(kind, look) : null;
+  const crest = kind && crestPair ? kit.geo(`gate-crest|${kind}|${crestPair[0]}|${crestPair[1]}`, () => emblemGeometry(kind, crestPair[0], crestPair[1])) : null;
   // per-instance materials whose opacity is animated (reached through the mesh refs every frame)
   const ringMat = useMemo(() => kit.own(new THREE.MeshBasicMaterial({ color: C.nasal, transparent: true, opacity: 0.25 })), [kit]);
   const flashMat = useMemo(
@@ -276,10 +296,13 @@ export function Gate({ drive, look }: { drive: RefObject<GateDrive>; look: GateL
           <mesh geometry={geo.cap} material={stoneDeep} position={[0, 2.45, 0]} castShadow />
           <mesh geometry={kit.dome()} material={moss} position={[0.05, 2.54, 0.05]} scale={[0.26, 0.12, 0.24]} />
           <mesh geometry={kit.dome()} material={moss} position={[-0.18, 0.02, 0.24]} scale={[0.2, 0.14, 0.12]} />
+          {/* a small emblem plaque on each pillar's face (the arch rests on the caps, so nothing can stand there) */}
+          {crest && kind ? <mesh geometry={crest} material={emblemMat} position={[0, 1.92, 0.27]} scale={CREST[kind].s * 0.42} /> : null}
         </group>
       ))}
       <mesh geometry={geo.sill} material={stoneDeep} position={[0, 0, 0]} receiveShadow />
       <mesh geometry={geo.arch} material={stone} position={[0, 2.4, 0]} castShadow />
+      {crest && kind ? <mesh geometry={crest} material={emblemMat} position={[0, ARCH_TOP - 0.1 + CREST[kind].lift, -0.03]} scale={CREST[kind].s} castShadow /> : null}
       <mesh geometry={geo.tympanum} material={kit.clay(look.soft)} position={[0, 2.4, -0.02]} />
       <group position={[0, MEDALLION_Y, 0.06]}>
         {/* the door's deep colour behind its emblem, so a white flower or a gold star reads clearly */}

@@ -211,9 +211,30 @@
   opacity: 0.92;
 }
 
+.home-today__track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+}
+
 .home-today__bar {
   height: 10px;
   background: rgba(255, 255, 255, 0.28);
+}
+
+.home-today__chest {
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: -12px 0 -8px;
+}
+
+.home-today__chest img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .home-today__bar .progress__fill {
@@ -250,13 +271,58 @@
   min-width: 200px;
 }
 
+/* the road under the stops (drawn from the measured node centres, see TrailRoad) */
+.trail-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.trail__road {
+  z-index: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.trail__road path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trail__road-edge {
+  stroke: #d9cdf6;
+  stroke-width: 30px;
+}
+
+.trail__road-top {
+  stroke: #fbf9ff;
+  stroke-width: 22px;
+}
+
+.trail__road-walked {
+  stroke: #ddd2ff;
+  stroke-width: 22px;
+}
+
+.trail__road-dash {
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-dasharray: 2 12;
+}
+
 .trail {
+  position: relative;
+  z-index: 1;
   display: grid;
   justify-items: center;
-  gap: 18px;
+  align-content: start;
+  gap: 6px;
   width: 100%;
   margin: 0;
-  padding: 8px 0 0;
+  padding: 4px 0 0;
   list-style: none;
 }
 
@@ -266,7 +332,8 @@
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 4px;
+  align-content: start;
+  gap: 2px;
   transform: translateX(calc(var(--x) * var(--step)));
 }
 
@@ -277,8 +344,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -337,6 +404,12 @@ button.trail__node:focus-visible {
   --ink-node: var(--candy-lime-ink);
 }
 
+/* the mic check is an optional first stop: a smaller step */
+.trail__node--mic {
+  width: 56px;
+  height: 56px;
+}
+
 .trail__node--mic.is-open {
   --face: var(--surface);
   --edge: #cfc6f3;
@@ -354,8 +427,8 @@ button.trail__node:focus-visible {
   --face: var(--primary);
   --edge: var(--primary-deep);
   --ink-node: var(--primary-ink);
-  width: 92px;
-  height: 92px;
+  width: 84px;
+  height: 84px;
   padding-left: 6px;
 }
 
@@ -476,14 +549,56 @@ button.trail__node:focus-visible {
 .trail__node--chest {
   --face: #fff6c9;
   --edge: #e8d27a;
-  width: 84px;
-  height: 84px;
-  padding: 10px;
+  width: 76px;
+  height: 76px;
+  padding: 6px;
 }
 
 .trail__node--chest.is-locked {
   --face: var(--surface-sunken);
   --edge: #cfcadf;
+}
+
+.trail__node--chest img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* a finished round: a round sticker of the game played (its 3D scene) inside the game-coloured ring, and a tick */
+.trail__sticker {
+  position: absolute;
+  inset: 5px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.trail__sticker img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trail__node--runner .trail__sticker img,
+.trail__node--kick .trail__sticker img {
+  object-position: 72% 50%;
+}
+
+.trail__tick {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--ok);
+  color: #fff;
 }
 
 .trail__label {
@@ -494,6 +609,7 @@ button.trail__node:focus-visible {
 }
 
 .trail__step[aria-current="step"] .trail__label {
+  margin-top: 8px;
   color: var(--primary-text);
 }
 
@@ -529,10 +645,30 @@ button.trail__node:focus-visible {
 .plays {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.plays[data-count="3"] > li:first-child,
+.plays[data-count="5"] > li:first-child {
+  grid-column: 1 / -1;
+}
+
+.plays[data-count="3"] > li:first-child .play-card,
+.plays[data-count="5"] > li:first-child .play-card {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 10px 10px;
+}
+
+.plays[data-count="3"] > li:first-child .play-card__verb,
+.plays[data-count="5"] > li:first-child .play-card__verb {
+  font-size: clamp(1.3rem, 5.4vw, 1.7rem);
 }
 
 .play-card {
@@ -590,6 +726,22 @@ button.trail__node:focus-visible {
 .play-card--kick {
   --card-bg: var(--candy-lime);
   --card-ink: var(--candy-lime-ink);
+}
+
+/* a new game (until the child has played it once) */
+.play-card__new {
+  position: absolute;
+  z-index: 1;
+  top: -10px;
+  left: 10px;
+  padding: 2px 12px;
+  border-radius: var(--r-pill);
+  background: var(--candy-lemon);
+  color: var(--candy-lemon-ink);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  box-shadow: var(--shadow-1);
 }
 
 .play-card__again {
@@ -738,6 +890,10 @@ button.trail__node:focus-visible {
   line-height: 1.4;
 }
 
+.collect-strip__title .nowrap {
+  white-space: nowrap;
+}
+
 .collect-strip__title small {
   color: var(--ink-3);
   font-family: var(--font-sans);
@@ -799,12 +955,20 @@ button.trail__node:focus-visible {
     --step: 64px;
   }
   .trail__node {
-    width: 84px;
-    height: 84px;
+    width: 76px;
+    height: 76px;
   }
   .trail__node.is-current {
-    width: 108px;
-    height: 108px;
+    width: 100px;
+    height: 100px;
+  }
+  .trail__node--mic {
+    width: 64px;
+    height: 64px;
+  }
+  .trail__node--chest {
+    width: 88px;
+    height: 88px;
   }
   .trail__buddy {
     width: 140px;
@@ -870,6 +1034,51 @@ button.trail__node:focus-visible {
   .home-choose .play-card__pic {
     aspect-ratio: 120 / 68;
   }
+  /* the path sits in the middle of its panel, at the tablet's larger stop size */
+  .home > .home-path {
+    align-content: center;
+  }
+  .trail__node {
+    width: 76px;
+    height: 76px;
+  }
+  .trail__node.is-current {
+    width: 100px;
+    height: 100px;
+  }
+  .trail__node--mic {
+    width: 64px;
+    height: 64px;
+  }
+  .trail__node--chest {
+    width: 88px;
+    height: 88px;
+  }
+  /* three columns (a 6-track grid): 5 games → a wide first card + 4; 4 or 2 → two per row; 3 → one row */
+  .home-choose .plays {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .home-choose .plays > li,
+  .home-choose .plays[data-count="3"] > li:first-child {
+    grid-column: span 2;
+  }
+  .home-choose .plays[data-count="5"] > li:first-child {
+    grid-column: span 4;
+  }
+  .home-choose .plays[data-count="4"] > li,
+  .home-choose .plays[data-count="2"] > li {
+    grid-column: span 3;
+  }
+  .home-choose .plays[data-count="3"] > li:first-child .play-card {
+    grid-template-columns: none;
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 10px 16px;
+  }
+  .home-choose .plays[data-count="3"] > li:first-child .play-card__verb {
+    font-size: clamp(1.1rem, 4.6vw, 1.4rem);
+  }
 }
 
 [data-motion="reduce"] .trail__node.is-current::after,
@@ -927,6 +1136,15 @@ button.trail__node:focus-visible {
   display: grid;
   place-items: center;
   flex: none;
+  width: 60px;
+  height: 60px;
+}
+
+.home-island__pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .home-island__text {

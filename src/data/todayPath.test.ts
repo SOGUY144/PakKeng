@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Session } from "./schema";
-import { practiceDaysThisWeek, roundsFor, todayPath } from "./todayPath";
+import { freshPlays, practiceDaysThisWeek, roundsFor, todayPath } from "./todayPath";
 
 // Thursday 6 Nov 2026, 10:00 local time
 const NOW = new Date(2026, 10, 6, 10, 0, 0);
@@ -172,5 +172,16 @@ describe("practiceDaysThisWeek — days with a saved round, Monday to Sunday (no
   it("only this child's rounds when a child is given", () => {
     const sessions = [session(today(8)), session(new Date(2026, 10, 3, 9), { childId: "C-021" })];
     expect(practiceDaysThisWeek(sessions, NOW, "C-014")).toBe(1);
+  });
+});
+
+describe("freshPlays — the “ใหม่” mark on a new game's card", () => {
+  it("stays until the child plays the new game once (any real or demo round), not for sample history or another child", () => {
+    expect(freshPlays([])).toEqual(["kick"]);
+    expect(freshPlays([session(today(8), { game: "kick", source: "sample" })])).toEqual(["kick"]);
+    expect(freshPlays([session(today(8), { game: "kick", childId: "C-022" })], "C-014")).toEqual(["kick"]);
+    expect(freshPlays([session(today(8), { game: "frog" })])).toEqual(["kick"]);
+    expect(freshPlays([session(today(8), { game: "kick" })])).toEqual([]);
+    expect(freshPlays([session(today(8), { game: "kick", source: "device" })], "C-014")).toEqual([]);
   });
 });

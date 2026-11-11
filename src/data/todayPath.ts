@@ -108,3 +108,12 @@ export function practiceDaysThisWeek(sessions: Session[], now: Date, childId?: s
   }
   return days.size;
 }
+
+/** Games added after the first release: the activity cards mark them "ใหม่" until the child has played one round. */
+export const NEW_PLAYS: PathPlay[] = ["kick"];
+
+/** The new games this child has not played yet (the seeded sample history does not count as playing). */
+export function freshPlays(sessions: Session[], childId?: string): PathPlay[] {
+  const played = new Set(sessions.filter((s) => s.source !== "sample" && (childId === undefined || s.childId === childId)).map(playOf));
+  return NEW_PLAYS.filter((p) => !played.has(p));
+}

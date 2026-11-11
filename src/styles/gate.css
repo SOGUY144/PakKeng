@@ -83,87 +83,167 @@
   opacity: 1;
 }
 
-/* ---------- Picker: three doors side by side, standing in the garden ---------- */
+/* ---------- Picker: three doors (stills of the round's 3D gate, one crest each) at one scale ----------
+   Phones / portrait tablets: the first door gets the wide card, the other two share the row under it.
+   Landscape tablets / desktop: three in a row on one baseline. */
 .pick.pick--gate {
   --pick-bg: var(--candy-lilac-soft);
   --pick-blob: var(--candy-lilac);
   --pick-ink: var(--candy-lilac-ink);
 }
 
-.pick--gate .pick__list {
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.pick--gate .pick__list > li {
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-  max-width: 190px;
-}
-
-.pick-door {
+.door-cards {
   display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 12px;
   width: 100%;
-  padding: 10px 6px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.door-cards > li:first-child {
+  grid-column: 1 / -1;
+}
+
+.door-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: end;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 8px 8px 10px;
   border: 3px solid var(--surface);
-  /* arched like the doorway it holds */
-  border-radius: 50% 50% 24px 24px / 30% 30% 24px 24px;
+  border-radius: var(--r-xl);
+  /* the door's own soft colour fading to white (white first: browsers without color-mix keep a plain card) */
   background: var(--surface);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--door-soft) 75%, #fff) 0%, #fff 90%);
   box-shadow: var(--shadow-clay);
   color: var(--ink);
   font: inherit;
   cursor: pointer;
   transition:
     transform var(--dur-2) var(--ease-spring),
-    background-color var(--dur-2);
+    border-color var(--dur-1);
 }
 
-.pick-door:hover,
-.pick-door:focus-visible {
-  transform: translateY(-3px);
-  border-color: var(--ink);
+.door-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--door);
 }
 
-.pick-door__pic {
+.door-card:active {
+  transform: scale(0.985);
+}
+
+.door-card:focus-visible {
+  outline: 4px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* one door height for every card on phones (bounded by the narrow cards' width and the screen height),
+   so the wide card shows the same door at the same scale, not a bigger one */
+.door-card__pic {
+  --door-h: min(calc((100vw - 88px) * 2 / 3), calc((100dvh - 360px) / 2), 260px);
+  display: block;
+  height: var(--door-h);
+  aspect-ratio: 3 / 4;
+  max-width: 100%;
+}
+
+.door-card__pic img {
   display: block;
   width: 100%;
-  aspect-ratio: 100 / 132;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
 }
 
-.pick-door__name {
+.door-card__flat {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: 4px;
+  height: 100%;
+  overflow: hidden;
+  text-align: center;
+}
+
+/* the drawing takes what the note leaves (it never pokes out of the card) */
+.door-card__flat svg {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+}
+
+.door-card__flat-note {
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.door-card__name {
   max-width: 100%;
   font-family: var(--font-display);
-  font-size: clamp(1.05rem, 4.4vw, 1.5rem);
+  font-size: clamp(1.15rem, 5vw, 1.5rem);
   font-weight: 600;
   line-height: 1.5;
   text-align: center;
   overflow-wrap: anywhere;
 }
 
-/* already opened in this visit: what was behind it */
-.pick-door__done {
+/* already opened in this visit: what was behind it (on the picture, so the card keeps its height) */
+.door-card__done {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  translate: -50% 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 100%;
-  padding: 0 8px;
+  max-width: calc(100% - 16px);
+  padding: 0 10px;
   border-radius: var(--r-pill);
   background: var(--ok-soft);
+  box-shadow: var(--shadow-1);
   color: var(--ok-text);
   font-size: var(--fs-xs);
   font-family: var(--font-display);
   font-weight: 600;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
+  line-height: 1.7;
+  white-space: nowrap;
 }
 
-.pick-door__done svg {
+.door-card__done svg {
   flex: none;
+}
+
+@media (min-width: 700px) and (orientation: portrait) {
+  .door-card__pic {
+    --door-h: min(calc((100vw - 120px) * 2 / 3), calc((100dvh - 420px) / 2), 340px);
+  }
+}
+
+@media (min-width: 700px) and (orientation: landscape) {
+  .door-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 1060px;
+    margin-inline: auto;
+    gap: 22px;
+  }
+  .door-cards > li:first-child {
+    grid-column: auto;
+  }
+  /* three equal columns: the width sets the door, the screen height caps it (same box in every card) */
+  .door-card__pic {
+    width: 100%;
+    height: auto;
+    max-height: min(calc(100dvh - 420px), 440px);
+  }
 }
 
 /* ---------- Round: progress pill, the near edge (garden wall), side column ---------- */
@@ -384,7 +464,7 @@
 
 [data-motion="reduce"] .door-art__leaf,
 [data-motion="reduce"] .door-art__bolt,
-[data-motion="reduce"] .pick-door {
+[data-motion="reduce"] .door-card {
   transition: none;
 }
 

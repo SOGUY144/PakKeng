@@ -15,6 +15,10 @@ import { C } from "../palette";
 import { BlobShadow, Burst, Field, FitCamera, Lights, type BurstFire, type Placement } from "../parts";
 import * as S from "../shapes";
 import type { CelebrateSpec } from "../spec";
+import type { DoorId } from "../../data/doors";
+import type { RouteId } from "../../data/routes";
+import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, RoutePostcard } from "./Postcards";
+import type { EggKind, PetKind } from "../../data/schema";
 
 /** Floating garden island used as a little stage (same clay language as the game worlds). */
 function Pedestal({ radius = 1.3, pond = false }: { radius?: number; pond?: boolean }) {
@@ -159,7 +163,14 @@ export type StudioSubject =
   | `friend-${FriendKind}`
   | `friend-${FriendKind}-back`
   | `hero-${AvatarSpecies}`
-  | `hero-${FriendKind}`;
+  | `hero-${FriendKind}`
+  | `route-${RouteId}-${AvatarSpecies}`
+  | `door-${DoorId}`
+  | "thumb-gate"
+  | "chest-closed"
+  | "chest-open"
+  | `pet-${PetKind}`
+  | `egg-${EggKind}-${0 | 1 | 2 | 3}`;
 
 /** Still subjects rendered once (dev tool) into the images used by Home, Result and the call-a-friend cards. */
 export function StudioScene({ subject }: { subject: StudioSubject }) {
@@ -194,6 +205,17 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
       </group>
     );
   }
+  // picker and Home stills (Postcards.tsx): route worlds, the three doors, the gate card, the day's chest
+  const route = /^route-(flower|mushroom)-(bunny|puppy|dino|kitty)$/.exec(subject);
+  if (route) return <RoutePostcard routeId={route[1] as RouteId} species={route[2] as AvatarSpecies} />;
+  const door = /^door-(flower|star|shell)$/.exec(subject);
+  if (door) return <DoorPostcard doorId={door[1] as DoorId} />;
+  if (subject === "thumb-gate") return <GateRowPostcard />;
+  if (subject === "chest-closed" || subject === "chest-open") return <ChestPostcard open={subject === "chest-open"} />;
+  const pet = /^pet-(puppy|kitten|chick|dino|dragon|unicorn)$/.exec(subject);
+  if (pet) return <PetPostcard kind={pet[1] as PetKind} />;
+  const egg = /^egg-(sun|leaf|sky|star)-([0-3])$/.exec(subject);
+  if (egg) return <EggPostcard kind={egg[1] as EggKind} crack={Number(egg[2]) as 0 | 1 | 2 | 3} />;
   if (me) {
     const species = me[2] as AvatarSpecies;
     return me[1] === "hero" ? (

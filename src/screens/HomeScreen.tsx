@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { Bunny, CollectibleIcon, DoorPanel, GameThumb } from "../components/Art";
 import { Disclaimer } from "../components/Chrome";
@@ -12,7 +12,7 @@ import { isSameDay } from "../data/format";
 import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
 import { isDoorAlone } from "../data/resultCards";
-import { practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
+import { freshPlays, practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
 import { hrefFor, navigate, type Route } from "../lib/router";
 import { signalKind, useConnection, useSignalSource } from "../signal/mock";
 import "../styles/home.css";
@@ -20,11 +20,12 @@ import "../styles/home.css";
 type Play = PathPlay;
 
 /** What each game invites the child to do — the verb is the label, the game's name comes second. */
+/** The new game comes first (marked “ใหม่” until played once), then the four first games in their usual order. */
 const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean }[] = [
+  { id: "kick", verb: "ยิงจุดโทษ", name: "ฟุตบอล", open: (p) => p.games.kick },
   { id: "frog", verb: "เรียกเพื่อน", name: "กบข้ามบึง", open: (p) => p.games.frog },
   { id: "balloon", verb: "พาบอลลูนไปส่ง", name: "บอลลูน", open: (p) => p.games.balloon },
   { id: "runner", verb: "เลือกทางวิ่ง", name: "กระต่ายวิ่ง", open: (p) => p.games.runner },
-  { id: "kick", verb: "ยิงจุดโทษ", name: "ฟุตบอล", open: (p) => p.games.kick },
   { id: "gate", verb: "เปิดประตู", name: "ประตูเสียงก้องจมูก", open: (p) => p.gateEnabled },
 ];
 const VERB: Record<Play, string> = Object.fromEntries(PLAYS.map((p) => [p.id, p.verb])) as Record<Play, string>;
@@ -53,8 +54,57 @@ function GateThumb() {
 }
 
 function PlayThumb({ play }: { play: Play }) {
-  if (play === "gate") return <GateThumb />;
-  return <RenderImg name={`thumb-${play}`} fallback={<GameThumb game={play} />} />;
+  return <RenderImg name={`thumb-${play}`} fallback={play === "gate" ? <GateThumb /> : <GameThumb game={play} />} />;
+}
+
+/** The day's chest, rendered from the 3D chest model (2D drawing if the image cannot load). */
+function ChestPic({ open }: { open: boolean }) {
+  return <RenderImg key={open ? "open" : "shut"} name={open ? "chest-open" : "chest-closed"} fallback={<ChestArt open={open} />} />;
+}
+
+/**
+ * The road under the path: measured from where the nodes actually are (zig-zag, bubble, labels), drawn behind them.
+ * The part up to the step to play is coloured, so the path reads as one road being walked, not loose buttons.
+ */
+function TrailRoad({ listRef, reached, layoutKey }: { listRef: RefObject<HTMLOListElement | null>; reached: number; layoutKey: string }) {
+  const [road, setRoad] = useState<{ w: number; h: number; pts: [number, number][] }>({ w: 0, h: 0, pts: [] });
+  useLayoutEffect(() => {
+    const ol = listRef.current;
+    if (!ol) return;
+    const measure = () => {
+      const box = ol.getBoundingClientRect();
+      const pts = [...ol.querySelectorAll<HTMLElement>(".trail__node")].map((n): [number, number] => {
+        const b = n.getBoundingClientRect();
+        return [Math.round(b.left + b.width / 2 - box.left), Math.round(b.top + b.height / 2 - box.top)];
+      });
+      setRoad({ w: Math.round(box.width), h: Math.round(box.height), pts });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(ol);
+    void document.fonts?.ready.then(measure);
+    return () => ro.disconnect();
+  }, [listRef, layoutKey]);
+  if (road.pts.length < 2) return null;
+  const curve = (pts: [number, number][]) =>
+    pts
+      .map(([x, y], i) => {
+        if (i === 0) return `M${x} ${y}`;
+        const [px, py] = pts[i - 1];
+        const my = (py + y) / 2;
+        return `C${px} ${my} ${x} ${my} ${x} ${y}`;
+      })
+      .join(" ");
+  const all = curve(road.pts);
+  const walked = curve(road.pts.slice(0, Math.min(road.pts.length, reached + 1)));
+  return (
+    <svg className="trail__road" width={road.w} height={road.h} viewBox={`0 0 ${road.w} ${road.h}`} aria-hidden="true">
+      <path d={all} className="trail__road-edge" />
+      <path d={all} className="trail__road-top" />
+      {reached > 0 ? <path d={walked} className="trail__road-walked" /> : null}
+      <path d={all} className="trail__road-dash" />
+    </svg>
+  );
 }
 
 /** A small clay chest for the end of the path (lid lifted once the day's rounds are done). */
@@ -84,18 +134,26 @@ function lastPlay(sessions: Session[], plan: Plan): Play | null {
   return PLAYS.find((p) => p.id === play)?.open(plan) ? play : null;
 }
 
-function GameCards({ plays, again, listRef }: { plays: typeof PLAYS; again: Play | null; listRef?: RefObject<HTMLUListElement | null> }) {
+/**
+ * The game cards. With an odd number of games the first card takes a whole row (picture beside the verb, same height),
+ * so no card is left alone on the last row (CSS reads data-count; desktop uses three columns).
+ */
+function GameCards({ plays, again, fresh, listRef }: { plays: typeof PLAYS; again: Play | null; fresh: Play[]; listRef?: RefObject<HTMLUListElement | null> }) {
   return (
-    <ul className="plays" ref={listRef}>
+    <ul className="plays" data-count={plays.length} ref={listRef}>
       {plays.map((p) => (
         <li key={p.id}>
           <button type="button" className={`play-card play-card--${p.id}`} onClick={() => navigate(p.id as Route)}>
+            {fresh.includes(p.id) ? <span className="play-card__new">ใหม่</span> : null}
             {again === p.id ? <span className="play-card__again">เล่นต่อ</span> : null}
             <span className="play-card__pic">
               <PlayThumb play={p.id} />
             </span>
             <span className="play-card__verb">{p.verb}</span>
-            <span className="sr-only">{p.name}</span>
+            <span className="sr-only">
+              {p.name}
+              {fresh.includes(p.id) ? " เกมใหม่" : ""}
+            </span>
           </button>
         </li>
       ))}
@@ -127,7 +185,7 @@ function useDialog(onClose: () => void, firstRef: RefObject<HTMLElement | null>,
   }, [firstRef, returnTo]);
 }
 
-function GameSheet({ plays, again, onClose, returnTo }: { plays: typeof PLAYS; again: Play | null; onClose: () => void; returnTo: RefObject<HTMLElement | null> }) {
+function GameSheet({ plays, again, fresh, onClose, returnTo }: { plays: typeof PLAYS; again: Play | null; fresh: Play[]; onClose: () => void; returnTo: RefObject<HTMLElement | null> }) {
   const list = useRef<HTMLUListElement>(null);
   useDialog(onClose, list, returnTo);
   return (
@@ -139,7 +197,7 @@ function GameSheet({ plays, again, onClose, returnTo }: { plays: typeof PLAYS; a
             <Icon name="close" size={20} />
           </button>
         </div>
-        <GameCards plays={plays} again={again} listRef={list} />
+        <GameCards plays={plays} again={again} fresh={fresh} listRef={list} />
       </div>
     </div>
   );
@@ -233,6 +291,11 @@ export function HomeScreen() {
   const plays = PLAYS.filter((p) => p.open(plan));
   const closed = PLAYS.length - plays.length;
   const again = lastPlay(sessions, plan);
+  const fresh = freshPlays(sessions, child.id);
+  const trailRef = useRef<HTMLOListElement>(null);
+  // how far along the road the child has come: the step to play (or, once the day is done, the chest)
+  const here = path.nodes.findIndex((n) => n.state === "current");
+  const walked = path.complete ? path.nodes.length - 1 : Math.max(0, here);
   const demo = src.kind === "mock";
   // the seed keeps a placeholder (child codes only, no real names): greet without it until an adult sets one
   const named = child.nickname.trim() !== "" && !child.nickname.startsWith("[");
@@ -319,8 +382,14 @@ export function HomeScreen() {
             </strong>
             <span>{path.complete ? "ครบรอบที่ตั้งไว้แล้ว!" : `อีก ${path.rounds - path.played} รอบ`}</span>
           </p>
-          <div className="progress home-today__bar" role="progressbar" aria-label="รอบฝึกวันนี้" aria-valuemin={0} aria-valuemax={path.rounds} aria-valuenow={Math.min(path.played, path.rounds)}>
-            <div className="progress__fill" style={{ transform: `scaleX(${Math.min(1, path.played / Math.max(1, path.rounds))})` }} />
+          <div className="home-today__track">
+            <div className="progress home-today__bar" role="progressbar" aria-label="รอบฝึกวันนี้" aria-valuemin={0} aria-valuemax={path.rounds} aria-valuenow={Math.min(path.played, path.rounds)}>
+              <div className="progress__fill" style={{ transform: `scaleX(${Math.min(1, path.played / Math.max(1, path.rounds))})` }} />
+            </div>
+            {/* the reward at the end of the bar: always in view (the banner stays on top while the path scrolls) */}
+            <span className="home-today__chest" aria-hidden="true">
+              <ChestPic open={path.complete} />
+            </span>
           </div>
           <p className="home-today__minutes">
             เวลาฝึกที่บันทึก {Math.floor(path.practiceSec / 60)} นาที · ครูตั้งไว้ {plan.dailyMinutes} นาที ({path.rounds} รอบ)
@@ -331,69 +400,85 @@ export function HomeScreen() {
           <h2 id="path-title" className="sr-only">
             เส้นทางวันนี้
           </h2>
-          <ol className="trail">
-            {path.nodes.map((n, i) => {
-              const x = ZIG[i % ZIG.length];
-              const style = { "--x": x } as CSSProperties;
-              const label = nodeLabel(n);
-              const cls = `trail__node trail__node--${n.kind} is-${n.state}${n.play ? ` trail__node--${n.play}` : ""}`;
-              return (
-                <li key={`${n.kind}-${n.round ?? i}`} className="trail__step" style={style} aria-current={n.state === "current" ? "step" : undefined}>
-                  {n.kind === "mic" ? (
-                    <button type="button" className={cls} onClick={() => navigate("calibrate")} aria-label={label}>
-                      <Icon name={n.state === "done" ? "check" : "mic"} size={28} />
-                    </button>
-                  ) : null}
-
-                  {n.kind === "round" && n.state === "current" ? (
-                    <>
-                      <span className="trail__bubble" aria-hidden="true">
-                        {plays.length === 0 ? "รอครูเปิดเกม" : "เริ่ม!"}
-                      </span>
-                      <button ref={startRef} type="button" className={cls} onClick={(e) => start(e.currentTarget)} disabled={plays.length === 0} aria-label={plays.length === 0 ? `รอบที่ ${n.round} รอครูเปิดเกม` : label}>
-                        <svg className="trail__ring" viewBox="0 0 100 100" aria-hidden="true">
-                          <circle cx="50" cy="50" r="46" className="trail__ring-track" />
-                          <circle cx="50" cy="50" r="46" className="trail__ring-fill" strokeDasharray={`${path.progress * 289} 289`} transform="rotate(-90 50 50)" />
-                        </svg>
-                        <Icon name="play" size={34} />
+          <div className="trail-wrap">
+            <ol className="trail" ref={trailRef}>
+              {path.nodes.map((n, i) => {
+                const x = ZIG[i % ZIG.length];
+                const style = { "--x": x } as CSSProperties;
+                const label = nodeLabel(n);
+                const cls = `trail__node trail__node--${n.kind} is-${n.state}${n.play ? ` trail__node--${n.play}` : ""}`;
+                return (
+                  <li key={`${n.kind}-${n.round ?? i}`} className="trail__step" style={style} aria-current={n.state === "current" ? "step" : undefined}>
+                    {n.kind === "mic" ? (
+                      <button type="button" className={cls} onClick={() => navigate("calibrate")} aria-label={label}>
+                        <Icon name={n.state === "done" ? "check" : "mic"} size={28} />
                       </button>
-                      <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
-                        <MeImg species={me} />
-                      </span>
-                    </>
-                  ) : null}
+                    ) : null}
 
-                  {n.kind === "round" && n.state !== "current" ? (
-                    <span className={cls} role="img" aria-label={label}>
-                      <Icon name={n.state === "done" ? "check" : "lock"} size={n.state === "done" ? 30 : 22} />
-                    </span>
-                  ) : null}
-
-                  {n.kind === "chest" ? (
-                    n.state === "open" ? (
+                    {n.kind === "round" && n.state === "current" ? (
                       <>
-                        <button ref={chestRef} type="button" className={cls} onClick={() => setChest(true)} aria-label={label}>
-                          <ChestArt open />
+                        <span className="trail__bubble" aria-hidden="true">
+                          {plays.length === 0 ? "รอครูเปิดเกม" : "เริ่ม!"}
+                        </span>
+                        <button ref={startRef} type="button" className={cls} onClick={(e) => start(e.currentTarget)} disabled={plays.length === 0} aria-label={plays.length === 0 ? `รอบที่ ${n.round} รอครูเปิดเกม` : label}>
+                          <svg className="trail__ring" viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="46" className="trail__ring-track" />
+                            <circle cx="50" cy="50" r="46" className="trail__ring-fill" strokeDasharray={`${path.progress * 289} 289`} transform="rotate(-90 50 50)" />
+                          </svg>
+                          <Icon name="play" size={34} />
                         </button>
-                        {/* the day is done: the bunny comes to stand by the chest */}
                         <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
                           <MeImg species={me} />
                         </span>
                       </>
-                    ) : (
-                      <span className={cls} role="img" aria-label={label}>
-                        <ChestArt open={false} />
-                      </span>
-                    )
-                  ) : null}
+                    ) : null}
 
-                  <span className="trail__label" aria-hidden="true">
-                    {n.kind === "mic" ? "เช็กไมค์" : n.kind === "chest" ? "หีบรางวัล" : `รอบ ${n.round}`}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
+                    {n.kind === "round" && n.state !== "current" ? (
+                      <span className={cls} role="img" aria-label={label}>
+                        {n.state === "done" && n.play ? (
+                          <>
+                            {/* a sticker of the game played in that round (rendered from its 3D scene), with a tick */}
+                            <span className="trail__sticker">
+                              <RenderImg name={`thumb-${n.play}`} fallback={<Icon name="check" size={30} />} />
+                            </span>
+                            <span className="trail__tick">
+                              <Icon name="check" size={14} />
+                            </span>
+                          </>
+                        ) : (
+                          <Icon name={n.state === "done" ? "check" : "lock"} size={n.state === "done" ? 30 : 22} />
+                        )}
+                      </span>
+                    ) : null}
+
+                    {n.kind === "chest" ? (
+                      n.state === "open" ? (
+                        <>
+                          <button ref={chestRef} type="button" className={cls} onClick={() => setChest(true)} aria-label={label}>
+                            <ChestPic open />
+                          </button>
+                          {/* the day is done: the bunny comes to stand by the chest */}
+                          <span className={`trail__buddy trail__buddy--${x >= 0 ? "left" : "right"}`} aria-hidden="true">
+                            <MeImg species={me} />
+                          </span>
+                        </>
+                      ) : (
+                        <span className={cls} role="img" aria-label={label}>
+                          <ChestPic open={false} />
+                        </span>
+                      )
+                    ) : null}
+
+                    <span className="trail__label" aria-hidden="true">
+                      {n.kind === "mic" ? "เช็กไมค์" : n.kind === "chest" ? "หีบรางวัล" : `รอบ ${n.round}`}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+            {/* after the list: its ref is set before this measures (drawn behind it with z-index) */}
+            <TrailRoad listRef={trailRef} reached={walked} layoutKey={`${path.nodes.map((n) => n.state).join()}|${plays.length}`} />
+          </div>
           {plays.length === 0 ? <p className="home-path__note">ครูยังไม่ได้เปิดเกม ให้ผู้ใหญ่ช่วยดูแผนการฝึกนะ</p> : null}
           {path.complete && plays.length > 0 ? (
             <button type="button" className="btn btn--secondary home-more" onClick={(e) => start(e.currentTarget)}>
@@ -407,14 +492,23 @@ export function HomeScreen() {
             <h2 id="choose-title" className="home-choose__title">
               รอบนี้เล่นอะไรดี?
             </h2>
-            <GameCards plays={plays} again={again} listRef={chooseRef} />
+            <GameCards plays={plays} again={again} fresh={fresh} listRef={chooseRef} />
           </section>
         ) : null}
 
         <section className="collect-strip" aria-labelledby="collect-title">
           <h2 id="collect-title" className="collect-strip__title">
             ของสะสม
-            <small>{next ? `อีก ${next.stars - stars} ดาว ได้${next.name}` : "ครบทุกชิ้นแล้ว"}</small>
+            {/* the item's name never breaks across lines (ผ้าพัน|คอ) */}
+            <small>
+              {next ? (
+                <>
+                  อีก {next.stars - stars} ดาว <span className="nowrap">ได้{next.name}</span>
+                </>
+              ) : (
+                "ครบทุกชิ้นแล้ว"
+              )}
+            </small>
           </h2>
           <ul className="collect-strip__items">
             {COLLECTIBLES.map((c) => {
@@ -431,7 +525,12 @@ export function HomeScreen() {
 
         <a className="home-island" href={hrefFor("island")}>
           <span className="home-island__pic" aria-hidden="true">
-            {egg ? <EggArt kind={egg.kind} crack={egg.crack} size={52} /> : ledger.buddy ? <PetArt kind={ledger.buddy} size={52} /> : <PetArt kind="puppy" size={52} />}
+            {/* the egg at its crack stage, or the buddy pet: stills of the island's own 3D models */}
+            {egg ? (
+              <RenderImg key={`egg-${egg.kind}-${egg.crack}`} name={`egg-${egg.kind}-${egg.crack}`} fallback={<EggArt kind={egg.kind} crack={egg.crack} size={52} />} />
+            ) : (
+              <RenderImg key={`pet-${ledger.buddy ?? "puppy"}`} name={`pet-${ledger.buddy ?? "puppy"}`} fallback={<PetArt kind={ledger.buddy ?? "puppy"} size={52} />} />
+            )}
           </span>
           <span className="home-island__text">
             <strong>เกาะของฉัน</strong>
@@ -449,7 +548,7 @@ export function HomeScreen() {
         </footer>
       </div>
 
-      {sheet ? <GameSheet plays={plays} again={again} onClose={closeSheet} returnTo={sheetOpener} /> : null}
+      {sheet ? <GameSheet plays={plays} again={again} fresh={fresh} onClose={closeSheet} returnTo={sheetOpener} /> : null}
       {chest ? (
         <ChestDialog
           me={me}

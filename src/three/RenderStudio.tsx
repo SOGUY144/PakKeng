@@ -11,6 +11,10 @@ import { StudioScene, type StudioSubject } from "./worlds/Showcase";
 const FRIENDS = ["crab", "dog", "fish", "bird", "turtle"] as const;
 /** The child's character choices (Home shows the one picked on the island). */
 const SPECIES = ["bunny", "puppy", "dino", "kitty"] as const;
+const ROUTE_IDS = ["flower", "mushroom"] as const;
+const DOOR_IDS = ["flower", "star", "shell"] as const;
+const PETS = ["puppy", "kitten", "chick", "dino", "dragon", "unicorn"] as const;
+const EGGS = ["sun", "leaf", "sky", "star"] as const;
 
 const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   { name: "thumb-runner", w: 360, h: 252 },
@@ -29,6 +33,15 @@ const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   // welcome screen: bigger, so they stay sharp on tablets and desktops
   ...SPECIES.map((s) => ({ name: `hero-${s}` as const, w: 440, h: 580 })),
   ...FRIENDS.map((f) => ({ name: `hero-${f}` as const, w: 360, h: 360 })),
+  // entry maps: each route as its own little world with the child's character at the start
+  ...ROUTE_IDS.flatMap((r) => SPECIES.map((s) => ({ name: `route-${r}-${s}` as const, w: 900, h: 600 }))),
+  ...DOOR_IDS.map((d) => ({ name: `door-${d}` as const, w: 540, h: 720 })),
+  { name: "thumb-gate", w: 360, h: 252 },
+  { name: "chest-closed", w: 200, h: 200 },
+  { name: "chest-open", w: 200, h: 200 },
+  // Home's island card: the buddy pet, or the egg at its crack stage
+  ...PETS.map((p) => ({ name: `pet-${p}` as const, w: 160, h: 160 })),
+  ...EGGS.flatMap((e) => ([0, 1, 2, 3] as const).map((c) => ({ name: `egg-${e}-${c}` as const, w: 160, h: 160 }))),
 ];
 
 /** `/?studio&only=friend` re-renders just the shots whose name starts with "friend" (several: `only=thumb-kick,hero-dino`). */
