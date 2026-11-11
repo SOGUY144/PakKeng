@@ -235,3 +235,21 @@ describe("BalloonGame: device trouble freezes, never penalises", () => {
     expect(g.state.holdMs).toBeGreaterThan(kept + 1100);
   });
 });
+
+describe("BalloonGame: re-arm guard after a vibration", () => {
+  it("a buzz at the pin: 'ส่งลูกถัดไป' tapped at once still ignores the mics until the guard ends, then waits for silence", () => {
+    const g = make();
+    const a = run(g, [voice(3200)]);
+    expect(g.state.completed).toBe(1);
+    g.holdUntil(a.t + 340);
+    g.nextBalloon();
+    // voice picked up from the start of the hold and past it: never counted until a silent frame
+    const b = run(g, [voice(800)], a.t);
+    expect(g.state.holdMs).toBe(0);
+    expect(g.state.armed).toBe(false);
+    run(g, [hush(300), voice(1000)], b.t);
+    expect(g.state.holdMs).toBeGreaterThan(900);
+    expect(g.state.completed).toBe(1);
+  });
+});
+

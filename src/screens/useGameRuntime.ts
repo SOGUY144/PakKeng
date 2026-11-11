@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { haptics } from "../lib/haptics";
 import { useFrameRender, useGameLoop, useOnHidden } from "../lib/hooks";
 import { recordRenderDelay } from "../signal/latency";
 import { signalSource } from "../signal/mock";
@@ -18,6 +19,13 @@ export const IDLE_FRAME: SignalFrame = {
 
 export type PauseReason = "user" | "hidden";
 
+let rounds = 0;
+/** A token unique to one round in this visit (haptic event keys: the same event never buzzes twice, a new round does). */
+function nextRoundToken(): string {
+  rounds += 1;
+  return `${Date.now().toString(36)}-${rounds}`;
+}
+
 interface Interruptible {
   interrupt(): void;
 }
@@ -28,16 +36,20 @@ interface Interruptible {
  * - pausing interrupts the game (open speech segment is dropped, never scored)
  * - the tab becoming hidden auto-pauses
  * - restart builds a fresh game object (no listeners are re-attached)
+ * - pause, restart and leaving the screen cancel a vibration that may still be running
  */
 export function useGameRuntime<G extends Interruptible>(
   create: () => G,
-  onFrame: (game: G, frame: SignalFrame, now: number, dtMs: number) => boolean | void,
+  /** `round` = this round's token (the round part of haptic event keys). */
+  onFrame: (game: G, frame: SignalFrame, now: number, dtMs: number, round: string) => boolean | void,
 ) {
   const createRef = useRef(create);
   createRef.current = create;
   const gameRef = useRef<G | null>(null);
   if (gameRef.current === null) gameRef.current = create();
   const processorRef = useRef(new SignalProcessor());
+  const tokenRef = useRef<string | null>(null);
+  if (tokenRef.current === null) tokenRef.current = nextRoundToken();
   const frameRef = useRef<SignalFrame>(IDLE_FRAME);
   const [paused, setPaused] = useState<PauseReason | null>(null);
   const [ended, setEnded] = useState(false);
@@ -49,12 +61,13 @@ export function useGameRuntime<G extends Interruptible>(
     const frame = processorRef.current.step(src.latest(), src.connection(), now);
     frameRef.current = frame;
     if (frame.valid && frame.sampleT !== null) recordRenderDelay(now - frame.sampleT);
-    const done = onFrame(gameRef.current as G, frame, now, dt);
+    const done = onFrame(gameRef.current as G, frame, now, dt, tokenRef.current as string);
     if (done) setEnded(true);
     render();
   }, paused === null && !ended);
 
   const pause = useCallback((reason: PauseReason = "user") => {
+    haptics.cancel();
     gameRef.current?.interrupt();
     processorRef.current.reset();
     setPaused((p) => p ?? reason);
@@ -67,7 +80,9 @@ export function useGameRuntime<G extends Interruptible>(
   const resume = useCallback(() => setPaused(null), []);
 
   const restart = useCallback(() => {
+    haptics.cancel();
     gameRef.current = createRef.current();
+    tokenRef.current = nextRoundToken();
     processorRef.current.reset();
     frameRef.current = IDLE_FRAME;
     setEnded(false);
@@ -79,6 +94,9 @@ export function useGameRuntime<G extends Interruptible>(
     gameRef.current?.interrupt();
     setEnded(true);
   }, []);
+
+  // leaving the screen (navigation, unmount): no pattern keeps running
+  useEffect(() => () => haptics.cancel(), []);
 
   // dev builds only: QA reads the live game state next to the screenshot (the scene must follow this, never the reverse)
   useEffect(() => {

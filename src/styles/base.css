@@ -570,3 +570,28 @@ svg {
     opacity: 0;
   }
 }
+
+/* แรงสั่น (adult corner: caregiver drawer in each game, and "เครื่องนี้" on the dashboard) */
+.haptics-set {
+  display: grid;
+  gap: 6px;
+}
+
+.haptics-set__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.haptics-set__note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.haptics-set__status {
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+}

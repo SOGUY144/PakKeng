@@ -127,3 +127,20 @@ describe("GateGame: the target is reaching the expert's threshold", () => {
     expect(g.state.attempts[0].passed).toBe(true);
   });
 });
+
+describe("GateGame: re-arm guard after a vibration", () => {
+  it("voice during the hold (and running on past it) never moves the door; after silence it counts again", () => {
+    const g = make();
+    const a = run(g, [hush(200), say(600), hush()]);
+    const progress = g.state.progress;
+    const attempts = g.state.attempts.length;
+    g.holdUntil(a.t + 268);
+    const b = run(g, [say(700)], a.t);
+    expect(g.state.progress).toBe(progress);
+    expect(g.state.attempts).toHaveLength(attempts);
+    run(g, [hush(300), say(400), hush()], b.t);
+    expect(g.state.progress).toBeGreaterThan(progress);
+    expect(g.state.attempts).toHaveLength(attempts + 1);
+  });
+});
+

@@ -1,3 +1,4 @@
+import { HapticsSetting } from "./HapticsSetting";
 import { useRef, useState, type ReactNode } from "react";
 import { useReducedMotion } from "../lib/hooks";
 import { useSignalSource } from "../signal/mock";
@@ -81,6 +82,8 @@ export function CareDrawer({ careRef, frame, conn, issue = null, children, demo 
         <h3 className="care__title">สถานะอุปกรณ์</h3>
         <DeviceStatus frame={frame} conn={conn} issue={issue} />
         {children}
+        <h3 className="care__title">แรงสั่น</h3>
+        <HapticsSetting compact />
         <h3 className="care__title">แหล่งสัญญาณ</h3>
         <SourceSwitch />
         <DemoPanel target={demo.target} hint={demo.hint}>

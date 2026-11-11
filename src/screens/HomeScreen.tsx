@@ -13,6 +13,7 @@ import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
 import { isDoorAlone } from "../data/resultCards";
 import { freshPlays, practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
+import { haptics } from "../lib/haptics";
 import { hrefFor, navigate, type Route } from "../lib/router";
 import { signalKind, useConnection, useSignalSource } from "../signal/mock";
 import "../styles/home.css";
@@ -143,7 +144,14 @@ function GameCards({ plays, again, fresh, listRef }: { plays: typeof PLAYS; agai
     <ul className="plays" data-count={plays.length} ref={listRef}>
       {plays.map((p) => (
         <li key={p.id}>
-          <button type="button" className={`play-card play-card--${p.id}`} onClick={() => navigate(p.id as Route)}>
+          <button
+            type="button"
+            className={`play-card play-card--${p.id}`}
+            onClick={() => {
+              haptics.buzz("tap");
+              navigate(p.id as Route);
+            }}
+          >
             {fresh.includes(p.id) ? <span className="play-card__new">ใหม่</span> : null}
             {again === p.id ? <span className="play-card__again">เล่นต่อ</span> : null}
             <span className="play-card__pic">
@@ -454,7 +462,17 @@ export function HomeScreen() {
                     {n.kind === "chest" ? (
                       n.state === "open" ? (
                         <>
-                          <button ref={chestRef} type="button" className={cls} onClick={() => setChest(true)} aria-label={label}>
+                          <button
+                          ref={chestRef}
+                          type="button"
+                          className={cls}
+                          onClick={() => {
+                            // the day's chest: one reward buzz per child per day (opening it again later stays quiet)
+                            haptics.buzz("reward", { key: `chest:${child.id}:${source}:${now.toDateString()}` });
+                            setChest(true);
+                          }}
+                          aria-label={label}
+                        >
                             <ChestPic open />
                           </button>
                           {/* the day is done: the bunny comes to stand by the chest */}

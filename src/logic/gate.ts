@@ -57,6 +57,8 @@ export class GateGame {
   private settleMs: number;
   private latch = new ThresholdLatch();
   private seg = new SpeechSegmenter();
+  /** Mics ignored until this time (a vibration just played), then listening waits for silence. */
+  private holdT = -Infinity;
 
   constructor(cfg: GateConfig) {
     this.cfg = cfg;
@@ -97,6 +99,15 @@ export class GateGame {
     this.stopListening();
   }
 
+  /**
+   * A short device feedback (vibration) has just played: the mics are ignored until `until`, then counting restarts
+   * only from a silent frame. The door's progress never goes down.
+   */
+  holdUntil(until: number): void {
+    if (until > this.holdT) this.holdT = until;
+    this.stopListening();
+  }
+
   /** Pause / tab hidden: the open utterance is dropped, never scored; listening restarts after silence. */
   interrupt(): void {
     this.stopListening();
@@ -113,6 +124,12 @@ export class GateGame {
       this.drop();
       const phase = s.phase === "settle" && now >= s.settleUntil ? "listen" : s.phase;
       this.state = { ...s, phase, practiceMs, inZone: false, speaking: false, armed: false };
+      return events;
+    }
+    // Device feedback still ringing (vibration + guard): not the child; afterwards wait for silence.
+    if (now < this.holdT) {
+      this.drop();
+      this.state = { ...s, practiceMs, inZone: false, speaking: false, armed: false };
       return events;
     }
     // Device trouble, or not listening again yet: the door does not move; counting restarts at the first silent frame of usable data.

@@ -19,6 +19,8 @@ import { useConnection, useSignalSource, signalKind } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { callStatusLine } from "./callStatus";
+import { callCue } from "../logic/hapticCues";
+import { playCue, tapCue } from "./hapticCue";
 import { useGameRuntime } from "./useGameRuntime";
 import { useSourceGuard } from "./useSourceGuard";
 
@@ -28,7 +30,18 @@ const fid = (w: { id: string }) => w.id as FriendId;
  * Lily-pad choice list (first friend, or "who next?"). The chosen friend does a happy hop (the others step back)
  * before the game moves on, so the tap visibly leads to "the frog goes to this friend".
  */
-function FriendChoices({ words, onPick, label }: { words: { id: string; word: string }[]; onPick: (id: FriendId) => void; label: (w: string) => string }) {
+function FriendChoices({
+  words,
+  onPick,
+  label,
+  tap = false,
+}: {
+  words: { id: string; word: string }[];
+  onPick: (id: FriendId) => void;
+  label: (w: string) => string;
+  /** Buzz on the pick (only before the round: "who next?" opens while the game still listens, so it stays quiet). */
+  tap?: boolean;
+}) {
   const [picked, setPicked] = useState<FriendId | null>(null);
   // the game re-renders every frame: keep the latest callback without restarting the hop timer
   const pickRef = useRef(onPick);
@@ -47,7 +60,10 @@ function FriendChoices({ words, onPick, label }: { words: { id: string; word: st
           <button
             type="button"
             className={`pick-pad${picked === fid(w) ? " is-picked" : ""}`}
-            onClick={() => setPicked((p) => p ?? fid(w))}
+            onClick={() => {
+              if (tap && picked === null) tapCue();
+              setPicked((p) => p ?? fid(w));
+            }}
             aria-label={label(w.word)}
             aria-pressed={picked === fid(w)}
           >
@@ -76,7 +92,7 @@ function FriendPicker({ words, onPick }: { words: CallWord[]; onPick: (id: Frien
           <DemoTag />
         </header>
         <h1 className="pick__title">วันนี้อยากไปหาใครก่อน?</h1>
-        <FriendChoices words={words} onPick={onPick} label={(w) => `ไปหา${w}ก่อน`} />
+        <FriendChoices words={words} onPick={onPick} label={(w) => `ไปหา${w}ก่อน`} tap />
         <p className="pick__note">แตะเพื่อนที่อยากไปหา กบจะพาไป</p>
       </div>
     </div>
@@ -149,9 +165,11 @@ function CallRound({ words, onPlayAgain }: { words: CallWord[]; onPlayAgain: () 
 
   const rt = useGameRuntime(
     () => new CallGame(words),
-    (game, frame, now, dt) => {
+    (game, frame, now, dt, round) => {
       nowRef.current = now;
       for (const ev of game.update(frame, now, dt)) {
+        // optional vibration once the call has closed (before any reply plays); the mics stay closed until it is over
+        playCue(callCue(ev, round), frame, (t) => game.holdUntil(t));
         if (ev.type === "heard") {
           setHeardAt(now);
           // The friend answers aloud when the device has a Thai voice; the mic is ignored while it speaks.

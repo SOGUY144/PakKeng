@@ -1,3 +1,4 @@
+import { HapticsSetting } from "../components/HapticsSetting";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { BarChart, type ChartBar } from "../components/BarChart";
 import { Disclaimer, ViewSwitch } from "../components/Chrome";
@@ -424,7 +425,7 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: "overview", label: "ภาพรวม", icon: "chart" },
   { id: "history", label: "ประวัติ", icon: "clock" },
   { id: "plan", label: "แผนการฝึก", icon: "target" },
-  { id: "data", label: "ข้อมูลเดโม", icon: "save" },
+  { id: "data", label: "เครื่องนี้", icon: "save" },
 ];
 
 type ChartKind = "oral" | "nasal";
@@ -794,6 +795,11 @@ export function DashboardScreen() {
         </section>
 
         <section role="tabpanel" id="panel-data" aria-labelledby="tab-data" className="dash-panel" hidden={tab !== "data"}>
+          <div className="dash-card data-tools">
+            <h2 className="dash-card__title">แรงสั่น (เครื่องนี้)</h2>
+            <p className="dash-card__sub">ตัวเสริมสำหรับเด็กเท่านั้น ภาพและข้อความในเกมยังบอกครบเมื่อปิด · จำค่าไว้ในเบราว์เซอร์นี้ ใช้กับเด็กทุกคนในเครื่องนี้</p>
+            <HapticsSetting />
+          </div>
           <div className="dash-card data-tools">
             <h2 className="dash-card__title">ข้อมูลเดโมในเบราว์เซอร์นี้</h2>
             <p className="dash-card__sub">ข้อมูลตัวอย่างสร้างครั้งเดียว รีเฟรชหน้าแล้วไม่เติมซ้ำ · ไม่มีการส่งข้อมูลออกจากเครื่อง</p>

@@ -21,6 +21,8 @@ import { useConnection, useSignalSource, signalKind } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { callStatusLine } from "./callStatus";
+import { routeCue } from "../logic/hapticCues";
+import { playCue, tapCue } from "./hapticCue";
 import { useGameRuntime } from "./useGameRuntime";
 import { useSourceGuard } from "./useSourceGuard";
 import "../styles/runner.css";
@@ -59,7 +61,10 @@ function RoutePicker({ legs, onPick }: { legs: number; onPick: (id: RouteId) => 
                 type="button"
                 className={`route-card route-card--${r.id}`}
                 style={{ ["--flag" as string]: r.flag, ["--flag-deep" as string]: r.flagDeep }}
-                onClick={() => onPick(r.id)}
+                onClick={() => {
+                  tapCue();
+                  onPick(r.id);
+                }}
                 aria-label={`${r.name} วิ่งผ่าน ${legs - 1} ธง ไปถึง${r.destination}`}
               >
                 <span className="route-card__pic">
@@ -143,7 +148,13 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
 
   const rt = useGameRuntime(
     () => new RouteRun(items, plan.oralThreshold),
-    (game, frame, now, dt) => game.update(frame, now, dt).some((e) => e.type === "finish"),
+    (game, frame, now, dt, round) => {
+      const events = game.update(frame, now, dt);
+      // optional vibration: setting off on a word, and reaching the destination by voice (the run does not listen)
+      const lastHeard = game.call.state.words[game.legs - 1]?.heard === true;
+      for (const e of events) playCue(routeCue(e, round, game.legs, lastHeard), frame, (t) => game.call.holdUntil(t));
+      return events.some((e) => e.type === "finish");
+    },
   );
 
   const { game, frame } = rt;

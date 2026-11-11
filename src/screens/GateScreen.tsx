@@ -25,6 +25,8 @@ import type { SignalFrame } from "../signal/SignalProcessor";
 import { signalProblem, type MeterStatus } from "../signal/status";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
+import { gateCue } from "../logic/hapticCues";
+import { playCue, tapCue } from "./hapticCue";
 import { useGameRuntime } from "./useGameRuntime";
 import { useSourceGuard } from "./useSourceGuard";
 
@@ -113,7 +115,10 @@ function DoorPicker({ opened, fromRun, onPick, onBack }: { opened: DoorId[]; fro
                   type="button"
                   className={`door-card${done ? " is-done" : ""}`}
                   style={{ ["--door" as string]: d.leaf, ["--door-soft" as string]: d.soft, ["--door-deep" as string]: d.leafDeep }}
-                  onClick={() => onPick(d.id)}
+                  onClick={() => {
+                    tapCue();
+                    onPick(d.id);
+                  }}
                   aria-label={done ? `เปิด${d.name}อีกครั้ง ข้างหลังคือ${d.behind.name}` : `เปิด${d.name}`}
                 >
                   <span className="door-card__pic">
@@ -231,7 +236,12 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
 
   const rt = useGameRuntime(
     () => new GateGame({ nasalThreshold: plan.gateThreshold, openMs: GATE_OPEN_MS }),
-    (game, frame, now, dt) => game.update(frame, now, dt).some((e) => e.type === "open"),
+    (game, frame, now, dt, round) => {
+      const events = game.update(frame, now, dt);
+      // optional vibration when the door opens (the round stops listening at that frame)
+      for (const e of events) playCue(gateCue(e, round), frame, (t) => game.holdUntil(t));
+      return events.some((e) => e.type === "open");
+    },
   );
 
   const { game, frame } = rt;

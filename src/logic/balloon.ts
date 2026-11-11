@@ -108,6 +108,8 @@ export class BalloonGame {
   /** Smoothed share of unusable voice (drives the calm message). */
   private badShare = 0;
   private badKind: BalloonIssue = "loud";
+  /** Mics ignored until this time (a vibration just played), then listening waits for silence. */
+  private holdT = -Infinity;
 
   constructor(cfg: BalloonConfig, opts: Partial<typeof BALLOON_DEFAULTS> = {}) {
     this.cfg = cfg;
@@ -188,6 +190,18 @@ export class BalloonGame {
     return events;
   }
 
+  /**
+   * A short device feedback (vibration) has just played: the mics are ignored until `until`, then counting restarts
+   * only from a silent frame (as after an example word). Nothing is counted or taken away; the balloon stays where it is.
+   */
+  holdUntil(until: number): void {
+    if (this.state.done) return;
+    if (until > this.holdT) this.holdT = until;
+    this.dropUtterance();
+    this.latch.reset();
+    this.state = { ...this.state, armed: false, inZone: false, speaking: false };
+  }
+
   /** Pause / tab hidden: the open utterance is dropped, never scored; a cut-off example means waiting for silence again. */
   interrupt(): void {
     this.dropUtterance();
@@ -223,6 +237,14 @@ export class BalloonGame {
       const settleUntil = s.phase === "settle" && s.settleUntil < 0 ? now + this.opts.settleMs : s.settleUntil;
       const phase = s.phase === "settle" && now >= settleUntil ? s.resume : s.phase;
       this.state = { ...s, phase, settleUntil, practiceMs, height: frame.valid ? sink(s.height, dt) : s.height, inZone: false, speaking: false };
+      return events;
+    }
+
+    // Device feedback still ringing (vibration + guard): not the child; afterwards wait for silence.
+    if (now < this.holdT) {
+      this.dropUtterance();
+      this.latch.reset();
+      this.state = { ...s, practiceMs, armed: false, inZone: false, speaking: false };
       return events;
     }
 

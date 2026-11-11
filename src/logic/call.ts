@@ -115,6 +115,8 @@ export class CallGame {
   private seg: SpeechSegmenter;
   private acc: Acc | null = null;
   private silentMs = 0;
+  /** Mics ignored until this time (device feedback such as a vibration just played), then listening waits for silence. */
+  private holdT = -Infinity;
 
   constructor(words: CallItem[], cfg: Partial<typeof CALL_DEFAULTS> = {}) {
     this.words = words;
@@ -208,6 +210,19 @@ export class CallGame {
     return true;
   }
 
+  /**
+   * A short device feedback (vibration) has just played, after the attempt closed: whatever the mics pick up until
+   * `until` is not the child, and listening restarts only from a silent frame after it (the same re-arm as after an
+   * example word). Nothing is counted or taken away.
+   */
+  holdUntil(until: number): void {
+    if (this.state.phase === "done") return;
+    if (until > this.holdT) this.holdT = until;
+    this.dropAttempt();
+    this.silentMs = 0;
+    this.state = { ...this.state, armed: false, inAttempt: false };
+  }
+
   /** Pause / tab hidden: the open attempt is dropped, never scored. */
   interrupt(): void {
     this.dropAttempt();
@@ -233,6 +248,13 @@ export class CallGame {
       this.dropAttempt();
       const phase = s.phase === "settle" && now >= s.settleUntil ? s.resume : s.phase;
       this.state = { ...s, phase, practiceMs, armed: false, inAttempt: false };
+      return events;
+    }
+
+    // Device feedback still ringing (vibration + guard): not the child; afterwards wait for silence.
+    if (now < this.holdT) {
+      this.dropAttempt();
+      this.state = { ...s, practiceMs, armed: false, inAttempt: false };
       return events;
     }
 

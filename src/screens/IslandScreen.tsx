@@ -36,6 +36,7 @@ import type { Child, EggKind, PlantKind, RewardLedger, SignalKind } from "../dat
 import { useActiveChild, useDB } from "../data/store";
 import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
+import { haptics } from "../lib/haptics";
 import { showToast } from "../lib/toast";
 import { signalKind, useSignalSource } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
@@ -157,6 +158,7 @@ function PetsPanel({ child, source, l, onFx }: { child: Child; source: SignalKin
     const kind = egg?.kind;
     const pet = hatchEgg(child.id, source);
     if (pet && kind) {
+      haptics.buzz("reward");
       showToast(`${PET_NAME[pet]}ออกมาแล้ว!`);
       onFx({ type: "hatch", egg: kind });
       focusEgg();
@@ -174,6 +176,7 @@ function PetsPanel({ child, source, l, onFx }: { child: Child; source: SignalKin
                   type="button"
                   className="island-tile"
                   onClick={() => {
+                    haptics.buzz("tap");
                     adoptStarter(child.id, source, p);
                     focusEgg();
                   }}
@@ -272,6 +275,7 @@ function GardenPanel({ child, source, l, onFx }: { child: Child; source: SignalK
   const pick = (i: number) => {
     const kind = harvestBed(child.id, source, i);
     if (kind) {
+      haptics.buzz("reward");
       showToast(`เก็บ${plantName(kind)}แล้ว!`);
       onFx({ type: "pick", bed: i, kind });
       focusGarden();

@@ -22,6 +22,8 @@ import { useConnection } from "../signal/mock";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { callStatusLine, type Line } from "./callStatus";
+import { kickCue } from "../logic/hapticCues";
+import { playCue, tapCue } from "./hapticCue";
 import { useGameRuntime } from "./useGameRuntime";
 import { useSourceGuard } from "./useSourceGuard";
 import "../styles/kick.css";
@@ -83,7 +85,10 @@ function TeamPicker({ onPick }: { onPick: (id: TeamId) => void }) {
                 type="button"
                 className={`pick-pad pick-pad--team${picked === t.id ? " is-picked" : ""}`}
                 style={{ ["--team" as string]: t.color, ["--team-deep" as string]: t.deep }}
-                onClick={() => setPicked((p) => p ?? t.id)}
+                onClick={() => {
+                  if (picked === null) tapCue();
+                  setPicked((p) => p ?? t.id);
+                }}
                 aria-label={`ยิงประตูกับ${t.name}`}
                 aria-pressed={picked === t.id}
               >
@@ -163,13 +168,15 @@ function KickRound({ team, onPlayAgain }: { team: Team; onPlayAgain: () => void 
 
   const rt = useGameRuntime(
     () => new KickMatch(items, plan.oralThreshold, { cheerMs: motionReduced() ? 900 : undefined }),
-    (game, frame, now, dt) => {
+    (game, frame, now, dt, round) => {
       const events = game.update(frame, now, dt);
       // sound only while the game is not listening (ball in flight / celebration); silenced before it listens again
       for (const e of events) {
         if (e.type === "kick") playKickThump();
         else if (e.type === "goal") playSuccessChime();
         else if (e.type === "ready" || e.type === "finish") stopSfx();
+        // optional vibration: one per ball, at the goal (the celebration does not listen; the mics stay closed after it)
+        playCue(kickCue(e, round), frame, (t) => game.call.holdUntil(t));
       }
       return events.some((e) => e.type === "finish");
     },

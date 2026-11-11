@@ -270,3 +270,29 @@ describe("Device message parsing (ESP32 → web)", () => {
     expect(parseReading("20,1")).toEqual({ nasalPercent: 20, speechDetected: true });
   });
 });
+
+describe("CallGame: re-arm guard after a vibration", () => {
+  it("after a buzz the mics stay closed until the guard ends, then listening waits for silence (the buzz never becomes an attempt)", () => {
+    const g = make();
+    const a = run(g, [hush(), call(), hush()]);
+    expect(g.state.words[0]).toMatchObject({ attempts: 1, usable: 1 });
+    // the screen buzzed right after the attempt closed: hold the mics for the pattern + guard
+    g.holdUntil(a.t + 268);
+    // the motor's rattle reaches the mics during the hold and runs on past it: not the child, not even a retry
+    const b = run(g, [call(600)], a.t);
+    expect(b.events.filter((e) => e.type === "heard" || e.type === "retry")).toEqual([]);
+    expect(g.state.words[0].attempts).toBe(1);
+    expect(g.state.armed).toBe(false);
+    // a silent frame re-arms; the next real call counts again
+    run(g, [hush(300), call(), hush()], b.t);
+    expect(g.state.words[0]).toMatchObject({ attempts: 2, usable: 2 });
+  });
+
+  it("a hold changes nothing when no vibration played (the game behaves exactly as before)", () => {
+    const g = make();
+    g.holdUntil(-1);
+    run(g, [hush(), call(), hush()]);
+    expect(g.state.words[0]).toMatchObject({ attempts: 1, usable: 1, heard: true });
+  });
+});
+

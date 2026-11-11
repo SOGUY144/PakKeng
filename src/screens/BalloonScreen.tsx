@@ -24,6 +24,8 @@ import type { SignalFrame } from "../signal/SignalProcessor";
 import { signalProblem, type MeterStatus } from "../signal/status";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
+import { balloonCue } from "../logic/hapticCues";
+import { playCue, tapCue } from "./hapticCue";
 import { useGameRuntime } from "./useGameRuntime";
 import { useSourceGuard } from "./useSourceGuard";
 
@@ -101,7 +103,16 @@ function TripPicker({ onPick }: { onPick: (id: TripId) => void }) {
         <ul className="pick__list">
           {TRIPS.map((t) => (
             <li key={t.id}>
-              <button type="button" className="pick-trip" style={tripVars(t)} onClick={() => onPick(t.id)} aria-label={`ส่งบอลลูนไป${t.name}`}>
+              <button
+                type="button"
+                className="pick-trip"
+                style={tripVars(t)}
+                onClick={() => {
+                  tapCue();
+                  onPick(t.id);
+                }}
+                aria-label={`ส่งบอลลูนไป${t.name}`}
+              >
                 <span className="pick-trip__pic">
                   <TripPicture trip={t} />
                 </span>
@@ -201,11 +212,14 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
         balloonsPerRound: BALLOONS_PER_ROUND,
         restBetween: true,
       }),
-    (game, frame, now, dt) => {
+    (game, frame, now, dt, round) => {
       const events = game.update(frame, now, dt);
       // a balloon reached the pin: a short chime while the game rests (the mics are not counted until
       // "ส่งลูกถัดไป", which stops the chime first; the logic's settle window covers the tail)
       if (events.some((e) => e.type === "balloon-complete")) playSuccessChime();
+      // optional vibration at the pin, only while the game rests (never while it counts a held sound)
+      const counting = !game.resting && !game.state.done;
+      for (const e of events) playCue(balloonCue(e, round), frame, (t) => game.holdUntil(t), counting);
       return events.some((e) => e.type === "done");
     },
   );

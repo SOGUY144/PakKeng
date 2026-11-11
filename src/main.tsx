@@ -13,10 +13,12 @@ import "./styles/kid.css";
 import "./styles/dashboard.css";
 import { App } from "./App";
 import { initMotion } from "./lib/motion";
+import { initHaptics } from "./lib/haptics";
 import { initSfx } from "./lib/sfx";
 
 initMotion();
 initSfx();
+initHaptics();
 
 const root = createRoot(document.getElementById("root") as HTMLElement);
 if (import.meta.env.DEV && new URLSearchParams(location.search).has("studio")) {
