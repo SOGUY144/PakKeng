@@ -205,7 +205,34 @@ export function BaffleDiagram() {
   );
 }
 
-export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" }) {
+export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" | "tower" }) {
+  if (game === "tower")
+    return (
+      <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">
+        <defs>
+          <linearGradient id="thumb-tower-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#ffd9e6" />
+            <stop offset="1" stopColor="#fff8ea" />
+          </linearGradient>
+        </defs>
+        <rect width="120" height="84" fill="url(#thumb-tower-sky)" />
+        <path d="M50 84V14c0-9 20-9 20 0v70z" fill="#fff" opacity=".7" />
+        <ellipse cx="60" cy="78" rx="26" ry="6" fill="#fff" stroke="#b9a6f2" strokeWidth="1.5" />
+        <ellipse cx="40" cy="62" rx="15" ry="5" fill="#fff" stroke="#b9a6f2" strokeWidth="1.5" />
+        <ellipse cx="80" cy="46" rx="15" ry="5" fill="#fff" stroke="#b9a6f2" strokeWidth="1.5" />
+        <ellipse cx="42" cy="30" rx="15" ry="5" fill="#fff" stroke="#b9a6f2" strokeWidth="1.5" />
+        <ellipse cx="62" cy="14" rx="15" ry="5" fill="#fff" stroke="#b9a6f2" strokeWidth="1.5" />
+        <path d="M50 10a12 12 0 0 1 24 0" stroke="#ff9cbc" strokeWidth="3" fill="none" />
+        <g transform="translate(70 26) scale(0.28)">
+          <path d="M27 36C20 22 19 8 26 5c7-2 9 13 9 29M53 36c7-14 8-28 1-31-7-2-9 13-9 29" fill="#fff" stroke={LINE} strokeWidth="5" />
+          <ellipse cx="40" cy="74" rx="20" ry="17" fill="#fff" stroke={LINE} strokeWidth="5" />
+          <circle cx="40" cy="48" r="20" fill="#fff" stroke={LINE} strokeWidth="5" />
+          <circle cx="33" cy="47" r="4" fill={EYE} />
+          <circle cx="47" cy="47" r="4" fill={EYE} />
+        </g>
+        <path d="M58 60c6-16 14-22 22-20" stroke="#b9a6f2" strokeWidth="2" strokeDasharray="3 4" fill="none" />
+      </svg>
+    );
   if (game === "kick")
     return (
       <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">

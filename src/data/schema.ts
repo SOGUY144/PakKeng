@@ -1,4 +1,4 @@
-export type GameId = "runner" | "balloon" | "frog" | "kick";
+export type GameId = "runner" | "balloon" | "frog" | "kick" | "tower";
 export type Level = 1 | 2 | 3;
 
 /** แผนการฝึกที่นักแก้ไขการพูดตั้งต่อเด็กหนึ่งคน — แหล่งเดียวของเกณฑ์ทุกค่าในเกม */
@@ -62,6 +62,17 @@ export interface KickSummary {
   team: string;
 }
 
+/**
+ * One climb of the cloud tower: floors reached by a jump on a usable word, out of the floors of the round.
+ * Skipped floors (the cloud lift) are counted apart and never as speech. `path` = the side the child picked.
+ */
+export interface TowerSummary {
+  floors: number;
+  total: number;
+  skipped: number;
+  path: string;
+}
+
 /** สรุปรายคำของด่านเรียกเพื่อน — เก็บเท่าที่จำเป็น: ไม่มีเสียงดิบ มีแต่จำนวนครั้งและค่าเฉลี่ย */
 export interface CallWordSummary {
   id: string;
@@ -91,7 +102,7 @@ export interface CallSummary {
 
 /** What the child picked at the start of a round (friend order, balloon trip, route, door) — shown back on the result screen. */
 export interface RoundChoice {
-  kind: "friends" | "trip" | "route" | "door" | "team";
+  kind: "friends" | "trip" | "route" | "door" | "team" | "path";
   /** Stable id of the choice (e.g. "crab,dog,fish", "lighthouse", "river", "flower"). */
   id: string;
   /** Short Thai name the child saw, e.g. "ประภาคาร". */
@@ -127,6 +138,8 @@ export interface Session {
   call?: CallSummary | null;
   /** Present on penalty-kick rounds. */
   kick?: KickSummary | null;
+  /** Present on cloud-tower rounds. */
+  tower?: TowerSummary | null;
   /**
    * Detected speech attempts with usable signal in this round (never the example word, never silence/clipping/lost data).
    * Not a count of correct words — there is no speech recognition. The only thing rewards (eggs, garden, clothes) grow
@@ -200,6 +213,7 @@ export const GAME_LABEL: Record<GameId, string> = {
   balloon: "บอลลูน",
   frog: "กบข้ามบึง",
   kick: "ยิงจุดโทษ",
+  tower: "หอคอยเมฆ",
 };
 
 export const LEVEL_LABEL: Record<Level, string> = {

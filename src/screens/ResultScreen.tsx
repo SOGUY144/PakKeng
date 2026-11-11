@@ -10,7 +10,7 @@ import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { fmtClock, fmtDayMonth, fmtPct, isSameDay } from "../data/format";
-import { isDoorAlone, roundDid, roundRating } from "../data/resultCards";
+import { isDoorAlone, roundDid, roundRating, towerHeadline } from "../data/resultCards";
 import { getLastResultId } from "../data/rounds";
 import type { FriendId } from "../data/callWords";
 import { doorById } from "../data/doors";
@@ -50,6 +50,8 @@ function achieved(s: Session): { title: string; sub: string } {
       ? { title: `ยิงเข้า ${s.kick.goals} ลูก!`, sub: c?.kind === "team" ? `เตะกับ${c.label}` : "ได้ถ้วยแล้ว" }
       : { title: "จบรอบแล้ว", sub: "รอบหน้ามายิงประตูกันใหม่นะ" };
   }
+  // only floors jumped on a usable word count; reaching the top on the skip lift is said as it happened
+  if (s.game === "tower" && s.tower) return towerHeadline(s);
   if (isGateRound(s)) return { title: "ลองเปิดประตูแล้ว", sub: "ไว้รอบหน้ามาลองใหม่นะ" };
   return { title: "จบรอบแล้ว", sub: `ลองพูด ${s.attempts} ครั้ง` };
 }
@@ -130,7 +132,7 @@ export function ResultScreen() {
   const did = roundDid(session);
   // colour and icon of the game the card speaks for (a door the child never reached does not recolour a run)
   const tone = did.kind === "other" ? session.game : did.kind;
-  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : "mic";
+  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : did.kind === "tower" ? "flag" : "mic";
   const kept = storagePersisted();
   const sourceLabel = session.source === "device" ? "อุปกรณ์จริง" : session.source === "sample" ? "ข้อมูลตัวอย่าง" : "โหมดสาธิต";
   const met = call ? call.words.filter((w) => w.heard) : [];
@@ -144,9 +146,9 @@ export function ResultScreen() {
             <span key={i} className={`result__spark result__spark--${i}`} />
           ))}
           {mode.kind === "3d" ? (
-            <World3D kind="celebrate" game={session.game} outfit={outfitOf(db, child, session.source === "device" ? "device" : "demo")} species={rewardsOf(db, child.id).species} tier={mode.tier} active reduced={reduced} />
+            <World3D kind="celebrate" game={session.game} variant={session.tower?.path} outfit={outfitOf(db, child, session.source === "device" ? "device" : "demo")} species={rewardsOf(db, child.id).species} tier={mode.tier} active reduced={reduced} />
           ) : (
-            <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" ? <GameThumb game="kick" /> : null} />
+            <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" || session.game === "tower" ? <GameThumb game={session.game} /> : null} />
           )}
         </div>
 

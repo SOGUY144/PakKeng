@@ -728,6 +728,12 @@ button.trail__node:focus-visible {
   --card-ink: var(--candy-lime-ink);
 }
 
+/* cloud tower: a pale cloud-lilac (softer than the door's lilac; no blue — it stays for oral values) */
+.play-card--tower {
+  --card-bg: #e4dcfd;
+  --card-ink: var(--candy-lilac-ink);
+}
+
 /* a new game (until the child has played it once) */
 .play-card__new {
   position: absolute;

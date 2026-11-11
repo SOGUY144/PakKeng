@@ -8,6 +8,7 @@ import { Balloon } from "../models/Balloon";
 import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { BALL_R, Goal, SoccerBall, Trophy, type NetDrive } from "../models/Football";
 import { CloudPal } from "../models/CloudPal";
+import { cloudPlatform, rainbowArch, smilingMoon } from "../models/CloudTower";
 import { bunnyDrive, cloudDrive, type BunnyPose } from "../models/drives";
 import { Frog, type FrogPose } from "../models/Frog";
 import { Friend, type FriendKind, type FriendPose } from "../models/Friends";
@@ -17,7 +18,7 @@ import * as S from "../shapes";
 import type { CelebrateSpec } from "../spec";
 import type { DoorId } from "../../data/doors";
 import type { RouteId } from "../../data/routes";
-import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, RoutePostcard } from "./Postcards";
+import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, RoutePostcard, TowerPostcard } from "./Postcards";
 import type { EggKind, PetKind } from "../../data/schema";
 
 /** Floating garden island used as a little stage (same clay language as the game worlds). */
@@ -57,7 +58,7 @@ function Pedestal({ radius = 1.3, pond = false }: { radius?: number; pond?: bool
  * ฉากฉลองสั้น ๆ ในหน้าสรุปรอบ (≈3 วินาที แล้วยืนนิ่ง) — ตัวละครตรงกับเกมที่เพิ่งเล่น
  * กระต่ายใส่ของสะสมที่ปลดล็อกแล้ว; reduced motion = ท่าเดิมขนาดครึ่งเดียว ประกายน้อยลง
  */
-export function CelebrateWorld({ game, outfit, species, reduced, tier }: CelebrateSpec) {
+export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }: CelebrateSpec) {
   const kit = useKit();
   const bunny = useRef(bunnyDrive({ pose: game === "balloon" ? "ride" : "stand", reduced }));
   const cloud = useRef(cloudDrive({ reduced }));
@@ -106,7 +107,23 @@ export function CelebrateWorld({ game, outfit, species, reduced, tier }: Celebra
       ) : (
         <FitCamera target={[0, 0.72, 0]} dir={[0.12, 0.3, 1]} width={3.6} height={2.2} />
       )}
-      <Pedestal pond={game === "frog"} radius={game === "balloon" ? 1.0 : 1.3} />
+      {game === "tower" ? (
+        <>
+          {/* the top cloud of the tower, with the path's goal behind (rainbow / smiling moon) */}
+          <mesh geometry={kit.geo("tower-cloud-1.25", () => cloudPlatform(1.25, kit.seg))} material={kit.clay(C.white, { vertexColors: true })} />
+          {variant === "star" ? (
+            <mesh geometry={kit.geo("tower-goal-star", () => smilingMoon(kit.seg))} material={kit.clay(C.white, { vertexColors: true, emissive: C.butter, emissiveIntensity: 0.45 })} position={[0.75, 0.55, -0.6]} scale={1.1} />
+          ) : (
+            <mesh geometry={kit.geo("tower-goal-rainbow", () => rainbowArch(kit.seg))} material={kit.clay(C.white, { vertexColors: true })} position={[0, 0.02, -0.5]} scale={1.15} />
+          )}
+          <group rotation-y={0.25}>
+            <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
+          </group>
+          <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
+        </>
+      ) : (
+        <Pedestal pond={game === "frog"} radius={game === "balloon" ? 1.0 : 1.3} />
+      )}
       {game === "runner" ? (
         <>
           <group rotation-y={0.25}>
@@ -155,6 +172,8 @@ export type StudioSubject =
   | "thumb-balloon"
   | "thumb-frog"
   | "thumb-kick"
+  | "thumb-tower"
+  | `tower-${"rainbow" | "star"}-${AvatarSpecies}`
   | `avatar-${AvatarSpecies}`
   | "item-cap"
   | "item-shoes"
@@ -211,6 +230,9 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
   const door = /^door-(flower|star|shell)$/.exec(subject);
   if (door) return <DoorPostcard doorId={door[1] as DoorId} />;
   if (subject === "thumb-gate") return <GateRowPostcard />;
+  const tower = /^tower-(rainbow|star)-(bunny|puppy|dino|kitty)$/.exec(subject);
+  if (tower) return <TowerPostcard path={tower[1] as "rainbow" | "star"} species={tower[2] as AvatarSpecies} mode="pick" />;
+  if (subject === "thumb-tower") return <TowerPostcard path="rainbow" species="bunny" mode="thumb" />;
   if (subject === "chest-closed" || subject === "chest-open") return <ChestPostcard open={subject === "chest-open"} />;
   const pet = /^pet-(puppy|kitten|chick|dino|dragon|unicorn)$/.exec(subject);
   if (pet) return <PetPostcard kind={pet[1] as PetKind} />;

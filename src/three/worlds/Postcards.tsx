@@ -2,11 +2,13 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { doorById, DOORS, type DoorId } from "../../data/doors";
 import { routeById, type RouteId } from "../../data/routes";
+import { floorSpot, TOWER_RISE, type TowerPathId } from "../../data/towerPaths";
 import { ROUTE_LEGS } from "../../logic/route";
 import { seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { Chest } from "../models/Chest";
+import { cloudPillar, cloudPlatform, rainbowArch, rainbowFlag, smilingMoon, starLantern } from "../models/CloudTower";
 import { Egg } from "../models/Egg";
 import { Pet } from "../models/Pets";
 import { eggDrive, petDrive } from "../models/petDrives";
@@ -294,6 +296,52 @@ export function EggPostcard({ kind, crack }: { kind: EggKind; crack: 0 | 1 | 2 |
       <Lights tier="high" sun={[-2.5, 6, 5]} box={2} intensity={2.4} />
       <FitCamera target={[0, 0.36, 0]} dir={[0.2, 0.42, 1]} width={0.95} height={0.95} />
       <Egg kind={kind} crack={crack} drive={drive} />
+    </group>
+  );
+}
+
+/**
+ * หอคอยเมฆสำหรับหน้าเลือกทาง / การ์ดเกม / การ์ดจบรอบ: โมเดลและผังเดียวกับฉากจริง (CloudTower + floorSpot)
+ * "pick" = ตัวละครของเด็กยืนบนเมฆพื้น มองขึ้นไปทางของตัวเอง ของประดับทุกชั้นสว่าง (ให้เห็นว่าทางนี้มีอะไร) ·
+ * "thumb" = กระโดดกลางอากาศขึ้นเมฆชั้นแรก
+ */
+export function TowerPostcard({ path, species, mode }: { path: TowerPathId; species: AvatarSpecies; mode: "pick" | "thumb" }) {
+  const kit = useKit();
+  const hero = useRef(bunnyDrive({ pose: mode === "pick" ? "wave" : "stand" }));
+  const clay = kit.clay(C.white, { vertexColors: true });
+  const glow = kit.clay(C.white, { vertexColors: true, emissive: path === "star" ? C.butter : C.pinkSoft, emissiveIntensity: path === "star" ? 0.45 : 0.18 });
+  const geo = {
+    platform: kit.geo("tower-cloud-0.78", () => cloudPlatform(0.78, kit.seg)),
+    ground: kit.geo("tower-cloud-1.25", () => cloudPlatform(1.25, kit.seg)),
+    pillar: kit.geo("tower-pillar", () => cloudPillar(5 * TOWER_RISE - 0.6, kit.seg)),
+    keep: kit.geo(`tower-keep-${path}-lit`, () => (path === "star" ? starLantern(true) : rainbowFlag(true))),
+    goal: kit.geo(`tower-goal-${path}`, () => (path === "star" ? smilingMoon(kit.seg) : rainbowArch(kit.seg))),
+  };
+  const spots = [0, 1, 2, 3, 4, 5].map((f) => floorSpot(path, f));
+  const first = spots[1];
+  // pick: standing on the ground cloud, turned towards this path's first cloud · thumb: on the first cloud, looking up the tower
+  const me = mode === "pick" ? { x: 0.1, y: 0, yaw: Math.sign(first.x) * 0.45 } : { x: first.x + Math.sign(first.x) * 0.16, y: first.y, yaw: -Math.sign(first.x) * 0.35 };
+  return (
+    <group dispose={null}>
+      <Lights tier="high" sun={[-3, 9, 7]} box={5} intensity={2.5} />
+      {mode === "pick" ? (
+        <FitCamera target={[0, 2.15, 0]} dir={[0, 0.12, 1]} width={4.9} height={6.1} fov={30} />
+      ) : (
+        <FitCamera target={[-0.2, 1.75, 0]} dir={[0, 0.14, 1]} width={4.4} height={3.7} fov={30} />
+      )}
+      <mesh geometry={geo.pillar} material={clay} position={[0, 0, -1.5]} />
+      <mesh geometry={geo.ground} material={clay} />
+      {spots.slice(1).map((p, i) => (
+        <mesh key={i} geometry={geo.platform} material={clay} position={[p.x, p.y, 0]} />
+      ))}
+      {spots.slice(1, 5).map((p, i) => (
+        <mesh key={i} geometry={geo.keep} material={glow} position={[p.x - Math.sign(p.x) * 0.42, p.y, -0.32]} />
+      ))}
+      <mesh geometry={geo.goal} material={path === "star" ? glow : clay} position={[0, 5 * TOWER_RISE + 0.02 + (path === "star" ? 0.45 : 0), -0.42]} scale={0.85} />
+      <group position={[me.x, me.y, 0.12]} rotation-y={me.yaw} scale={0.72}>
+        <Bunny drive={hero} outfit="cap" species={species} />
+      </group>
+      <BlobShadow at={[me.x, me.y, 0.12]} size={[0.62, 0.5]} />
     </group>
   );
 }

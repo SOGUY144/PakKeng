@@ -37,6 +37,9 @@ const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   ...ROUTE_IDS.flatMap((r) => SPECIES.map((s) => ({ name: `route-${r}-${s}` as const, w: 900, h: 600 }))),
   ...DOOR_IDS.map((d) => ({ name: `door-${d}` as const, w: 540, h: 720 })),
   { name: "thumb-gate", w: 360, h: 252 },
+  // cloud tower: the game card, and each path with the child's character for the path picker and the end card
+  { name: "thumb-tower", w: 360, h: 252 },
+  ...(["rainbow", "star"] as const).flatMap((p) => SPECIES.map((s) => ({ name: `tower-${p}-${s}` as const, w: 720, h: 540 }))),
   { name: "chest-closed", w: 200, h: 200 },
   { name: "chest-open", w: 200, h: 200 },
   // Home's island card: the buddy pet, or the egg at its crack stage

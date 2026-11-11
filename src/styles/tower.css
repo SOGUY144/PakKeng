@@ -1,0 +1,366 @@
+/* ---------- หอคอยเมฆ (cloud tower) ----------
+   Picker: the left and right cloud paths as two stills of the same tower (route-card layout from runner.css).
+   Round: the shared world layout (kid.css); the sky differs per path (day rainbow / dusk stars), a floor counter
+   “ชั้น N จาก 5” in the top bar is plain HTML text, and the 2D fallback is a side stack of the same clouds. */
+
+.pick.pick--tower {
+  --pick-bg: var(--candy-lilac-soft);
+  --pick-blob: var(--candy-lilac);
+  --pick-ink: var(--candy-lilac-ink);
+}
+
+.tower-card--rainbow {
+  --flag: #ff9cbc;
+  --flag-deep: #c8467a;
+}
+
+.tower-card--star {
+  --flag: #b9a6f2;
+  --flag-deep: #5b3fc4;
+}
+
+.tower-card .route-card__pic {
+  aspect-ratio: 4 / 3;
+}
+
+/* no blue skies: blue (and orange) stay reserved for oral / nasal values */
+.tower-card--rainbow .route-card__pic {
+  background: linear-gradient(180deg, #ffe3ec 0%, #fff6e6 100%);
+}
+
+.tower-card--star .route-card__pic {
+  background:
+    radial-gradient(circle at 18% 22%, #fff 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 78% 14%, #fff 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 64% 38%, #fff 0 1px, transparent 2px),
+    linear-gradient(180deg, #b6a8ee 0%, #efe6ff 100%);
+}
+
+.tower-card .route-card__pic img {
+  object-position: 50% 45%;
+}
+
+/* short phones: keep both paths in view without scrolling */
+@media (max-height: 740px) and (max-width: 599px) {
+  .tower-card .route-card__pic {
+    aspect-ratio: 2 / 1;
+  }
+}
+
+/* ---------- Round ---------- */
+/* the two paths' skies (two classes: they replace the shared warm 3D sky of .stage.stage--3d) */
+.stage.stage--tower-rainbow {
+  background: linear-gradient(180deg, #ffd9e6 0%, #ffeede 48%, #fff8ea 100%);
+}
+
+.stage.stage--tower-star {
+  background:
+    radial-gradient(circle at 12% 18%, #fff 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 84% 10%, #fff 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 70% 30%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 30% 8%, #fff 0 1px, transparent 2px),
+    linear-gradient(180deg, #a99be8 0%, #d6cdfa 48%, #f6efff 100%);
+}
+
+/* floor counter in the top bar: one pip per floor + “ชั้น N จาก 5” */
+.tower-floor {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 4px 14px 4px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tower-floor__pips {
+  display: inline-flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+.tower-floor__pip {
+  display: block;
+  width: 18px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.tower-floor__pip.is-current {
+  background: var(--candy-lemon);
+  box-shadow: inset 0 0 0 1.5px var(--candy-lemon-ink);
+}
+
+.tower-floor__pip.is-jump {
+  background: var(--candy-lilac-ink);
+  box-shadow: none;
+}
+
+/* reached on the lift: filled lightly, with a gap in the middle (not the same mark as a voiced jump) */
+.tower-floor__pip.is-skip {
+  background: linear-gradient(90deg, var(--line-strong) 0 40%, transparent 40% 60%, var(--line-strong) 60%);
+  box-shadow: none;
+}
+
+.world-dock--tower {
+  background: linear-gradient(180deg, #ece6ff, #fff);
+}
+
+/* dock picture: a puffy cloud with the speaker badge */
+.dock-pic--cloud {
+  display: grid;
+  place-items: center;
+  --dock-tint: #e3f2fc;
+}
+
+.dock-pic__cloud,
+.tower-side__cloud {
+  position: relative;
+  display: block;
+  width: 58px;
+  height: 30px;
+  margin-top: 14px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    0 0 0 2px var(--candy-lilac-ink),
+    0 4px 0 rgba(75, 47, 168, 0.18);
+}
+
+.dock-pic__cloud::before,
+.dock-pic__cloud::after,
+.tower-side__cloud::before,
+.tower-side__cloud::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--candy-lilac-ink);
+  clip-path: inset(-4px -4px 45% -4px);
+}
+
+.dock-pic__cloud::before,
+.tower-side__cloud::before {
+  left: 8px;
+  top: -12px;
+  width: 24px;
+  height: 24px;
+}
+
+.dock-pic__cloud::after,
+.tower-side__cloud::after {
+  left: 24px;
+  top: -18px;
+  width: 30px;
+  height: 30px;
+}
+
+.tower-side__cloud {
+  width: 34px;
+  height: 16px;
+  margin-top: 10px;
+  border-radius: 9px;
+  opacity: 0.55;
+}
+
+.tower-side__cloud::before {
+  left: 4px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+}
+
+.tower-side__cloud::after {
+  left: 13px;
+  top: -10px;
+  width: 18px;
+  height: 18px;
+}
+
+.tower-side__cloud.is-jump {
+  opacity: 1;
+}
+
+/* the floor list reads like the tower: the top floor at the top */
+.side-list.tower-side {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+/* ---------- 2D fallback: a side stack of the same clouds ---------- */
+.tower2d {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.tower2d--rainbow {
+  background: linear-gradient(180deg, #ffd9e6 0%, #fff8ea 100%);
+}
+
+.tower2d--star {
+  background:
+    radial-gradient(circle at 12% 18%, #fff 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 84% 12%, #fff 0 1.5px, transparent 2.5px),
+    linear-gradient(180deg, #a99be8 0%, #f6efff 100%);
+}
+
+.tower2d__pillar {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: 22%;
+  max-width: 160px;
+  height: 84%;
+  translate: -50% 0;
+  border-radius: 999px 999px 24px 24px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.85) 45%, rgba(255, 255, 255, 0.55));
+}
+
+.tower2d__cloud {
+  position: absolute;
+  width: 24%;
+  max-width: 150px;
+  aspect-ratio: 3 / 1;
+  translate: -50% 40%;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px #b9a6f2,
+    0 6px 0 rgba(75, 47, 168, 0.16);
+}
+
+.tower2d__cloud.is-ground {
+  width: 40%;
+  max-width: 240px;
+}
+
+.tower2d__keep {
+  position: absolute;
+  right: 12%;
+  bottom: 70%;
+  width: 18%;
+  aspect-ratio: 1 / 2;
+  opacity: 0.45;
+  filter: grayscale(0.8);
+}
+
+.tower2d--rainbow .tower2d__keep {
+  background:
+    linear-gradient(180deg, #ff9cbc 0 20%, #ffd877 20% 40%, #a8e3c8 40% 60%, transparent 60%) 30% 0 / 70% 100% no-repeat,
+    linear-gradient(90deg, #a26f45 0 18%, transparent 18%);
+}
+
+.tower2d--star .tower2d__keep {
+  aspect-ratio: 1;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: #f5c542;
+}
+
+.tower2d__keep.is-lit {
+  opacity: 1;
+  filter: none;
+  animation: tower2d-pop 0.4s ease-out;
+}
+
+.tower2d__goal {
+  position: absolute;
+  left: 50%;
+  bottom: 85%;
+  width: 70%;
+  aspect-ratio: 2 / 1;
+  translate: -50% 0;
+  opacity: 0.6;
+}
+
+.tower2d--rainbow .tower2d__goal {
+  border-radius: 999px 999px 0 0;
+  border: 8px solid transparent;
+  border-bottom: 0;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(90deg, #ff9cbc, #ffd877, #a8e3c8, #b9a6f2) border-box;
+}
+
+.tower2d--star .tower2d__goal {
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: inset -12px 4px 0 0 #ffd877;
+}
+
+.tower2d__goal.is-lit {
+  opacity: 1;
+}
+
+.tower2d__me {
+  position: absolute;
+  translate: -50% 8%;
+  transform-origin: 50% 100%;
+  scale: calc(1 + var(--crouch, 0) * 0.08) calc(1 - var(--crouch, 0) * 0.14);
+}
+
+.tower2d__me.is-lift::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -14%;
+  height: 30%;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #dcd0fb;
+}
+
+.tower2d__me.is-landing {
+  animation: tower2d-land 0.35s ease-out;
+}
+
+.tower2d__pet {
+  position: absolute;
+  translate: -50% 10%;
+}
+
+@keyframes tower2d-pop {
+  from {
+    scale: 0.6;
+  }
+}
+
+@keyframes tower2d-land {
+  30% {
+    scale: 1.08 0.88;
+  }
+}
+
+[data-motion="reduce"] .tower2d__keep.is-lit,
+[data-motion="reduce"] .tower2d__me.is-landing {
+  animation: none;
+}
+
+/* the end card shows the rendered tower (same models as the scene), or the light drawing if it cannot load */
+.tower-done__pic {
+  justify-self: center;
+  display: block;
+  width: min(180px, 60%);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #ffe3ec, #fff6e6);
+}
+
+.tower-done__pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

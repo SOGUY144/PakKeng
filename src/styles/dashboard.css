@@ -34,6 +34,12 @@
   box-shadow: var(--shadow-clay);
 }
 
+/* app name above the demo view switch; side by side, or stacked, once the sidebar becomes a top block (≤ 900px) */
+.dash-side__head {
+  display: grid;
+  gap: var(--sp-3);
+}
+
 .dash-brand {
   display: grid;
   line-height: 1.3;
@@ -44,6 +50,8 @@
   font-family: var(--font-display);
   font-size: 1.7rem;
   font-weight: 600;
+  /* the app name is one word: never split it across lines */
+  white-space: nowrap;
 }
 
 .dash-brand__role {
@@ -225,6 +233,11 @@
   margin-top: 6px;
   color: var(--ink-2);
   font-size: var(--fs-xs);
+}
+
+/* the long "sample + played rounds" badge wraps on a narrow phone instead of widening the whole column */
+.dash-note .badge {
+  white-space: normal;
 }
 
 .dash-child__actions {
@@ -749,17 +762,18 @@ fieldset.field legend {
   }
   .dash-side {
     position: static;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
     max-height: none;
     overflow: visible;
     padding: var(--sp-4);
   }
-  /* app name and view switch share one row; the children and the privacy note span below */
-  .dash-side__title,
-  .kids,
-  .dash-privacy {
-    grid-column: 1 / -1;
+  /* app name and view switch share one row while both fit (tablet); on a phone the switch wraps below the name
+     instead of squeezing it (the old two-column grid gave the switch its full width first and left the name ~0 px) */
+  .dash-side__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2) var(--sp-4);
   }
   .dash-side__title {
     margin-top: 0;
@@ -768,9 +782,10 @@ fieldset.field legend {
     grid-auto-flow: column;
     grid-auto-columns: minmax(170px, 1fr);
     overflow-x: auto;
-    /* room for the focus ring, which the scroller would otherwise clip */
+    /* room for the focus ring, which the scroller would otherwise clip (also when a focused card scrolls into view) */
     padding: 6px;
     margin: -6px;
+    scroll-padding-inline: 6px;
   }
   .dash-tabs {
     width: 100%;
@@ -817,11 +832,37 @@ fieldset.field legend {
   .dash-tab svg {
     display: none;
   }
+  /* "ต้นแบบเดโม · มุมมอง" on its own line, the two view links together under it */
+  .dash-side .viewswitch__label {
+    flex-basis: 100%;
+  }
+  /* narrower child cards (status and days stacked under the code): two whole cards on a 390 phone with the next one
+     peeking, and the second card's code still whole at 320 */
+  .kids {
+    grid-auto-columns: minmax(140px, calc((100% - 16px) / 2.25));
+  }
+  .kid {
+    grid-template-columns: 10px minmax(0, 1fr);
+    grid-template-areas:
+      "dot code"
+      ". status"
+      ". meta";
+  }
   .dash-alert {
     padding: var(--sp-4);
   }
   .plan__actions .btn--primary {
     width: 100%;
+  }
+}
+
+/* a very narrow phone (320–380 px): the four tabs need ~330 px in one row, so they sit 2 × 2 instead of hiding one
+   behind a sideways scroll */
+@media (max-width: 380px) {
+  .dash-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: var(--r-lg);
   }
 }
 

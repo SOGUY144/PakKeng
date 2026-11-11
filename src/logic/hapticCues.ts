@@ -4,6 +4,7 @@ import type { CallEvent } from "./call";
 import type { GateEvent } from "./gate";
 import type { KickEvent } from "./kick";
 import type { RouteEvent } from "./route";
+import type { TowerEvent } from "./tower";
 
 /**
  * Which game events may buzz (optional vibration, see lib/haptics) — one buzz per real event, only once the voice
@@ -45,4 +46,13 @@ export function balloonCue(ev: BalloonEvent, round: string): Cue | null {
 /** ประตู: the door opened (attempt events never buzz: whether the door moved depends on the nasal target). */
 export function gateCue(ev: GateEvent, round: string): Cue | null {
   return ev.type === "open" ? { kind: "reward", key: `gate:${round}:open` } : null;
+}
+
+/**
+ * หอคอยเมฆ: one buzz per floor jumped on a usable word, when the avatar lands (the jump and the landing are the same
+ * word, so it buzzes once) — the top is the reward instead of the floor buzz, never both. The skip lift never buzzes.
+ */
+export function towerCue(ev: TowerEvent, round: string): Cue | null {
+  if (ev.type !== "land") return null;
+  return ev.top ? { kind: "reward", key: `tower:${round}:top` } : { kind: "usable", key: `tower:${round}:land:${ev.floor}` };
 }

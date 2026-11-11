@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Haptics, type HapticsEnv } from "../lib/haptics";
 import type { CallEvent } from "./call";
-import { balloonCue, callCue, gateCue, kickCue, routeCue } from "./hapticCues";
+import { balloonCue, callCue, gateCue, kickCue, routeCue, towerCue } from "./hapticCues";
 import type { KickEvent } from "./kick";
 import type { RouteEvent } from "./route";
+import type { TowerEvent } from "./tower";
 
 const R = "r1";
 
@@ -22,6 +23,7 @@ describe("haptic cues: only finished, usable events buzz", () => {
       expect(callCue(ev, R)).toBeNull();
       expect(kickCue(ev, R)).toBeNull();
       expect(routeCue(ev, R, 6, true)).toBeNull();
+      expect(towerCue(ev, R)).toBeNull();
     }
     expect(balloonCue({ type: "skip", index: 0 }, R)).toBeNull();
     expect(balloonCue({ type: "done" }, R)).toBeNull();
@@ -50,6 +52,15 @@ describe("haptic cues: only finished, usable events buzz", () => {
   it("balloon and door: the delivery and the opening are the rewards", () => {
     expect(balloonCue({ type: "balloon-complete", index: 2 }, R)).toEqual({ kind: "reward", key: "balloon:r1:delivered:2" });
     expect(gateCue({ type: "open" }, R)).toEqual({ kind: "reward", key: "gate:r1:open" });
+  });
+
+  it("tower: one buzz per voiced floor, at the landing; the top is the reward alone; the skip lift and the jump stay quiet", () => {
+    const floor: TowerEvent[] = [{ type: "heard", index: 0, first: true, meanNasal: 20, durationMs: 400 }, { type: "jump", floor: 1 }, { type: "land", floor: 1, top: false }, { type: "ready", floor: 2 }];
+    expect(floor.map((e) => towerCue(e, R)).filter(Boolean)).toEqual([{ kind: "usable", key: "tower:r1:land:1" }]);
+    const top: TowerEvent[] = [{ type: "jump", floor: 5 }, { type: "land", floor: 5, top: true }, { type: "finish" }];
+    expect(top.map((e) => towerCue(e, R)).filter(Boolean)).toEqual([{ kind: "reward", key: "tower:r1:top" }]);
+    const lift: TowerEvent[] = [{ type: "lift", floor: 3 }, { type: "arrive", floor: 3, top: false }, { type: "arrive", floor: 5, top: true }, { type: "finish" }];
+    expect(lift.map((e) => towerCue(e, R)).filter(Boolean)).toEqual([]);
   });
 
   it("the same event seen twice (re-render, repeated handler) buzzes once; a new round's event buzzes again", () => {

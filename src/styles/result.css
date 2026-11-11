@@ -42,7 +42,8 @@
   --spark: var(--candy-lemon);
 }
 
-.result__scene--gate {
+.result__scene--gate,
+.result__scene--tower {
   --scene-bg: var(--candy-lilac-soft);
   --spark: var(--candy-lilac);
 }
@@ -129,7 +130,8 @@
   --title: var(--candy-pink-ink);
 }
 
-.result__head--gate {
+.result__head--gate,
+.result__head--tower {
   --title: var(--candy-lilac-ink);
 }
 
@@ -222,7 +224,8 @@
   --band-ink: var(--candy-pink-ink);
 }
 
-.result-card--gate {
+.result-card--gate,
+.result-card--tower {
   --band: var(--candy-lilac);
   --band-ink: var(--candy-lilac-ink);
 }
@@ -279,7 +282,8 @@
   color: var(--candy-pink-ink);
 }
 
-.result-card--gate .result-card__body svg {
+.result-card--gate .result-card__body svg,
+.result-card--tower .result-card__body svg {
   color: var(--candy-lilac-ink);
 }
 

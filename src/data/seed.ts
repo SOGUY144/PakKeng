@@ -36,7 +36,7 @@ const PROFILES: Profile[] = [
     practiceChance: 0.66,
     weeklyNasalOral: [34, 33, 32.5, 31.5, 31.2, 31.6, 30.9, 31.3],
     nasalWordMean: 41,
-    plan: { words: ["ตา", "ทา", "กา"], level: 2, games: { runner: true, balloon: true, frog: false, kick: true } },
+    plan: { words: ["ตา", "ทา", "กา"], level: 2, games: { runner: true, balloon: true, frog: false, kick: true, tower: true } },
   },
   {
     id: "C-009",

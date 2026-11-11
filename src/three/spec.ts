@@ -4,6 +4,7 @@ import type { CallGame } from "../logic/call";
 import type { GateGame } from "../logic/gate";
 import type { KickMatch } from "../logic/kick";
 import type { RouteRun } from "../logic/route";
+import type { TowerClimb } from "../logic/tower";
 import type { SignalFrame } from "../signal/SignalProcessor";
 import type { Tier } from "./gfx";
 
@@ -75,6 +76,18 @@ export interface KickSpec extends GameWorld<KickMatch> {
   team: string;
 }
 
+/** The cloud tower (หอคอยเมฆ). */
+export interface TowerSpec extends GameWorld<TowerClimb> {
+  kind: "tower";
+  /** The path the child picked (id in src/data/towerPaths.ts): the side the clouds climb, the sky and the keepsakes. */
+  path: string;
+  /** Unlocked collectibles worn by the climber, e.g. "cap,scarf". */
+  outfit: string;
+  species?: string;
+  /** The pet that climbs along; "" = none. */
+  buddy?: string;
+}
+
 /**
  * เกาะของฉัน: ตัวละครที่เลือก (ชนิด + ชุด) สัตว์ที่พาไปด้วย ไข่ และแปลงผัก — ทุกอย่างมาจากรางวัลที่คำนวณจากรอบที่บันทึก
  * (src/data/rewards.ts) ส่งเป็นค่า primitive: เปลี่ยนเมื่อเด็กเลือก/ฟัก/ปลูก/เก็บ ไม่ใช่ทุกเฟรม
@@ -102,9 +115,11 @@ export interface IslandSpec extends WorldCommon {
 
 export interface CelebrateSpec extends WorldCommon {
   kind: "celebrate";
-  game: "runner" | "balloon" | "frog" | "kick";
+  game: "runner" | "balloon" | "frog" | "kick" | "tower";
+  /** The round's own look where a game has two (cloud tower: "rainbow" | "star" path). */
+  variant?: string;
   outfit: string;
   species?: string;
 }
 
-export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | IslandSpec | CelebrateSpec;
+export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | TowerSpec | IslandSpec | CelebrateSpec;

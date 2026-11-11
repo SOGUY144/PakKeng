@@ -14,6 +14,7 @@ import { IslandScreen } from "./screens/IslandScreen";
 import { KickScreen } from "./screens/KickScreen";
 import { ResultScreen } from "./screens/ResultScreen";
 import { RunnerScreen } from "./screens/RunnerScreen";
+import { TowerScreen } from "./screens/TowerScreen";
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 
 const TITLES: Record<Route, string> = {
@@ -26,6 +27,7 @@ const TITLES: Record<Route, string> = {
   balloon: "บอลลูน",
   frog: "กบข้ามบึง",
   kick: "ยิงจุดโทษ",
+  tower: "หอคอยเมฆ",
   island: "เกาะของฉัน",
   dashboard: "แดชบอร์ดนักแก้ไขการพูด",
 };
@@ -57,6 +59,7 @@ function Screen({ route }: { route: Route }) {
   if (route === "balloon" && !plan.games.balloon) return <Locked game="เกมบอลลูน" />;
   if (route === "frog" && !plan.games.frog) return <Locked game="เกมกบข้ามบึง" />;
   if (route === "kick" && !plan.games.kick) return <Locked game="เกมยิงจุดโทษ" />;
+  if (route === "tower" && !plan.games.tower) return <Locked game="เกมหอคอยเมฆ" />;
   switch (route) {
     case "welcome":
       return <WelcomeScreen />;
@@ -76,6 +79,8 @@ function Screen({ route }: { route: Route }) {
       return <FrogScreen />;
     case "kick":
       return <KickScreen />;
+    case "tower":
+      return <TowerScreen />;
     case "island":
       return <IslandScreen />;
     case "dashboard":

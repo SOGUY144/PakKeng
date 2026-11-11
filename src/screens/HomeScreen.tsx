@@ -21,8 +21,9 @@ import "../styles/home.css";
 type Play = PathPlay;
 
 /** What each game invites the child to do — the verb is the label, the game's name comes second. */
-/** The new game comes first (marked “ใหม่” until played once), then the four first games in their usual order. */
+/** The new games come first (marked “ใหม่” until played once), then the four first games in their usual order. */
 const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean }[] = [
+  { id: "tower", verb: "ปีนหอคอย", name: "หอคอยเมฆ", open: (p) => p.games.tower },
   { id: "kick", verb: "ยิงจุดโทษ", name: "ฟุตบอล", open: (p) => p.games.kick },
   { id: "frog", verb: "เรียกเพื่อน", name: "กบข้ามบึง", open: (p) => p.games.frog },
   { id: "balloon", verb: "พาบอลลูนไปส่ง", name: "บอลลูน", open: (p) => p.games.balloon },

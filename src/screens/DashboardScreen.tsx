@@ -256,7 +256,7 @@ function PlanForm({ child }: { child: Child }) {
     showToast(`บันทึกแผนของ ${child.id} แล้ว · ภารกิจฝั่งเด็กเปลี่ยนตามทันที`);
   };
 
-  const gameIds: GameId[] = ["runner", "balloon", "frog", "kick"];
+  const gameIds: GameId[] = ["runner", "balloon", "frog", "kick", "tower"];
   const updated = new Date(child.plan.updatedAt);
 
   return (
@@ -480,11 +480,13 @@ export function DashboardScreen() {
   return (
     <div className="dash">
       <aside className="dash-side" aria-labelledby="kids-title">
-        <div className="dash-brand">
-          <span className="dash-brand__name">{GAME_NAME}</span>
-          <span className="dash-brand__role">สำหรับนักแก้ไขการพูด</span>
+        <div className="dash-side__head">
+          <div className="dash-brand">
+            <span className="dash-brand__name">{GAME_NAME}</span>
+            <span className="dash-brand__role">สำหรับนักแก้ไขการพูด</span>
+          </div>
+          <ViewSwitch current="teacher" />
         </div>
-        <ViewSwitch current="teacher" />
         <h2 id="kids-title" className="dash-side__title">
           เด็กที่ดูแล
         </h2>
@@ -494,7 +496,14 @@ export function DashboardScreen() {
             const last = x.weeks[x.weeks.length - 1];
             return (
               <li key={x.child.id}>
-                <button type="button" className={`kid${x.child.id === child.id ? " is-selected" : ""}`} aria-pressed={x.child.id === child.id} onClick={() => setSelectedId(x.child.id)}>
+                <button
+                  type="button"
+                  className={`kid${x.child.id === child.id ? " is-selected" : ""}`}
+                  aria-pressed={x.child.id === child.id}
+                  onClick={() => setSelectedId(x.child.id)}
+                  // on a phone the children are a sideways row: bring a half-hidden card (and its focus ring) fully into view
+                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" })}
+                >
                   <span className={`kid__dot ${s.cls}`} aria-hidden="true" />
                   <span className="kid__code">{x.child.id}</span>
                   <span className={`kid__status ${s.cls}`}>{s.text}</span>

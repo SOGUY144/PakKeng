@@ -177,11 +177,12 @@ describe("practiceDaysThisWeek — days with a saved round, Monday to Sunday (no
 
 describe("freshPlays — the “ใหม่” mark on a new game's card", () => {
   it("stays until the child plays the new game once (any real or demo round), not for sample history or another child", () => {
-    expect(freshPlays([])).toEqual(["kick"]);
-    expect(freshPlays([session(today(8), { game: "kick", source: "sample" })])).toEqual(["kick"]);
-    expect(freshPlays([session(today(8), { game: "kick", childId: "C-022" })], "C-014")).toEqual(["kick"]);
-    expect(freshPlays([session(today(8), { game: "frog" })])).toEqual(["kick"]);
-    expect(freshPlays([session(today(8), { game: "kick" })])).toEqual([]);
-    expect(freshPlays([session(today(8), { game: "kick", source: "device" })], "C-014")).toEqual([]);
+    expect(freshPlays([])).toEqual(["tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "kick", source: "sample" })])).toEqual(["tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "kick", childId: "C-022" })], "C-014")).toEqual(["tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "frog" })])).toEqual(["tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "kick" })])).toEqual(["tower"]);
+    expect(freshPlays([session(today(8), { game: "kick", source: "device" })], "C-014")).toEqual(["tower"]);
+    expect(freshPlays([session(today(8), { game: "kick" }), session(today(9), { game: "tower" })])).toEqual([]);
   });
 });
