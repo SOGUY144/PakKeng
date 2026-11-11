@@ -5,6 +5,7 @@ import type { GateEvent } from "./gate";
 import type { KickEvent } from "./kick";
 import type { RouteEvent } from "./route";
 import type { TowerEvent } from "./tower";
+import type { TrainEvent } from "./train";
 
 /**
  * Which game events may buzz (optional vibration, see lib/haptics) — one buzz per real event, only once the voice
@@ -55,4 +56,14 @@ export function gateCue(ev: GateEvent, round: string): Cue | null {
 export function towerCue(ev: TowerEvent, round: string): Cue | null {
   if (ev.type !== "land") return null;
   return ev.top ? { kind: "reward", key: `tower:${round}:top` } : { kind: "usable", key: `tower:${round}:land:${ev.floor}` };
+}
+
+/**
+ * รถไฟส่งของ: one buzz per leg ridden on a usable word, when the train pulls in (the departure and the arrival are the
+ * same word, so it buzzes once) — the delivery at the receiver is the reward instead of the stop buzz, never both.
+ * A coasted (skipped) leg never buzzes.
+ */
+export function trainCue(ev: TrainEvent, round: string): Cue | null {
+  if (ev.type !== "arrive") return null;
+  return ev.last ? { kind: "reward", key: `train:${round}:deliver` } : { kind: "usable", key: `train:${round}:arrive:${ev.stop}` };
 }

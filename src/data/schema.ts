@@ -1,4 +1,4 @@
-export type GameId = "runner" | "balloon" | "frog" | "kick" | "tower";
+export type GameId = "runner" | "balloon" | "frog" | "kick" | "tower" | "train";
 export type Level = 1 | 2 | 3;
 
 /** แผนการฝึกที่นักแก้ไขการพูดตั้งต่อเด็กหนึ่งคน — แหล่งเดียวของเกณฑ์ทุกค่าในเกม */
@@ -73,6 +73,17 @@ export interface TowerSummary {
   path: string;
 }
 
+/**
+ * One delivery of the train: legs ridden on a usable word, out of the legs of the round. Coasted legs (skip) are counted
+ * apart and never as speech. `cargo` = what the child picked to deliver (its receiver is in src/data/trainCargo.ts).
+ */
+export interface TrainSummary {
+  legs: number;
+  total: number;
+  coasted: number;
+  cargo: string;
+}
+
 /** สรุปรายคำของด่านเรียกเพื่อน — เก็บเท่าที่จำเป็น: ไม่มีเสียงดิบ มีแต่จำนวนครั้งและค่าเฉลี่ย */
 export interface CallWordSummary {
   id: string;
@@ -102,7 +113,7 @@ export interface CallSummary {
 
 /** What the child picked at the start of a round (friend order, balloon trip, route, door) — shown back on the result screen. */
 export interface RoundChoice {
-  kind: "friends" | "trip" | "route" | "door" | "team" | "path";
+  kind: "friends" | "trip" | "route" | "door" | "team" | "path" | "cargo";
   /** Stable id of the choice (e.g. "crab,dog,fish", "lighthouse", "river", "flower"). */
   id: string;
   /** Short Thai name the child saw, e.g. "ประภาคาร". */
@@ -140,6 +151,8 @@ export interface Session {
   kick?: KickSummary | null;
   /** Present on cloud-tower rounds. */
   tower?: TowerSummary | null;
+  /** Present on delivery-train rounds. */
+  train?: TrainSummary | null;
   /**
    * Detected speech attempts with usable signal in this round (never the example word, never silence/clipping/lost data).
    * Not a count of correct words — there is no speech recognition. The only thing rewards (eggs, garden, clothes) grow
@@ -214,6 +227,7 @@ export const GAME_LABEL: Record<GameId, string> = {
   frog: "กบข้ามบึง",
   kick: "ยิงจุดโทษ",
   tower: "หอคอยเมฆ",
+  train: "รถไฟส่งของ",
 };
 
 export const LEVEL_LABEL: Record<Level, string> = {

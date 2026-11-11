@@ -9,6 +9,7 @@ import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { BALL_R, Goal, SoccerBall, Trophy, type NetDrive } from "../models/Football";
 import { CloudPal } from "../models/CloudPal";
 import { cloudPlatform, rainbowArch, smilingMoon } from "../models/CloudTower";
+import { cargoGeo } from "../models/trainShapes";
 import { bunnyDrive, cloudDrive, type BunnyPose } from "../models/drives";
 import { Frog, type FrogPose } from "../models/Frog";
 import { Friend, type FriendKind, type FriendPose } from "../models/Friends";
@@ -18,7 +19,7 @@ import * as S from "../shapes";
 import type { CelebrateSpec } from "../spec";
 import type { DoorId } from "../../data/doors";
 import type { RouteId } from "../../data/routes";
-import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, RoutePostcard, TowerPostcard } from "./Postcards";
+import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, RoutePostcard, TowerPostcard, TrainPostcard } from "./Postcards";
 import type { EggKind, PetKind } from "../../data/schema";
 
 /** Floating garden island used as a little stage (same clay language as the game worlds). */
@@ -63,6 +64,7 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
   const bunny = useRef(bunnyDrive({ pose: game === "balloon" ? "ride" : "stand", reduced }));
   const cloud = useRef(cloudDrive({ reduced }));
   const frogPose = useRef<FrogPose>({ crouch: false, airborne: false, land: 0, reduced });
+  const receiverPose = useRef<FriendPose>({ listening: false, happy: 0, asking: 0, reduced });
   const frogRoot = useRef<THREE.Group>(null);
   const craft = useRef<THREE.Group>(null);
   const fire = useRef<BurstFire>({ seq: 0, x: 0, y: 1.6, z: 0.2 });
@@ -78,6 +80,7 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
       s.beats += 1;
       bunny.current.cheer += 1;
       cloud.current.wave += 1;
+      receiverPose.current.happy += 1;
       if (game === "frog") frogPose.current.crouch = false;
       fire.current = { seq: fire.current.seq + 1, x: 0, y: game === "balloon" ? 2.4 : 1.4, z: 0.3 };
     }
@@ -135,6 +138,19 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
           </group>
         </>
       ) : null}
+      {game === "train" ? (
+        <>
+          {/* delivered: the receiver of the cargo the child picked, the cargo between them */}
+          <group position={[-0.45, 0, 0.05]} rotation-y={0.35}>
+            <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
+          </group>
+          <BlobShadow at={[-0.45, 0, 0.07]} size={[0.8, 0.65]} />
+          <group position={[0.75, 0.02, -0.1]} rotation-y={-0.5}>
+            <Friend kind={variant === "flowers" ? "bird" : "turtle"} pose={receiverPose} />
+          </group>
+          <mesh geometry={kit.geo(`train-cargo-${variant === "flowers" ? "flowers" : "melon"}`, () => cargoGeo(variant === "flowers" ? "flowers" : "melon", kit.seg))} material={kit.clay(C.white, { vertexColors: true })} position={[0.2, 0, 0.45]} />
+        </>
+      ) : null}
       {game === "kick" ? (
         <>
           <group rotation-y={0.25}>
@@ -173,6 +189,8 @@ export type StudioSubject =
   | "thumb-frog"
   | "thumb-kick"
   | "thumb-tower"
+  | "thumb-train"
+  | `train-${"melon" | "flowers"}-${AvatarSpecies}`
   | `tower-${"rainbow" | "star"}-${AvatarSpecies}`
   | `avatar-${AvatarSpecies}`
   | "item-cap"
@@ -233,6 +251,9 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
   const tower = /^tower-(rainbow|star)-(bunny|puppy|dino|kitty)$/.exec(subject);
   if (tower) return <TowerPostcard path={tower[1] as "rainbow" | "star"} species={tower[2] as AvatarSpecies} mode="pick" />;
   if (subject === "thumb-tower") return <TowerPostcard path="rainbow" species="bunny" mode="thumb" />;
+  const train = /^train-(melon|flowers)-(bunny|puppy|dino|kitty)$/.exec(subject);
+  if (train) return <TrainPostcard cargo={train[1] as "melon" | "flowers"} species={train[2] as AvatarSpecies} />;
+  if (subject === "thumb-train") return <TrainPostcard cargo="melon" species="bunny" />;
   if (subject === "chest-closed" || subject === "chest-open") return <ChestPostcard open={subject === "chest-open"} />;
   const pet = /^pet-(puppy|kitten|chick|dino|dragon|unicorn)$/.exec(subject);
   if (pet) return <PetPostcard kind={pet[1] as PetKind} />;

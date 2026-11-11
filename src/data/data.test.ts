@@ -79,7 +79,7 @@ describe("plan validation", () => {
 
   it("requires at least one word and one game", () => {
     expect(validatePlan({ ...base, words: [] }).ok).toBe(false);
-    expect(validatePlan({ ...base, games: { runner: false, balloon: false, frog: false, kick: false, tower: false } }).ok).toBe(false);
+    expect(validatePlan({ ...base, games: { runner: false, balloon: false, frog: false, kick: false, tower: false, train: false } }).ok).toBe(false);
   });
 
   it("requires a nasal word while the gate is enabled", () => {

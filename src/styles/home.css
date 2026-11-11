@@ -653,12 +653,14 @@ button.trail__node:focus-visible {
 }
 
 .plays[data-count="3"] > li:first-child,
-.plays[data-count="5"] > li:first-child {
+.plays[data-count="5"] > li:first-child,
+.plays[data-count="7"] > li:first-child {
   grid-column: 1 / -1;
 }
 
 .plays[data-count="3"] > li:first-child .play-card,
-.plays[data-count="5"] > li:first-child .play-card {
+.plays[data-count="5"] > li:first-child .play-card,
+.plays[data-count="7"] > li:first-child .play-card {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: none;
   align-items: center;
@@ -667,7 +669,8 @@ button.trail__node:focus-visible {
 }
 
 .plays[data-count="3"] > li:first-child .play-card__verb,
-.plays[data-count="5"] > li:first-child .play-card__verb {
+.plays[data-count="5"] > li:first-child .play-card__verb,
+.plays[data-count="7"] > li:first-child .play-card__verb {
   font-size: clamp(1.3rem, 5.4vw, 1.7rem);
 }
 
@@ -726,6 +729,12 @@ button.trail__node:focus-visible {
 .play-card--kick {
   --card-bg: var(--candy-lime);
   --card-ink: var(--candy-lime-ink);
+}
+
+/* delivery train: warm sand (rails and wooden wagons; no blue or orange — they stay for oral / nasal values) */
+.play-card--train {
+  --card-bg: #f3e3c2;
+  --card-ink: #6b4a1f;
 }
 
 /* cloud tower: a pale cloud-lilac (softer than the door's lilac; no blue — it stays for oral values) */
@@ -1060,7 +1069,7 @@ button.trail__node:focus-visible {
     width: 88px;
     height: 88px;
   }
-  /* three columns (a 6-track grid): 5 games → a wide first card + 4; 4 or 2 → two per row; 3 → one row */
+  /* three columns (a 6-track grid): 7 → a full-width first card + 6; 5 → a wide first card + 4; 4 or 2 → two per row; 3 → one row */
   .home-choose .plays {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -1070,6 +1079,10 @@ button.trail__node:focus-visible {
   }
   .home-choose .plays[data-count="5"] > li:first-child {
     grid-column: span 4;
+  }
+  /* 7 games → the newest one wide across the row, then two rows of three */
+  .home-choose .plays[data-count="7"] > li:first-child {
+    grid-column: 1 / -1;
   }
   .home-choose .plays[data-count="4"] > li,
   .home-choose .plays[data-count="2"] > li {

@@ -5,6 +5,7 @@ import type { GateGame } from "../logic/gate";
 import type { KickMatch } from "../logic/kick";
 import type { RouteRun } from "../logic/route";
 import type { TowerClimb } from "../logic/tower";
+import type { TrainTrip } from "../logic/train";
 import type { SignalFrame } from "../signal/SignalProcessor";
 import type { Tier } from "./gfx";
 
@@ -88,6 +89,16 @@ export interface TowerSpec extends GameWorld<TowerClimb> {
   buddy?: string;
 }
 
+/** The delivery train (รถไฟส่งของ). */
+export interface TrainSpec extends GameWorld<TrainTrip> {
+  kind: "train";
+  /** The cargo the child picked (id in src/data/trainCargo.ts): what rides on the wagon, who receives it, which branch. */
+  cargo: string;
+  /** Unlocked collectibles worn by the driver, e.g. "cap,scarf". */
+  outfit: string;
+  species?: string;
+}
+
 /**
  * เกาะของฉัน: ตัวละครที่เลือก (ชนิด + ชุด) สัตว์ที่พาไปด้วย ไข่ และแปลงผัก — ทุกอย่างมาจากรางวัลที่คำนวณจากรอบที่บันทึก
  * (src/data/rewards.ts) ส่งเป็นค่า primitive: เปลี่ยนเมื่อเด็กเลือก/ฟัก/ปลูก/เก็บ ไม่ใช่ทุกเฟรม
@@ -115,11 +126,11 @@ export interface IslandSpec extends WorldCommon {
 
 export interface CelebrateSpec extends WorldCommon {
   kind: "celebrate";
-  game: "runner" | "balloon" | "frog" | "kick" | "tower";
+  game: "runner" | "balloon" | "frog" | "kick" | "tower" | "train";
   /** The round's own look where a game has two (cloud tower: "rainbow" | "star" path). */
   variant?: string;
   outfit: string;
   species?: string;
 }
 
-export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | TowerSpec | IslandSpec | CelebrateSpec;
+export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | TowerSpec | TrainSpec | IslandSpec | CelebrateSpec;

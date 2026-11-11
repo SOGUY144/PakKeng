@@ -3,12 +3,18 @@ import * as THREE from "three";
 import { doorById, DOORS, type DoorId } from "../../data/doors";
 import { routeById, type RouteId } from "../../data/routes";
 import { floorSpot, TOWER_RISE, type TowerPathId } from "../../data/towerPaths";
+import { BRANCH_END, cargoById, JUNCTION, stopSpot, type CargoId } from "../../data/trainCargo";
+import { TRAIN_LEGS } from "../../logic/train";
 import { ROUTE_LEGS } from "../../logic/route";
 import { seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { Chest } from "../models/Chest";
 import { cloudPillar, cloudPlatform, rainbowArch, rainbowFlag, smilingMoon, starLantern } from "../models/CloudTower";
+import { Friend, type FriendKind, type FriendPose } from "../models/Friends";
+import { Locomotive, Sleepers, Wagon } from "../models/Train";
+import { beachGeo, bigTreeGeo, stationGeo } from "../models/trainShapes";
+import { lineFor, otherBranch, railGeometry, uOf, v3 } from "../models/trainTrack";
 import { Egg } from "../models/Egg";
 import { Pet } from "../models/Pets";
 import { eggDrive, petDrive } from "../models/petDrives";
@@ -342,6 +348,73 @@ export function TowerPostcard({ path, species, mode }: { path: TowerPathId; spec
         <Bunny drive={hero} outfit="cap" species={species} />
       </group>
       <BlobShadow at={[me.x, me.y, 0.12]} size={[0.62, 0.5]} />
+    </group>
+  );
+}
+
+/**
+ * รถไฟส่งของสำหรับหน้าเลือกของ / การ์ดเกม / การ์ดจบรอบ: โมเดลและผังเดียวกับฉากจริง (Train, trainTrack, stopSpot)
+ * ช่วงสุดท้ายของการส่งของ — รถไฟพร้อมสินค้าที่เลือกกำลังผ่านทางแยกไปหาผู้รับที่รออยู่ที่สถานีปลายทาง ตัวละครของเด็กอยู่ในห้องคนขับ
+ */
+export function TrainPostcard({ cargo: cargoId, species }: { cargo: CargoId; species: AvatarSpecies }) {
+  const kit = useKit();
+  const cargo = cargoById(cargoId);
+  const driver = useRef(bunnyDrive({ pose: "wave" }));
+  const happy = useRef<FriendPose>({ listening: true, happy: 0, asking: 0, reduced: true });
+  const idle = useRef<FriendPose>({ listening: false, happy: 0, asking: 0, reduced: true });
+  const clay = kit.clay(C.white, { vertexColors: true });
+  const track = useMemo(() => {
+    const line = lineFor(cargo.id);
+    const other = otherBranch(cargo.id);
+    const u2 = uOf(line, v3(stopSpot(cargo.id, 2)));
+    const u3 = uOf(line, v3(stopSpot(cargo.id, 3)));
+    const main = railGeometry(line, u2, 1);
+    const side = railGeometry(other, uOf(other, v3(JUNCTION)), 1);
+    [main.left, main.right, side.left, side.right].forEach((g) => kit.own(g));
+    // the engine just past the junction, the wagon behind it on the line
+    const at = Math.min(1, u3 + 0.035);
+    const p = line.getPointAt(at);
+    const t = line.getTangentAt(at);
+    const len = line.getLength();
+    const wp = line.getPointAt(Math.max(0, at - 1.2 / len));
+    const wt = line.getTangentAt(Math.max(0, at - 1.2 / len));
+    return { main, side, loco: { p, yaw: Math.atan2(-t.x, -t.z) }, wagon: { p: wp, yaw: Math.atan2(-wt.x, -wt.z) } };
+  }, [kit, cargo.id]);
+  const end = stopSpot(cargo.id, TRAIN_LEGS);
+  const otherEnd = BRANCH_END[cargo.branch === "left" ? "right" : "left"];
+  const spot = (q: { x: number; z: number }): [number, number, number] => [q.x + Math.sign(q.x) * 0.95, 0.08, q.z - 0.35];
+  const rail = kit.clay("#9a8fae", { roughness: 0.5 });
+  const target: [number, number, number] = [(JUNCTION.x + end.x) / 2 + Math.sign(end.x) * 0.3, 0.3, (JUNCTION.z + end.z) / 2 + 0.7];
+  return (
+    <group dispose={null}>
+      <Lights tier="high" sun={[-4, 10, 6]} box={6} intensity={2.5} />
+      <FitCamera target={target} dir={[0.5, 0.82, 1]} width={5.6} height={4.4} fov={30} />
+      <mesh geometry={kit.geo("train-ground", () => new THREE.PlaneGeometry(26, 34))} material={kit.clay(C.grass)} rotation-x={-Math.PI / 2} position={[0, 0, -6]} receiveShadow />
+      <mesh geometry={track.main.left} material={rail} />
+      <mesh geometry={track.main.right} material={rail} />
+      <Sleepers items={track.main.sleepers} />
+      <mesh geometry={track.side.left} material={rail} />
+      <mesh geometry={track.side.right} material={rail} />
+      <Sleepers items={track.side.sleepers} />
+      <mesh geometry={kit.geo("train-station", stationGeo)} material={clay} position={[stopSpot(cargo.id, 3).x + 0.85, 0, stopSpot(cargo.id, 3).z]} />
+      <mesh geometry={kit.geo("train-beach", () => beachGeo(kit.seg))} material={clay} position={[BRANCH_END.left.x - 1.0, 0, BRANCH_END.left.z - 0.6]} />
+      <mesh geometry={kit.geo("train-bigtree", bigTreeGeo)} material={clay} position={[BRANCH_END.right.x + 1.3, 0, BRANCH_END.right.z - 0.9]} scale={2.1} castShadow />
+      <group position={spot(end)} rotation-y={-Math.sign(end.x) * 0.9}>
+        <Friend kind={cargo.receiver as FriendKind} pose={happy} />
+      </group>
+      <group position={spot(otherEnd)} rotation-y={-Math.sign(otherEnd.x) * 0.9} scale={0.85}>
+        <Friend kind={(cargo.receiver === "turtle" ? "bird" : "turtle") as FriendKind} pose={idle} />
+      </group>
+      <group position={[track.loco.p.x, 0.06, track.loco.p.z]} rotation-y={track.loco.yaw}>
+        <Locomotive>
+          <group position={[0, 0.27, 0.45]} scale={0.42} rotation-y={0.35}>
+            <Bunny drive={driver} outfit="cap" species={species} />
+          </group>
+        </Locomotive>
+      </group>
+      <group position={[track.wagon.p.x, 0.06, track.wagon.p.z]} rotation-y={track.wagon.yaw}>
+        <Wagon cargo={cargo.id} />
+      </group>
     </group>
   );
 }

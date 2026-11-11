@@ -48,6 +48,11 @@
   --spark: var(--candy-lilac);
 }
 
+.result__scene--train {
+  --scene-bg: #fbf3e2;
+  --spark: #f3e3c2;
+}
+
 .result__scene > img {
   display: block;
   width: 100%;
@@ -133,6 +138,10 @@
 .result__head--gate,
 .result__head--tower {
   --title: var(--candy-lilac-ink);
+}
+
+.result__head--train {
+  --title: #6b4a1f;
 }
 
 .result__head h1 {
@@ -230,6 +239,11 @@
   --band-ink: var(--candy-lilac-ink);
 }
 
+.result-card--train {
+  --band: #f3e3c2;
+  --band-ink: #6b4a1f;
+}
+
 .result-card--time {
   --band: var(--primary);
   --band-ink: var(--primary-ink);
@@ -285,6 +299,10 @@
 .result-card--gate .result-card__body svg,
 .result-card--tower .result-card__body svg {
   color: var(--candy-lilac-ink);
+}
+
+.result-card--train .result-card__body svg {
+  color: #6b4a1f;
 }
 
 .result-card--time .result-card__body svg {

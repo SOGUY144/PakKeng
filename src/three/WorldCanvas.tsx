@@ -11,6 +11,7 @@ import { IslandWorld } from "./worlds/IslandWorld";
 import { KickWorld } from "./worlds/KickWorld";
 import { RunnerWorld } from "./worlds/RunnerWorld";
 import { TowerWorld } from "./worlds/TowerWorld";
+import { TrainWorld } from "./worlds/TrainWorld";
 
 const MAX_DPR: Record<Tier, number> = { high: 2, medium: 1.5, low: 1 };
 
@@ -61,6 +62,8 @@ function World(spec: WorldSpec) {
       return <KickWorld {...spec} />;
     case "tower":
       return <TowerWorld {...spec} />;
+    case "train":
+      return <TrainWorld {...spec} />;
     case "island":
       return <IslandWorld {...spec} />;
     case "celebrate":

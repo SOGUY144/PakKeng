@@ -10,7 +10,7 @@ export const DEFAULT_PLAN: Omit<Plan, "updatedAt"> = {
   dailyMinutes: 10,
   balloonHoldSec: 3,
   level: 3,
-  games: { runner: true, balloon: true, frog: true, kick: true, tower: true },
+  games: { runner: true, balloon: true, frog: true, kick: true, tower: true, train: true },
   gateEnabled: true,
   callWords: [...DEFAULT_CALL_WORDS],
 };
@@ -122,6 +122,7 @@ export function missionGame(p: Plan): GameId | null {
   if (p.games.frog) return "frog";
   if (p.games.kick) return "kick";
   if (p.games.tower) return "tower";
+  if (p.games.train) return "train";
   return null;
 }
 
@@ -136,6 +137,7 @@ export function promptInstruction(game: GameId, level: Level): string {
   if (game === "frog") return "ฟังคำ แล้วเรียกเพื่อน";
   if (game === "kick") return "พูดคำนี้ แล้วเตะลูกเข้าประตู";
   if (game === "tower") return "พูดคำนี้ แล้วกระโดดขึ้นเมฆหนึ่งชั้น";
+  if (game === "train") return "พูดคำนี้ แล้วรถไฟวิ่งไปหนึ่งช่วง";
   if (game === "balloon") return "พูดลากเสียงค้างไว้ ให้บอลลูนอยู่ในโซน";
   if (level === 1) return "พูดคำนี้ ลากเสียงให้ยาว";
   if (level === 2) return "พูดคำนี้ หนึ่งครั้ง";

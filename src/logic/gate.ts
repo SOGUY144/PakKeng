@@ -47,6 +47,14 @@ export interface GateState {
   listens: number;
 }
 
+/** A frame whose level can be used: not clipped and not below the quiet floor. Unknown levels cannot be judged, so they pass. */
+function frameUsable(frame: SignalFrame): boolean {
+  const q = frame.quality;
+  if (!q.known) return true;
+  if (q.clip) return false;
+  return q.levelDb === null || q.levelDb >= QUALITY_DEFAULTS.quietDb;
+}
+
 /** Share of clipped frames that makes a door attempt unusable for rewards (same as the call games). */
 const GATE_CLIP_SHARE = 0.2;
 
@@ -145,7 +153,10 @@ export class GateGame {
     let inZoneMs = s.inZoneMs;
     let open = s.open;
     let justOpened = false;
-    if (inZone && !open) {
+    // a clipped (shouted) or too-quiet frame never moves the door — the same per-frame rule as the balloon: the door must
+    // never reward shouting or whispering, and values from such frames cannot be trusted (the attempt is still recorded
+    // for the adult, marked not usable)
+    if (inZone && !open && frameUsable(frame)) {
       inZoneMs += dt;
       if (inZoneMs >= this.cfg.openMs) {
         open = true;

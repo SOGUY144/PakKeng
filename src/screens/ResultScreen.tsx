@@ -10,7 +10,8 @@ import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { fmtClock, fmtDayMonth, fmtPct, isSameDay } from "../data/format";
-import { isDoorAlone, roundDid, roundRating, towerHeadline } from "../data/resultCards";
+import { isDoorAlone, roundDid, roundRating, towerHeadline, trainHeadline } from "../data/resultCards";
+import { cargoById } from "../data/trainCargo";
 import { getLastResultId } from "../data/rounds";
 import type { FriendId } from "../data/callWords";
 import { doorById } from "../data/doors";
@@ -38,6 +39,8 @@ function achieved(s: Session): { title: string; sub: string } {
   }
   if (s.gate?.opened) return { title: "เปิดประตูได้แล้ว!", sub: "ด้วยเสียงก้องจมูกตามที่ครูตั้งไว้" };
   if (s.game === "balloon" && s.balloon) {
+    // nothing delivered (ended early or all skipped): no cheer for zero, no blame either
+    if (s.balloon.completed === 0) return { title: "จบรอบแล้ว", sub: "รอบหน้ามาส่งบอลลูนกันใหม่นะ" };
     const where = c?.kind === "trip" ? `ถึง${c.label}` : "ถึงหมุด";
     return { title: `ส่งบอลลูน${where} ${s.balloon.completed} ลูก!`, sub: s.balloon.completed >= s.balloon.target ? "ส่งครบทุกลูกแล้ว" : "พักแล้วค่อยส่งต่อรอบหน้าได้" };
   }
@@ -52,6 +55,10 @@ function achieved(s: Session): { title: string; sub: string } {
   }
   // only floors jumped on a usable word count; reaching the top on the skip lift is said as it happened
   if (s.game === "tower" && s.tower) return towerHeadline(s);
+  if (s.game === "train" && s.train) {
+    const cargo = cargoById(s.train.cargo);
+    return trainHeadline(s, cargo.name, cargo.receiverName);
+  }
   if (isGateRound(s)) return { title: "ลองเปิดประตูแล้ว", sub: "ไว้รอบหน้ามาลองใหม่นะ" };
   return { title: "จบรอบแล้ว", sub: `ลองพูด ${s.attempts} ครั้ง` };
 }
@@ -132,7 +139,7 @@ export function ResultScreen() {
   const did = roundDid(session);
   // colour and icon of the game the card speaks for (a door the child never reached does not recolour a run)
   const tone = did.kind === "other" ? session.game : did.kind;
-  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : did.kind === "tower" ? "flag" : "mic";
+  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : did.kind === "tower" ? "flag" : did.kind === "train" ? "next" : "mic";
   const kept = storagePersisted();
   const sourceLabel = session.source === "device" ? "อุปกรณ์จริง" : session.source === "sample" ? "ข้อมูลตัวอย่าง" : "โหมดสาธิต";
   const met = call ? call.words.filter((w) => w.heard) : [];
@@ -146,9 +153,9 @@ export function ResultScreen() {
             <span key={i} className={`result__spark result__spark--${i}`} />
           ))}
           {mode.kind === "3d" ? (
-            <World3D kind="celebrate" game={session.game} variant={session.tower?.path} outfit={outfitOf(db, child, session.source === "device" ? "device" : "demo")} species={rewardsOf(db, child.id).species} tier={mode.tier} active reduced={reduced} />
+            <World3D kind="celebrate" game={session.game} variant={session.tower?.path ?? session.train?.cargo} outfit={outfitOf(db, child, session.source === "device" ? "device" : "demo")} species={rewardsOf(db, child.id).species} tier={mode.tier} active reduced={reduced} />
           ) : (
-            <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" || session.game === "tower" ? <GameThumb game={session.game} /> : null} />
+            <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" || session.game === "tower" || session.game === "train" ? <GameThumb game={session.game} /> : null} />
           )}
         </div>
 

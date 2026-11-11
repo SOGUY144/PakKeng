@@ -1,0 +1,302 @@
+/* ---------- รถไฟส่งของ (delivery train) ----------
+   Picker: the two cargos as stills of the same line (route-card layout from runner.css), each with its receiver.
+   Round: the shared world layout (kid.css); a warm sky behind the transparent canvas (no blue: it stays for oral values),
+   “ช่วง N จาก 4” in the top bar as plain HTML text, and a 2D fallback that is the same line seen from above. */
+
+.pick.pick--train {
+  --pick-bg: #fbf3e2;
+  --pick-blob: #f3e3c2;
+  --pick-ink: #6b4a1f;
+}
+
+.train-card--melon {
+  --flag: #a8e3c8;
+  --flag-deep: #3f7d38;
+}
+
+.train-card--flowers {
+  --flag: #ff9cbc;
+  --flag-deep: #c8467a;
+}
+
+.train-card .route-card__pic {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(180deg, #fff1e6 0%, #f1f6e3 100%);
+}
+
+.train-card .route-card__pic img {
+  object-position: 50% 45%;
+}
+
+/* the receiver's face next to “ส่งให้…”: who the cargo is for, at a glance */
+.train-card__to {
+  gap: 6px;
+}
+
+.train-card__who {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--surface-muted);
+}
+
+.train-card__who img,
+.train-card__who .friend-pic__fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-height: 740px) and (max-width: 599px) {
+  .train-card .route-card__pic {
+    aspect-ratio: 2 / 1;
+  }
+}
+
+/* ---------- Round ---------- */
+.stage.stage--train {
+  background: linear-gradient(180deg, #ffe6ee 0%, #fff4e6 40%, #f4f7e6 100%);
+}
+
+.train-leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 4px 14px 4px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.train-leg__pips {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.train-leg__pip {
+  display: block;
+  width: 14px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.train-leg__pip.is-current {
+  background: var(--candy-lemon);
+  box-shadow: inset 0 0 0 1.5px var(--candy-lemon-ink);
+}
+
+.train-leg__pip.is-ride {
+  background: #6b4a1f;
+  box-shadow: none;
+}
+
+/* coasted (skipped): a lighter mark with a gap, not the same as a leg ridden by voice */
+.train-leg__pip.is-coast {
+  background: linear-gradient(90deg, var(--line-strong) 0 40%, transparent 40% 60%, var(--line-strong) 60%);
+  box-shadow: none;
+}
+
+.world-dock--train {
+  background: linear-gradient(180deg, #fbf3e2, #fff);
+}
+
+.dock-pic--receiver {
+  --dock-tint: #f3e3c2;
+}
+
+.train-side__stop {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid #b9a6f2;
+  background: #fff;
+  opacity: 0.6;
+}
+
+.train-side__stop.is-ride {
+  border-color: #6b4a1f;
+  background: radial-gradient(circle, #ffd877 0 45%, #fff 50%);
+  opacity: 1;
+}
+
+/* the list reads like the line: the receiver's station at the top */
+.side-list.train-side {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+/* the end card shows the rendered delivery (same models as the scene) */
+.train-done__pic {
+  justify-self: center;
+  display: block;
+  width: min(180px, 60%);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #fff1e6, #f1f6e3);
+}
+
+.train-done__pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- 2D fallback: the same line seen from above ---------- */
+.train2d {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f4f7e6 0%, #e4f1cf 100%);
+}
+
+.train2d__track {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.train2d__rail {
+  fill: none;
+  stroke: #9a8fae;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.train2d__rail--other {
+  stroke-dasharray: 6 5;
+  opacity: 0.5;
+}
+
+.train2d__stop {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  translate: -50% 50%;
+  border-radius: 50%;
+  border: 3px solid #b9a6f2;
+  background: #fff;
+}
+
+.train2d__stop.is-up {
+  border-color: #6b4a1f;
+  background: radial-gradient(circle, #ffd877 0 45%, #fff 50%);
+}
+
+.train2d__switch {
+  position: absolute;
+  width: 6px;
+  height: 26px;
+  translate: -50% 50%;
+  border-radius: 3px;
+  background: var(--ink);
+  transform-origin: 50% 100%;
+  transition: rotate 0.3s ease-out;
+}
+
+.train2d__switch.is-left {
+  rotate: -30deg;
+}
+
+.train2d__switch.is-right {
+  rotate: 30deg;
+}
+
+.train2d__receiver {
+  position: absolute;
+  width: 64px;
+  translate: -50% 0;
+}
+
+.train2d__receiver img,
+.train2d__receiver .friend-pic__fallback {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.train2d__train {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  translate: -50% 50%;
+}
+
+.train2d__loco {
+  width: 34px;
+  height: 22px;
+  border-radius: 8px 8px 4px 4px;
+  background: #f06c8a;
+  box-shadow:
+    inset 0 -5px 0 #c94a6b,
+    0 3px 0 #4a3f5c;
+}
+
+.train2d__cargo {
+  order: 2;
+  width: 30px;
+  height: 18px;
+  margin-top: 3px;
+  border-radius: 4px;
+  background: #c48d5c;
+  box-shadow: 0 3px 0 #4a3f5c;
+}
+
+.train2d__cargo--melon::after,
+.train2d__cargo--flowers::after {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 14px;
+  margin: -9px auto 0;
+  border-radius: 50%;
+  background: #5fa955;
+}
+
+.train2d__cargo--flowers::after {
+  background: radial-gradient(circle at 30% 40%, #ff9cbc 0 30%, transparent 32%), radial-gradient(circle at 70% 40%, #ffd877 0 30%, transparent 32%), #7cc46b;
+}
+
+.train2d__cargo.is-delivered::after {
+  visibility: hidden;
+}
+
+.train2d__driver {
+  position: absolute;
+  top: -22px;
+}
+
+.train2d__train.is-moving .train2d__loco {
+  animation: train2d-chug 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes train2d-chug {
+  to {
+    translate: 0 -2px;
+  }
+}
+
+[data-motion="reduce"] .train2d__train.is-moving .train2d__loco {
+  animation: none;
+}
+
+[data-motion="reduce"] .train2d__switch {
+  transition: none;
+}

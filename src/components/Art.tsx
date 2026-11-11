@@ -205,7 +205,25 @@ export function BaffleDiagram() {
   );
 }
 
-export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" | "tower" }) {
+export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" | "tower" | "train" }) {
+  if (game === "train")
+    return (
+      <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">
+        <rect width="120" height="84" fill="#f4f7e6" />
+        <path d="M18 84C30 60 74 58 84 34 90 20 80 8 70 0" fill="none" stroke="#9a8fae" strokeWidth="7" strokeLinecap="round" />
+        <path d="M18 84C30 60 74 58 84 34 90 20 80 8 70 0" fill="none" stroke="#f3e3c2" strokeWidth="2" strokeDasharray="3 4" />
+        <circle cx="96" cy="16" r="9" fill="#a8e3c8" stroke="#3f7d38" strokeWidth="2" />
+        <g transform="translate(36 46)">
+          <rect x="0" y="6" width="26" height="14" rx="4" fill="#f06c8a" stroke={LINE} strokeWidth="2" />
+          <rect x="18" y="-2" width="10" height="10" rx="2" fill="#b9a6f2" stroke={LINE} strokeWidth="2" />
+          <rect x="4" y="-2" width="5" height="8" fill={LINE} />
+          <circle cx="7" cy="22" r="4" fill={LINE} />
+          <circle cx="21" cy="22" r="4" fill={LINE} />
+          <rect x="30" y="8" width="20" height="12" rx="3" fill="#c48d5c" stroke={LINE} strokeWidth="2" />
+          <circle cx="40" cy="6" r="6" fill="#5fa955" stroke={LINE} strokeWidth="1.5" />
+        </g>
+      </svg>
+    );
   if (game === "tower")
     return (
       <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">

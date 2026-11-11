@@ -2,7 +2,7 @@ import type { Attempt } from "../logic/common";
 import { totals } from "../logic/common";
 import { callGroupNasal } from "./callWords";
 import { addSession } from "./store";
-import type { BalloonSummary, CallSummary, Child, FrogSummary, GameId, GateSummary, KickSummary, RoundChoice, Session, SignalKind, TowerSummary } from "./schema";
+import type { BalloonSummary, CallSummary, Child, FrogSummary, GameId, GateSummary, KickSummary, RoundChoice, Session, SignalKind, TowerSummary, TrainSummary } from "./schema";
 
 /**
  * Hand-off between screens of one round (เลือกทางวิ่ง → ด่านประตู → สรุป).
@@ -69,6 +69,7 @@ interface FinishArgs {
   call?: CallSummary | null;
   kick?: KickSummary | null;
   tower?: TowerSummary | null;
+  train?: TrainSummary | null;
   choice?: RoundChoice | null;
   endedEarly?: boolean;
   /** Signal source of the round (labelled demo vs real device): saved as the round's source; rewards keep them apart. */
@@ -115,6 +116,7 @@ export function finishRound(a: FinishArgs): Session {
     call,
     kick: a.kick ?? null,
     tower: a.tower ?? null,
+    train: a.train ?? null,
     usableAttempts: usableAttemptsOf(call, t.attempts, a.gate ?? null),
     choice: a.choice ?? null,
     stars: a.stars,

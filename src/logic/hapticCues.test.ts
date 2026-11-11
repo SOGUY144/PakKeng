@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { Haptics, type HapticsEnv } from "../lib/haptics";
 import type { CallEvent } from "./call";
-import { balloonCue, callCue, gateCue, kickCue, routeCue, towerCue } from "./hapticCues";
+import { balloonCue, callCue, gateCue, kickCue, routeCue, towerCue, trainCue } from "./hapticCues";
 import type { KickEvent } from "./kick";
 import type { RouteEvent } from "./route";
 import type { TowerEvent } from "./tower";
+import type { TrainEvent } from "./train";
 
 const R = "r1";
 
@@ -24,6 +25,7 @@ describe("haptic cues: only finished, usable events buzz", () => {
       expect(kickCue(ev, R)).toBeNull();
       expect(routeCue(ev, R, 6, true)).toBeNull();
       expect(towerCue(ev, R)).toBeNull();
+      expect(trainCue(ev, R)).toBeNull();
     }
     expect(balloonCue({ type: "skip", index: 0 }, R)).toBeNull();
     expect(balloonCue({ type: "done" }, R)).toBeNull();
@@ -61,6 +63,15 @@ describe("haptic cues: only finished, usable events buzz", () => {
     expect(top.map((e) => towerCue(e, R)).filter(Boolean)).toEqual([{ kind: "reward", key: "tower:r1:top" }]);
     const lift: TowerEvent[] = [{ type: "lift", floor: 3 }, { type: "arrive", floor: 3, top: false }, { type: "arrive", floor: 5, top: true }, { type: "finish" }];
     expect(lift.map((e) => towerCue(e, R)).filter(Boolean)).toEqual([]);
+  });
+
+  it("train: one buzz per voiced leg, when it pulls in; the delivery is the reward alone; coasting and departing stay quiet", () => {
+    const leg: TrainEvent[] = [{ type: "heard", index: 0, first: true, meanNasal: 20, durationMs: 400 }, { type: "go", stop: 1 }, { type: "arrive", stop: 1, last: false }, { type: "ready", stop: 2 }];
+    expect(leg.map((e) => trainCue(e, R)).filter(Boolean)).toEqual([{ kind: "usable", key: "train:r1:arrive:1" }]);
+    const last: TrainEvent[] = [{ type: "go", stop: 4 }, { type: "arrive", stop: 4, last: true }, { type: "finish" }];
+    expect(last.map((e) => trainCue(e, R)).filter(Boolean)).toEqual([{ kind: "reward", key: "train:r1:deliver" }]);
+    const coast: TrainEvent[] = [{ type: "coast", stop: 2 }, { type: "rolled", stop: 2, last: false }, { type: "rolled", stop: 4, last: true }, { type: "finish" }];
+    expect(coast.map((e) => trainCue(e, R)).filter(Boolean)).toEqual([]);
   });
 
   it("the same event seen twice (re-render, repeated handler) buzzes once; a new round's event buzzes again", () => {

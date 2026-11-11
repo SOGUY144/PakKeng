@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MOCK_DEFAULTS, mockReading, type VoiceLevel } from "../signal/MockSignalSource";
 import { SignalProcessor } from "../signal/SignalProcessor";
 import type { ConnectionState } from "../signal/types";
 import { GATE_SETTLE_MS, GateGame, type GateEvent } from "./gate";
@@ -34,6 +35,50 @@ function run(game: GateGame, phases: Phase[], start = 0) {
 const say = (ms: number, nasal = 60): Phase => ({ ms, nasal, speech: true });
 const hush = (ms = 400): Phase => ({ ms, nasal: 60, speech: false });
 const make = () => new GateGame({ nasalThreshold: 40, openMs: 1500 });
+
+/** The demo device at a voice level (normal / quiet / loud = clipped): its readings carry levels, so quality is known. */
+function talk(game: GateGame, level: VoiceLevel, nasal: number, ms: number, start = 0) {
+  const proc = new SignalProcessor();
+  const dt = 1000 / 60;
+  let t = start;
+  const events: GateEvent[] = [];
+  for (const p of [
+    { ms: 300, speech: false },
+    { ms, speech: true },
+    { ms: 400, speech: false },
+  ]) {
+    const end = t + p.ms;
+    while (t < end - 1e-9) {
+      t += dt;
+      const r = mockReading({ ...MOCK_DEFAULTS, level }, 100 - nasal, p.speech);
+      events.push(...game.update(proc.step({ ...r, t }, "connected", t), t, dt));
+    }
+  }
+  return { events, t };
+}
+
+describe("GateGame: the door never rewards shouting or whispering", () => {
+  it("a clipped (too loud) word never moves or opens the door; the same word in a normal voice does", () => {
+    const loud = make();
+    const a = talk(loud, "loud", 65, 2000);
+    expect(loud.state.progress).toBe(0);
+    expect(loud.state.open).toBe(false);
+    expect(a.events.some((e) => e.type === "open")).toBe(false);
+    expect(loud.state.attempts.map((x) => x.usable)).toEqual([false]);
+    const normal = make();
+    const b = talk(normal, "normal", 65, 2000);
+    expect(normal.state.open).toBe(true);
+    expect(b.events.some((e) => e.type === "open")).toBe(true);
+  });
+
+  it("a too-quiet word never moves the door either (its values cannot be trusted)", () => {
+    const quiet = make();
+    talk(quiet, "quiet", 65, 2000);
+    expect(quiet.state.progress).toBe(0);
+    expect(quiet.state.open).toBe(false);
+    expect(quiet.state.attempts.map((x) => x.usable)).toEqual([false]);
+  });
+});
 
 describe("GateGame: the example word never counts as the child", () => {
   it("speech picked up while the example plays, and its echo, is ignored; listening restarts after silence", () => {

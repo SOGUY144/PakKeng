@@ -110,7 +110,7 @@ export function practiceDaysThisWeek(sessions: Session[], now: Date, childId?: s
 }
 
 /** Games added after the first release: the activity cards mark them "ใหม่" until the child has played one round. */
-export const NEW_PLAYS: PathPlay[] = ["tower", "kick"];
+export const NEW_PLAYS: PathPlay[] = ["train", "tower", "kick"];
 
 /** The new games this child has not played yet (the seeded sample history does not count as playing). */
 export function freshPlays(sessions: Session[], childId?: string): PathPlay[] {
