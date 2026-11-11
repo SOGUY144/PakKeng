@@ -425,3 +425,40 @@
   outline-offset: 4px;
   border-radius: 6px;
 }
+
+/* choice tiles: stills of the same models as the island scene (character, clothes on the character, pets, eggs, plants);
+   the flat drawing stays as the fallback when a still cannot load */
+.island-pic {
+  display: block;
+  object-fit: contain;
+}
+
+.island-pic--64 {
+  width: 64px;
+  height: 64px;
+}
+
+.island-pic--72 {
+  width: 72px;
+  height: 72px;
+}
+
+.island-pic--wear {
+  width: 60px;
+  height: 60px;
+}
+
+.island-pic--92 {
+  width: 92px;
+  height: 92px;
+}
+
+.island-pic--96 {
+  width: 96px;
+  height: 96px;
+}
+
+.island-tile.is-locked .island-pic {
+  filter: grayscale(0.9);
+  opacity: 0.55;
+}

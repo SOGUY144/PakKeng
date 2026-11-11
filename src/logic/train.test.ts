@@ -338,6 +338,57 @@ describe("Delivery train (รถไฟส่งของ): one usable word = one
     void b;
   });
 
+  it("the leg a still (reduced-motion) view is framed on changes only while the train stands at a stop — never mid-ride", () => {
+    const g = trip();
+    expect(trainView(g).leg).toBe(0);
+    let t = run(g, [hush(), say(), hush(300)]).t;
+    expect(g.phase).toBe("ride");
+    const seen: { phase: string; leg: number }[] = [];
+    // frame by frame through the ride and the arrival, until the next leg listens
+    for (let i = 0; i < 400 && g.phase !== "aim"; i++) {
+      t = run(g, [hush(FRAME)], t).t;
+      seen.push({ phase: g.phase, leg: trainView(g).leg });
+    }
+    const moving = seen.filter((x) => x.phase === "ride" || x.phase === "arrive");
+    expect(moving.length).toBeGreaterThan(60);
+    expect(new Set(moving.map((x) => x.leg))).toEqual(new Set([0]));
+    expect(g.phase).toBe("aim");
+    expect(trainView(g).leg).toBe(1);
+    // a skip coasts on the same leg too, then the next one is framed
+    g.skip();
+    const coast: number[] = [];
+    for (let i = 0; i < 400 && g.phase === "coast"; i++) {
+      t = run(g, [hush(FRAME)], t).t;
+      if (g.phase === "coast") coast.push(trainView(g).leg);
+    }
+    expect(new Set(coast)).toEqual(new Set([1]));
+    expect(trainView(g).leg).toBe(2);
+    // delivered: the last leg stays framed
+    g.skip();
+    run(g, [coastRest()], t);
+    g.skip();
+    run(g, [coastRest()], t + COAST_MS + 200);
+    expect(g.done).toBe(true);
+    expect(trainView(g).leg).toBe(TRAIN_LEGS - 1);
+  });
+
+  it("the still view's leg: 'ไปต่อ' while pulling in cuts to the next leg at once; ending mid-ride keeps the leg being ridden", () => {
+    const g = trip();
+    let t = run(g, [hush(), say(), hush(300)]).t;
+    for (let i = 0; i < 400 && g.phase !== "arrive"; i++) t = run(g, [hush(FRAME)], t).t;
+    expect(g.phase).toBe("arrive");
+    expect(trainView(g).leg).toBe(0);
+    g.skipArrive();
+    expect(g.phase).toBe("aim");
+    expect(trainView(g).leg).toBe(1);
+    t = run(g, [hush(), say(), hush(300)], t).t;
+    expect(g.phase).toBe("ride");
+    expect(trainView(g).leg).toBe(1);
+    g.finish();
+    expect(g.done).toBe(true);
+    expect(trainView(g).leg).toBe(1);
+  });
+
   it("both views (3D scene and 2D track) read one view of the same game: switching never changes it", () => {
     const g = trip();
     run(g, [hush(), say(), hush(100), hush(RIDE_MS / 2)]);

@@ -10,12 +10,11 @@ import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { fmtClock, fmtDayMonth, fmtPct, isSameDay } from "../data/format";
-import { isDoorAlone, roundDid, roundRating, towerHeadline, trainHeadline } from "../data/resultCards";
+import { isDoorAlone, roundDid, roundRating, routeHeadline, towerHeadline, trainHeadline } from "../data/resultCards";
 import { cargoById } from "../data/trainCargo";
 import { getLastResultId } from "../data/rounds";
 import type { FriendId } from "../data/callWords";
 import { doorById } from "../data/doors";
-import { routeById } from "../data/routes";
 import { GAME_LABEL, LEVEL_LABEL, type Session } from "../data/schema";
 import { findChild, storagePersisted, useDB } from "../data/store";
 import { navigate, type Route } from "../lib/router";
@@ -44,10 +43,8 @@ function achieved(s: Session): { title: string; sub: string } {
     const where = c?.kind === "trip" ? `ถึง${c.label}` : "ถึงหมุด";
     return { title: `ส่งบอลลูน${where} ${s.balloon.completed} ลูก!`, sub: s.balloon.completed >= s.balloon.target ? "ส่งครบทุกลูกแล้ว" : "พักแล้วค่อยส่งต่อรอบหน้าได้" };
   }
-  if (s.game === "runner" && c?.kind === "route") {
-    const r = routeById(c.id);
-    return s.endedEarly ? { title: `วิ่ง${r.name}ไปได้ ${s.stars} ช่วง`, sub: `รอบหน้าไปให้ถึง${r.destination}กันนะ` } : { title: `ถึง${r.destination}แล้ว!`, sub: `วิ่ง${r.name}ครบทุกช่วง` };
-  }
+  // counts only legs run by voice: a run whose legs were skipped is never called a complete run
+  if (s.game === "runner" && c?.kind === "route") return routeHeadline(s);
   if (s.game === "kick" && s.kick) {
     return s.kick.goals > 0
       ? { title: `ยิงเข้า ${s.kick.goals} ลูก!`, sub: c?.kind === "team" ? `เตะกับ${c.label}` : "ได้ถ้วยแล้ว" }

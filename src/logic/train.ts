@@ -44,6 +44,12 @@ export interface TrainView {
   moving: "ride" | "coast" | null;
   /** Progress of pulling in after a ride (0 … 1); 0 otherwise. */
   arriveK: number;
+  /**
+   * The leg the child is on (0-based): the one about to be ridden, being ridden, or just finished while pulling in; the
+   * last one once delivered. It changes only while the train stands at a stop — a still view framed on it never moves
+   * during a ride.
+   */
+  leg: number;
   steam: number;
   speaking: boolean;
   voiced: number;
@@ -61,6 +67,7 @@ export function trainView(g: TrainTrip): TrainView {
     k: moving ? g.moveK : 0,
     moving,
     arriveK: g.phase === "arrive" ? g.arriveK : 0,
+    leg: g.done ? Math.max(0, Math.min(g.legs - 1, g.at - 1)) : g.phase === "arrive" ? g.at - 1 : Math.min(g.legs - 1, g.at),
     steam: g.steam,
     speaking: g.speaking,
     voiced: g.voiced,

@@ -1,6 +1,6 @@
 import type { SignalFrame } from "../signal/SignalProcessor";
 import { CallGame, type CallEvent, type CallItem } from "./call";
-import type { Attempt } from "./common";
+import { clampDt, levelUsable, type Attempt } from "./common";
 
 /** Legs in one round of the route (one word each, plan order). */
 export const ROUTE_LEGS = 6;
@@ -40,8 +40,11 @@ export class RouteRun {
   private readonly oralThreshold: number;
   /** Stops reached (0 = start, legs = destination). */
   reached = 0;
-  /** Finishing run from `from` to stop `to` (started at `start`, lasts `ms`); the game does not listen meanwhile. */
-  leg: { from: number; to: number; start: number; ms: number } | null = null;
+  /**
+   * Finishing run from `from` to stop `to` (lasts `ms`); the game does not listen meanwhile. `elapsed` is logical time:
+   * the sum of the clamped frame dt while the game runs, so a pause or a hidden tab mid-run never jumps the bunny ahead.
+   */
+  leg: { from: number; to: number; elapsed: number; ms: number } | null = null;
   /** Part of the current leg already run on the child's voice (0 … DASH_MAX); kept when an attempt is not usable. */
   dash = 0;
   /** Running on the child's voice right now (the game is listening while this happens). */
@@ -74,10 +77,11 @@ export class RouteRun {
 
   update(frame: SignalFrame, now: number, dtMs: number): RouteEvent[] {
     const out: RouteEvent[] = [];
-    const dt = Math.min(Math.max(dtMs, 0), 100) / 1000;
+    const dt = clampDt(dtMs) / 1000;
     if (this.leg) {
       const L = this.leg;
-      const k = Math.min(1, (now - L.start) / L.ms);
+      L.elapsed += dt * 1000;
+      const k = Math.min(1, L.elapsed / L.ms);
       // eased only at the end: when the voice already got the bunny going, the run does not start from a standstill
       const e = L.from > this.reached ? 1 - (1 - k) ** 2 : k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
       this.pos = L.from + (L.to - L.from) * e;
@@ -93,18 +97,20 @@ export class RouteRun {
       out.push(ev);
       if (ev.type !== "heard") continue;
       this.attempts.push({ meanNasal: ev.meanNasal, passed: 100 - ev.meanNasal >= this.oralThreshold, durationMs: ev.durationMs });
-      if (ev.first) this.leave(now, out);
+      if (ev.first) this.leave(out);
     }
     if (this.leg) return out;
 
-    // the child is speaking (usable signal, not the example word): run at once; quiet turns let the cloud creep closer
+    // the child is speaking in a voice the game can use (not the example word, not clipped, not too quiet): run at once.
+    // Quiet turns let the cloud creep closer; a voice the game cannot use holds the bunny and the cloud where they are.
     const c = this.call.state;
     const listening = c.phase === "turn";
-    this.dashing = listening && c.inAttempt && frame.valid;
+    const speaking = listening && c.inAttempt && frame.valid;
+    this.dashing = speaking && levelUsable(frame);
     if (this.dashing) {
       this.dash += (DASH_MAX - this.dash) * (1 - Math.exp(-DASH_RATE * dt));
       this.gap = Math.min(1, this.gap + GAP_OPEN_PER_S * dt);
-    } else if (listening) {
+    } else if (listening && !speaking) {
       this.gap = Math.max(GAP_MIN, this.gap - GAP_CLOSE_PER_S * dt);
     }
     this.pos = this.reached + this.dash;
@@ -112,11 +118,11 @@ export class RouteRun {
   }
 
   /** "ข้าม": run on to the next stop without the word — nothing is taken away. */
-  skip(now: number): RouteEvent[] {
+  skip(): RouteEvent[] {
     if (this.leg || this.done) return [];
     const out: RouteEvent[] = [];
     if (!this.call.heardNow) this.call.skip();
-    this.leave(now, out);
+    this.leave(out);
     return out;
   }
 
@@ -133,10 +139,10 @@ export class RouteRun {
     this.dashing = false;
   }
 
-  private leave(now: number, out: RouteEvent[]): void {
+  private leave(out: RouteEvent[]): void {
     const to = this.reached + 1;
     const from = this.reached + this.dash;
-    this.leg = { from, to, start: now, ms: Math.max(LEG_MIN_MS, LEG_MS * (to - from)) };
+    this.leg = { from, to, elapsed: 0, ms: Math.max(LEG_MIN_MS, LEG_MS * (to - from)) };
     this.dashing = false;
     out.push({ type: "leave", to });
   }

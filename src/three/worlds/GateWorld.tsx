@@ -406,7 +406,8 @@ function Beach({ door, reduced }: { door: Door; reduced: boolean }) {
   );
 }
 
-function Beyond({ door, reduced }: { door: Door | undefined; reduced: boolean }) {
+/** What waits behind the door, in the gate's own frame (also drawn behind the open door's still in Postcards). */
+export function Beyond({ door, reduced }: { door: Door | undefined; reduced: boolean }) {
   if (door?.id === "star") return <Night place={door.behind} reduced={reduced} />;
   if (door?.id === "shell") return <Beach door={door} reduced={reduced} />;
   return <Garden place={door?.behind ?? CLASSIC_PLACE} reduced={reduced} />;

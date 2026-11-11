@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fmtClock } from "./format";
-import { isDoorAlone, roundDid, roundRating } from "./resultCards";
+import { isDoorAlone, kickDoneLine, roundDid, roundRating, routeDoneLine, routeHeadline, runNoteLine } from "./resultCards";
 import type { Session } from "./schema";
 
 /** Smallest session the result cards read; each test overrides what its game records. */
@@ -175,5 +175,37 @@ describe("fmtClock — compact practice time for a small card", () => {
   it("a missing or broken duration shows 0:00, never NaN", () => {
     expect(fmtClock(Number.NaN)).toBe("0:00");
     expect(fmtClock(Number.POSITIVE_INFINITY)).toBe("0:00");
+  });
+});
+
+describe("result copy never claims play that was skipped", () => {
+  const route = (stars: number, endedEarly = false) =>
+    session({ game: "runner", attempts: stars, passed: stars, stars, endedEarly, choice: { kind: "route", id: "flower", label: "ทางดอกไม้" } });
+  it("a run with every leg skipped reached the destination but is not called a complete run", () => {
+    const h = routeHeadline(route(0));
+    expect(h.title).toBe("ถึงชิงช้าสวรรค์แล้ว");
+    expect(`${h.title} ${h.sub}`).not.toMatch(/ครบ/);
+    expect(routeDoneLine(0, 6, "ทางดอกไม้")).not.toMatch(/ครบ|วิ่งทาง/);
+  });
+  it("counts the legs run by voice: all, some, or a run ended early", () => {
+    expect(routeHeadline(route(6))).toEqual({ title: "ถึงชิงช้าสวรรค์แล้ว!", sub: "วิ่งทางดอกไม้ด้วยเสียงครบ 6 ช่วง" });
+    expect(routeHeadline(route(2))).toEqual({ title: "ถึงชิงช้าสวรรค์แล้ว!", sub: "วิ่งด้วยเสียง 2 จาก 6 ช่วง · ทางดอกไม้" });
+    expect(routeHeadline(route(2, true)).title).toBe("วิ่งทางดอกไม้ด้วยเสียง 2 ช่วง");
+    expect(routeHeadline(route(0, true)).title).toBe("จบรอบแล้ว");
+    expect(routeDoneLine(6, 6, "ทางดอกไม้")).toBe("วิ่งทางดอกไม้ด้วยเสียงครบ 6 ช่วง");
+    expect(routeDoneLine(3, 6, "ทางดอกไม้")).toBe("วิ่งด้วยเสียง 3 จาก 6 ช่วง");
+  });
+  it("the door round's note about the run counts legs run by voice (a skipped run is never 'ran it all')", () => {
+    expect(runNoteLine(0, 6, true)).toBe("ข้ามมาถึงปลายทาง");
+    expect(runNoteLine(6, 6, true)).toBe("วิ่งด้วยเสียงครบ 6 ช่วง");
+    expect(runNoteLine(2, 6, true)).toBe("วิ่งด้วยเสียง 2 จาก 6 ช่วง");
+    expect(runNoteLine(2, 6, false)).toBe("วิ่งด้วยเสียง 2 ช่วง");
+    expect(runNoteLine(0, 6, false)).toBe("ยังไม่ได้วิ่งด้วยเสียง");
+    for (const v of [0, 1, 5]) expect(runNoteLine(v, 6, true)).not.toMatch(/ครบ/);
+  });
+
+  it("football: skipped balls are not called kicks", () => {
+    expect(kickDoneLine(0, 5, "ทีมเต่า")).toBe("รอบหน้ามายิงประตูกันใหม่นะ");
+    expect(kickDoneLine(3, 5, "ทีมเต่า")).toBe("ยิงเข้า 3 จาก 5 ลูก · เตะกับทีมเต่า");
   });
 });

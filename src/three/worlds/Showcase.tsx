@@ -19,8 +19,9 @@ import * as S from "../shapes";
 import type { CelebrateSpec } from "../spec";
 import type { DoorId } from "../../data/doors";
 import type { RouteId } from "../../data/routes";
-import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, RoutePostcard, TowerPostcard, TrainPostcard } from "./Postcards";
-import type { EggKind, PetKind } from "../../data/schema";
+import { ChestPostcard, DoorPostcard, EggPostcard, GateRowPostcard, PetPostcard, PlantPostcard, RoutePostcard, TowerPostcard, TrainPostcard, TripPostcard, TrophyPostcard, WearPostcard } from "./Postcards";
+import type { EggKind, PetKind, PlantKind, WearId } from "../../data/schema";
+import type { TripId } from "../../data/trips";
 
 /** Floating garden island used as a little stage (same clay language as the game worlds). */
 function Pedestal({ radius = 1.3, pond = false }: { radius?: number; pond?: boolean }) {
@@ -190,6 +191,12 @@ export type StudioSubject =
   | "thumb-kick"
   | "thumb-tower"
   | "thumb-train"
+  | `trip-${TripId}-${AvatarSpecies}`
+  | `door-${DoorId}-open`
+  | "trophy"
+  | `wear-${WearId}-${AvatarSpecies}`
+  | `plant-${PlantKind}-${0 | 1 | 2 | 3}`
+  | "plant-empty"
   | `train-${"melon" | "flowers"}-${AvatarSpecies}`
   | `tower-${"rainbow" | "star"}-${AvatarSpecies}`
   | `avatar-${AvatarSpecies}`
@@ -245,8 +252,16 @@ export function StudioScene({ subject }: { subject: StudioSubject }) {
   // picker and Home stills (Postcards.tsx): route worlds, the three doors, the gate card, the day's chest
   const route = /^route-(flower|mushroom)-(bunny|puppy|dino|kitty)$/.exec(subject);
   if (route) return <RoutePostcard routeId={route[1] as RouteId} species={route[2] as AvatarSpecies} />;
-  const door = /^door-(flower|star|shell)$/.exec(subject);
-  if (door) return <DoorPostcard doorId={door[1] as DoorId} />;
+  const door = /^door-(flower|star|shell)(-open)?$/.exec(subject);
+  if (door) return <DoorPostcard doorId={door[1] as DoorId} open={door[2] === "-open"} />;
+  const trip = /^trip-(treehouse|lighthouse|cloud-castle)-(bunny|puppy|dino|kitty)$/.exec(subject);
+  if (trip) return <TripPostcard trip={trip[1] as TripId} species={trip[2] as AvatarSpecies} />;
+  if (subject === "trophy") return <TrophyPostcard />;
+  const wear = /^wear-(cap|shoes|scarf|crown|jersey|cape|hoodie|dress)-(bunny|puppy|dino|kitty)$/.exec(subject);
+  if (wear) return <WearPostcard id={wear[1] as WearId} species={wear[2] as AvatarSpecies} />;
+  const plant = /^plant-(carrot|sunflower|strawberry|starfruit)-([0-3])$/.exec(subject);
+  if (plant) return <PlantPostcard kind={plant[1] as PlantKind} stage={Number(plant[2])} />;
+  if (subject === "plant-empty") return <PlantPostcard kind={null} stage={0} />;
   if (subject === "thumb-gate") return <GateRowPostcard />;
   const tower = /^tower-(rainbow|star)-(bunny|puppy|dino|kitty)$/.exec(subject);
   if (tower) return <TowerPostcard path={tower[1] as "rainbow" | "star"} species={tower[2] as AvatarSpecies} mode="pick" />;

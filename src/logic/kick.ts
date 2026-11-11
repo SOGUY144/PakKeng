@@ -1,6 +1,6 @@
 import type { SignalFrame } from "../signal/SignalProcessor";
 import { CallGame, type CallEvent, type CallItem } from "./call";
-import { clampDt, type Attempt } from "./common";
+import { clampDt, levelUsable, type Attempt } from "./common";
 
 /** Balls in one round (one word each, plan order). */
 export const KICK_SHOTS = 5;
@@ -61,7 +61,11 @@ export class KickMatch {
   goalSeq = 0;
   /** Usable attempts, judged on the expert's oral criterion for the caregiver's history. */
   attempts: Attempt[] = [];
-  private t0 = 0;
+  /**
+   * Logical time in the current flight / celebration: the sum of the clamped frame dt while the game runs (never the
+   * wall clock), so a pause or a hidden tab mid-flight never lands the ball the moment play resumes.
+   */
+  private elapsed = 0;
   /** Length of the goal celebration (shorter with reduced motion; the child can also skip it). */
   private readonly cheerMs: number;
 
@@ -96,12 +100,14 @@ export class KickMatch {
     const out: KickEvent[] = [];
     if (this.phase === "done") return out;
     if (this.phase === "flight") {
-      this.flightK = Math.min(1, (now - this.t0) / FLIGHT_MS);
-      if (this.flightK >= 1) this.score(now, out);
+      this.elapsed += clampDt(dtMs);
+      this.flightK = Math.min(1, this.elapsed / FLIGHT_MS);
+      if (this.flightK >= 1) this.score(out);
       return out;
     }
     if (this.phase === "cheer") {
-      this.cheerK = Math.min(1, (now - this.t0) / this.cheerMs);
+      this.elapsed += clampDt(dtMs);
+      this.cheerK = Math.min(1, this.elapsed / this.cheerMs);
       if (this.cheerK >= 1) this.nextBall(out);
       return out;
     }
@@ -110,13 +116,13 @@ export class KickMatch {
       out.push(ev);
       if (ev.type !== "heard") continue;
       this.attempts.push({ meanNasal: ev.meanNasal, passed: 100 - ev.meanNasal >= this.oralThreshold, durationMs: ev.durationMs });
-      if (ev.first) this.kick(now, out);
+      if (ev.first) this.kick(out);
     }
     if (this.phase !== "aim") return out;
 
-    // the child is speaking (usable signal, not the example word): run up at once
+    // the child is speaking in a voice the game can use (not the example word, not clipped, not too quiet): run up at once
     const c = this.call.state;
-    this.charging = c.phase === "turn" && c.inAttempt && frame.valid;
+    this.charging = c.phase === "turn" && c.inAttempt && frame.valid && levelUsable(frame);
     if (this.charging) this.runup += (RUNUP_MAX - this.runup) * (1 - Math.exp(-RUNUP_RATE * (clampDt(dtMs) / 1000)));
     return out;
   }
@@ -157,23 +163,23 @@ export class KickMatch {
     this.charging = false;
   }
 
-  private kick(now: number, out: KickEvent[]): void {
+  private kick(out: KickEvent[]): void {
     this.phase = "flight";
     this.runup = 1;
     this.charging = false;
     this.flightK = 0;
-    this.t0 = now;
+    this.elapsed = 0;
     this.kickSeq += 1;
     out.push({ type: "kick", shot: this.shot });
   }
 
-  private score(now: number, out: KickEvent[]): void {
+  private score(out: KickEvent[]): void {
     this.goals += 1;
     this.goalSeq += 1;
     this.results = this.results.map((r, i) => (i === this.shot ? "goal" : r));
     this.phase = "cheer";
     this.cheerK = 0;
-    this.t0 = now;
+    this.elapsed = 0;
     out.push({ type: "goal", shot: this.shot });
   }
 

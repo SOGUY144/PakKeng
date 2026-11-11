@@ -3,10 +3,12 @@ import { Bunny, StarShape } from "../components/Art";
 import { FriendPicture } from "../components/CallParts";
 import { PauseOverlay } from "../components/GameParts";
 import { Icon, type IconName } from "../components/Icon";
+import { RenderImg } from "../components/RenderImg";
 import { StageNote } from "../components/StageNote";
 import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
 import { promptFor } from "../data/plan";
 import { ledgerOf, outfitOf, rewardsOf } from "../data/rewards";
+import { kickDoneLine } from "../data/resultCards";
 import { finishRound } from "../data/rounds";
 import { useActiveChild, useDB } from "../data/store";
 import { TEAMS, teamById, type Team, type TeamId } from "../data/teams";
@@ -462,11 +464,13 @@ function KickDone({ team, goals, shots, onResult, onAgain }: { team: Team; goals
   return (
     <div className="overlay overlay--soft" role="dialog" aria-modal="true" aria-labelledby="kick-done-title">
       <div className="overlay__card overlay__card--done">
-        <TrophyArt size={104} />
+        {goals > 0 ? (
+          <span className="kick-done__pic">
+            <RenderImg name="trophy" fallback={<TrophyArt size={104} />} />
+          </span>
+        ) : null}
         <h2 id="kick-done-title">{goals > 0 ? `ยิงเข้า ${goals} ลูก!` : "จบรอบแล้ว"}</h2>
-        <p className="overlay__text">
-          เตะกับ{team.name}ครบ {shots} ลูก
-        </p>
+        <p className="overlay__text">{kickDoneLine(goals, shots, team.name)}</p>
         <button ref={ref} type="button" className="btn btn--primary btn--lg btn--block" onClick={onResult}>
           ดูสรุปรอบ <Icon name="next" size={20} />
         </button>

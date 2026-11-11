@@ -10,6 +10,8 @@ import { outfitOf, rewardsOf, speciesName } from "../data/rewards";
 import { promptFor } from "../data/plan";
 import { finishRound, setPendingRunner } from "../data/rounds";
 import { ROUTES, routeById, routePoints, type Route, type RouteId } from "../data/routes";
+import type { AvatarSpecies } from "../data/schema";
+import { routeDoneLine } from "../data/resultCards";
 import { useActiveChild, useDB } from "../data/store";
 import { useReducedMotion } from "../lib/hooks";
 import { navigate } from "../lib/router";
@@ -215,7 +217,7 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
 
   const skip = () => {
     settleAudio();
-    rt.gameRef.current?.skip(performance.now());
+    rt.gameRef.current?.skip();
   };
 
   const choice = { kind: "route" as const, id: route.id, label: `${route.name} ไป${route.destination}` };
@@ -405,6 +407,8 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
       ) : null}
       {rt.ended && rt.paused === null ? (
         <RouteDone
+          species={look.species}
+          voiced={game.stars}
           route={route}
           gate={plan.gateEnabled}
           onGate={() => save(false, "gate")}
@@ -417,7 +421,7 @@ function RouteRound({ route, onPlayAgain }: { route: Route; onPlayAgain: () => v
 }
 
 /** Arrived: the destination, then the door game (when the plan has it), the summary, or another route. */
-function RouteDone({ route, gate, onGate, onResult, onAgain }: { route: Route; gate: boolean; onGate: () => void; onResult: () => void; onAgain: () => void }) {
+function RouteDone({ route, species, voiced, gate, onGate, onResult, onAgain }: { route: Route; species: AvatarSpecies; voiced: number; gate: boolean; onGate: () => void; onResult: () => void; onAgain: () => void }) {
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     ref.current?.focus();
@@ -425,9 +429,11 @@ function RouteDone({ route, gate, onGate, onResult, onAgain }: { route: Route; g
   return (
     <div className="overlay overlay--soft" role="dialog" aria-modal="true" aria-labelledby="route-done-title">
       <div className="overlay__card overlay__card--done">
-        <Destination route={route} size={110} />
-        <h2 id="route-done-title">ถึง{route.destination}แล้ว!</h2>
-        <p className="overlay__text">วิ่ง{route.name}ครบ {ROUTE_LEGS} ช่วง</p>
+        <span className="route-done__pic">
+          <RenderImg name={`route-${route.id}-${species}`} fallback={<Destination route={route} size={110} />} />
+        </span>
+        <h2 id="route-done-title">{voiced > 0 ? `ถึง${route.destination}แล้ว!` : `ถึง${route.destination}แล้ว`}</h2>
+        <p className="overlay__text">{routeDoneLine(voiced, ROUTE_LEGS, route.name)}</p>
         {gate ? (
           <button ref={ref} type="button" className="btn btn--primary btn--lg btn--block" onClick={onGate}>
             ไปเปิดประตูต่อ <Icon name="next" size={20} />

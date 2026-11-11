@@ -1,15 +1,22 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { doorById, DOORS, type DoorId } from "../../data/doors";
 import { routeById, type RouteId } from "../../data/routes";
 import { floorSpot, TOWER_RISE, type TowerPathId } from "../../data/towerPaths";
+import { TRIPS, tripById, type TripId } from "../../data/trips";
+import type { PlantKind, WearId } from "../../data/schema";
 import { BRANCH_END, cargoById, JUNCTION, stopSpot, type CargoId } from "../../data/trainCargo";
 import { TRAIN_LEGS } from "../../logic/train";
 import { ROUTE_LEGS } from "../../logic/route";
 import { seeded } from "../anim";
 import { useKit } from "../kitContext";
 import { Bunny, type AvatarSpecies } from "../models/Bunny";
+import { Balloon } from "../models/Balloon";
+import { BALLOON_TOP_Y, pinShape, placeGeometry } from "../models/balloonPlaces";
 import { Chest } from "../models/Chest";
+import { Trophy } from "../models/Football";
+import { Plant } from "../models/Garden";
 import { cloudPillar, cloudPlatform, rainbowArch, rainbowFlag, smilingMoon, starLantern } from "../models/CloudTower";
 import { Friend, type FriendKind, type FriendPose } from "../models/Friends";
 import { Locomotive, Sleepers, Wagon } from "../models/Train";
@@ -25,6 +32,7 @@ import { lookOf } from "../models/gateLook";
 import { C } from "../palette";
 import { BlobShadow, Field, FitCamera, Lights, type Placement } from "../parts";
 import * as S from "../shapes";
+import { Beyond } from "./GateWorld";
 import { FerrisWheel, MushroomHouse, StopFlag } from "./RunnerWorld";
 
 /*
@@ -204,11 +212,12 @@ export function RoutePostcard({ routeId, species }: { routeId: RouteId; species:
 const SHUT = (): GateDrive => ({ progress: 0, live: 0, open: false, reduced: true });
 
 /** One door of the picker, standing in a little hedge on its own grass island (closed, bolt across). */
-export function DoorPostcard({ doorId }: { doorId: DoorId }) {
+export function DoorPostcard({ doorId, open = false }: { doorId: DoorId; open?: boolean }) {
   const kit = useKit();
   const door = doorById(doorId);
   const look = useMemo(() => lookOf(door), [door]);
-  const drive = useRef<GateDrive>(SHUT());
+  // open: the end card's still — the leaves swung out and the far side (the game's own) showing through the doorway
+  const drive = useRef<GateDrive>(open ? { progress: 1, live: 0, open: true, reduced: false } : SHUT());
   // flowers at the foot of the door in its own theme (the same cached geometries as the game scenes)
   const petals: [string, string] = doorId === "flower" ? ["flower-pink", C.pink] : doorId === "star" ? ["flower-lilac", C.lilacDeep] : ["flower-white", C.white];
   return (
@@ -219,6 +228,29 @@ export function DoorPostcard({ doorId }: { doorId: DoorId }) {
         <Island rx={2.05} rz={1.15} />
       </group>
       <Gate drive={drive} look={look} />
+      {open ? (
+        <>
+          {/* the same far side as the game, seen only through the doorway: a clipped hedge on both sides hides the rest */}
+          <Beyond door={door} reduced />
+          {[-1, 1].map((sx) => (
+            <mesh
+              key={sx}
+              geometry={kit.geo("postcard-hedge", () => new RoundedBoxGeometry(0.62, 2.4, 0.85, 3, 0.26))}
+              material={kit.clay(C.leaf)}
+              position={[sx * 1.81, 1.2, 0]}
+              castShadow
+              receiveShadow
+            />
+          ))}
+          <Field
+            geometry={kit.geo("bush", S.bush)}
+            items={[
+              { x: -1.8, y: 2.22, z: 0.02, s: 1.25, ry: 0.4 },
+              { x: 1.82, y: 2.2, z: -0.02, s: 1.2, ry: 2.2 },
+            ]}
+          />
+        </>
+      ) : null}
       <Field
         geometry={kit.geo("bush", S.bush)}
         items={[
@@ -415,6 +447,71 @@ export function TrainPostcard({ cargo: cargoId, species }: { cargo: CargoId; spe
       <group position={[track.wagon.p.x, 0.06, track.wagon.p.z]} rotation-y={track.wagon.yaw}>
         <Wagon cargo={cargo.id} />
       </group>
+    </group>
+  );
+}
+
+/**
+ * บอลลูน (หน้าเลือกที่ส่ง + การ์ดจบรอบ): จุดหมายจากโมเดลเดียวกับฉาก หมุดส่งของ และบอลลูนสีของทางนั้นที่ตัวละครของเด็กนั่งมาถึง
+ */
+export function TripPostcard({ trip: tripId, species }: { trip: TripId; species: AvatarSpecies }) {
+  const kit = useKit();
+  const trip = tripById(tripId) ?? TRIPS[0];
+  const ride = useRef(bunnyDrive({ pose: "ride" }));
+  const clay = kit.clay(C.white, { vertexColors: true });
+  return (
+    <group dispose={null}>
+      <Lights tier="high" sun={[-3, 8, 7]} box={5} intensity={2.5} />
+      <FitCamera target={[1.2, 2.75, 0]} dir={[0.12, 0.08, 1]} width={3.6} height={5.4} />
+      {trip.id === "cloud-castle" ? null : (
+        <mesh geometry={kit.geo("trip-grass", () => new THREE.CylinderGeometry(1.5, 1.6, 0.16, 32))} material={kit.clay(C.grass)} position={[2.0, -0.08, -0.3]} scale={[1, 1, 0.75]} receiveShadow />
+      )}
+      <mesh geometry={kit.geo(`balloon-place-${trip.id}`, () => placeGeometry(trip.id))} material={clay} castShadow />
+      <mesh geometry={kit.geo("balloon-pin", pinShape)} material={clay} position={[0.8, BALLOON_TOP_Y + 0.2, 0.15]} />
+      <group position={[0.15, BALLOON_TOP_Y - 2.05, 0.4]} scale={0.82}>
+        <Balloon bunny={ride} outfit="cap" species={species} reduced colors={trip.balloon} parcel={trip.gift} />
+      </group>
+    </group>
+  );
+}
+
+/** ยิงจุดโทษ (การ์ดจบรอบ): the trophy from the pitch, on its own. */
+export function TrophyPostcard() {
+  return (
+    <group dispose={null}>
+      <Lights tier="high" sun={[-3, 8, 7]} box={2} intensity={2.6} />
+      <FitCamera target={[0, 0.42, 0]} dir={[0.18, 0.22, 1]} width={1.05} height={1.05} />
+      <Trophy />
+      <BlobShadow at={[0, 0, 0]} size={[0.6, 0.5]} />
+    </group>
+  );
+}
+
+/** ตู้เสื้อผ้า (เกาะของฉัน): the child's character wearing just this item (the cape is seen from behind, where it is). */
+export function WearPostcard({ id, species }: { id: WearId; species: AvatarSpecies }) {
+  const hero = useRef(bunnyDrive({ pose: "stand" }));
+  return (
+    <group dispose={null}>
+      <Lights tier="high" sun={[-3, 7, 6]} box={2} intensity={2.5} />
+      <FitCamera target={[0, 0.8, 0]} dir={[0.18, 0.14, 1]} width={1.3} height={1.72} />
+      <group rotation-y={id === "cape" ? Math.PI * 0.78 : 0.2}>
+        <Bunny drive={hero} outfit={id} species={species} />
+      </group>
+      <BlobShadow at={[0, 0, 0.02]} size={[0.75, 0.62]} />
+    </group>
+  );
+}
+
+/** สวน (เกาะของฉัน): one plant of the garden at its growth stage, in its own little mound of soil (none = an empty bed). */
+export function PlantPostcard({ kind, stage }: { kind: PlantKind | null; stage: number }) {
+  const kit = useKit();
+  return (
+    <group dispose={null}>
+      <Lights tier="high" sun={[-3, 7, 6]} box={1.5} intensity={2.5} />
+      <FitCamera target={[0, 0.2, 0]} dir={[0.15, 0.45, 1]} width={0.78} height={0.66} />
+      <mesh geometry={kit.geo("plant-soil", () => new THREE.CylinderGeometry(0.3, 0.33, 0.06, 28))} material={kit.clay("#9b6a45")} position={[0, -0.03, 0]} receiveShadow />
+      <mesh geometry={kit.geo("plant-soil-top", () => new THREE.SphereGeometry(0.27, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2))} material={kit.clay("#b07b52")} scale={[1, 0.18, 1]} />
+      {kind ? <Plant kind={kind} stage={stage} /> : null}
     </group>
   );
 }

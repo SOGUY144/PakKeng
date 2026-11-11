@@ -1,4 +1,5 @@
 import { ROUTE_LEGS } from "../logic/route";
+import { routeById } from "./routes";
 import type { Session } from "./schema";
 
 /** Which game the round's result speaks for (a door round is the door's lilac, a run is the run's lemon). */
@@ -110,4 +111,37 @@ export function trainHeadline(s: Session, cargoName: string, receiverName: strin
   if (t.legs === 0) return { title: `ส่ง${cargoName}ถึง${receiverName}แล้ว`, sub: "รถไฟไหลไปเอง · รอบหน้าลองพูดให้รถไฟวิ่งนะ" };
   const how = t.legs === t.total ? `วิ่งด้วยเสียงครบ ${t.total} ช่วง` : `วิ่งด้วยเสียง ${t.legs} ช่วง`;
   return { title: `ส่ง${cargoName}ถึง${receiverName}แล้ว!`, sub: how };
+}
+
+/**
+ * The kid's headline for a run (เลือกทางวิ่ง). Counts only legs run on a usable word: a run whose legs were skipped
+ * reached the destination too, and says so plainly — never that the child ran every leg.
+ */
+export function routeHeadline(s: Session): { title: string; sub: string } {
+  const r = routeById(s.choice?.kind === "route" ? s.choice.id : "");
+  const legs = voicedLegs(s);
+  if (s.endedEarly) {
+    return legs > 0 ? { title: `วิ่ง${r.name}ด้วยเสียง ${legs} ช่วง`, sub: `รอบหน้าไปให้ถึง${r.destination}กันนะ` } : { title: "จบรอบแล้ว", sub: `รอบหน้ามาวิ่ง${r.name}กันใหม่นะ` };
+  }
+  if (legs === 0) return { title: `ถึง${r.destination}แล้ว`, sub: "ข้ามมาถึงปลายทาง · รอบหน้าลองพูดให้วิ่งนะ" };
+  return { title: `ถึง${r.destination}แล้ว!`, sub: legs >= ROUTE_LEGS ? `วิ่ง${r.name}ด้วยเสียงครบ ${ROUTE_LEGS} ช่วง` : `วิ่งด้วยเสียง ${legs} จาก ${ROUTE_LEGS} ช่วง · ${r.name}` };
+}
+
+/** The line under the runner's end card: legs run on a usable word (skipped legs are not called running). */
+export function routeDoneLine(voiced: number, legs: number, routeName: string): string {
+  if (voiced >= legs) return `วิ่ง${routeName}ด้วยเสียงครบ ${legs} ช่วง`;
+  if (voiced > 0) return `วิ่งด้วยเสียง ${voiced} จาก ${legs} ช่วง`;
+  return "ข้ามมาถึงปลายทาง · รอบหน้าลองพูดให้วิ่งนะ";
+}
+
+/** The line under the football end card: goals by voice (skipped balls are not called kicks). */
+export function kickDoneLine(goals: number, shots: number, teamName: string): string {
+  return goals > 0 ? `ยิงเข้า ${goals} จาก ${shots} ลูก · เตะกับ${teamName}` : "รอบหน้ามายิงประตูกันใหม่นะ";
+}
+
+/** The door round's note about the run before it (side card): legs run by voice — a skipped run is never "ran it all". */
+export function runNoteLine(voiced: number, legs: number, completed: boolean): string {
+  if (voiced >= legs) return `วิ่งด้วยเสียงครบ ${legs} ช่วง`;
+  if (voiced > 0) return completed ? `วิ่งด้วยเสียง ${voiced} จาก ${legs} ช่วง` : `วิ่งด้วยเสียง ${voiced} ช่วง`;
+  return completed ? "ข้ามมาถึงปลายทาง" : "ยังไม่ได้วิ่งด้วยเสียง";
 }

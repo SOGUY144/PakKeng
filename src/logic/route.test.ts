@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ROUTES, routePoints } from "../data/routes";
-import { MOCK_DEFAULTS, mockReading } from "../signal/MockSignalSource";
+import { MOCK_DEFAULTS, mockReading, type VoiceLevel } from "../signal/MockSignalSource";
 import { SignalProcessor } from "../signal/SignalProcessor";
 import type { DeviceReading } from "../signal/types";
 import type { CallItem } from "./call";
+import { MAX_FRAME_DT_MS } from "./common";
 import { DASH_MAX, GAP_MIN, GAP_START, LEG_MS, RouteRun, type RouteEvent } from "./route";
 
 const words = ["ปา", "ตา", "กา"];
@@ -13,6 +14,8 @@ interface Phase {
   ms: number;
   speech: boolean;
   nasal?: number;
+  /** demo voice level (loud = clipped signal, quiet = too quiet to use) */
+  level?: VoiceLevel;
 }
 
 /** Drive the route at 60 fps through device phases (same demo device model as the call-a-friend tests). */
@@ -25,7 +28,7 @@ function run(game: RouteRun, phases: Phase[], start = 0) {
     const end = t + p.ms;
     while (t < end - 1e-9) {
       t += dt;
-      const r = mockReading({ ...MOCK_DEFAULTS }, 100 - (p.nasal ?? 25), p.speech);
+      const r = mockReading({ ...MOCK_DEFAULTS, ...(p.level ? { level: p.level } : {}) }, 100 - (p.nasal ?? 25), p.speech);
       const sample: DeviceReading & { t: number } = { ...r, t };
       events.push(...game.update(proc.step(sample, "connected", t), t, dt));
     }
@@ -38,6 +41,46 @@ const hush = (ms = 400): Phase => ({ ms, speech: false });
 const legRest = (): Phase => hush(LEG_MS + 100);
 
 describe("Route run (เลือกทางวิ่ง): one usable word = one leg", () => {
+  it("pause mid-run for 10 s: the bunny waits where it was and arrives only with active frames (no warp)", () => {
+    const g = new RouteRun(items(3), 70);
+    const a = run(g, [hush(), say(), hush(300)]);
+    expect(g.running).toBe(true);
+    const before = g.pos;
+    const t0 = g.leg?.elapsed ?? NaN;
+    expect(before).toBeLessThan(1);
+    g.interrupt(); // pause: the loop stops calling update()
+    const idle = new SignalProcessor().step(null, "connected", a.t + 10_000);
+    g.update(idle, a.t + 10_000, 0); // first frame after resuming: dt = 0
+    expect(g.pos).toBeCloseTo(before, 6);
+    expect(g.leg?.elapsed).toBeCloseTo(t0, 6);
+    expect(g.running).toBe(true);
+    g.update(idle, a.t + 10_016, 10_000); // even a stale frame reporting the whole pause counts one frame cap at most
+    expect(g.running).toBe(true);
+    expect((g.leg?.elapsed ?? Infinity) - t0).toBeLessThanOrEqual(MAX_FRAME_DT_MS + 1e-9);
+    const b = run(g, [hush(LEG_MS)], a.t + 10_016);
+    expect(b.events).toContainEqual({ type: "arrive", at: 1 });
+  });
+
+  it("pause during a skipped leg's run for 10 s: the bunny waits where it was and arrives only with active frames", () => {
+    const g = new RouteRun(items(3), 70);
+    const a = run(g, [hush()]);
+    g.skip();
+    const b = run(g, [hush(300)], a.t);
+    expect(g.running).toBe(true);
+    const p0 = g.pos;
+    const e0 = g.leg?.elapsed ?? NaN;
+    g.interrupt();
+    const idle = new SignalProcessor().step(null, "connected", b.t + 10_000);
+    g.update(idle, b.t + 10_000, 0);
+    expect(g.pos).toBeCloseTo(p0, 6);
+    g.update(idle, b.t + 10_016, 10_000);
+    expect(g.running).toBe(true);
+    expect((g.leg?.elapsed ?? Infinity) - e0).toBeLessThanOrEqual(MAX_FRAME_DT_MS + 1e-9);
+    const c = run(g, [hush(LEG_MS)], b.t + 10_016);
+    expect(c.events).toContainEqual({ type: "arrive", at: 1 });
+    expect(g.stars).toBe(0);
+  });
+
   it("a usable attempt sends the bunny to the next stop, then the next word is up", () => {
     const g = new RouteRun(items(3), 70);
     const a = run(g, [hush(), say(), hush()]);
@@ -73,9 +116,9 @@ describe("Route run (เลือกทางวิ่ง): one usable word = on
   it("skip runs on without penalty; the round ends at the destination after every leg", () => {
     const g = new RouteRun(items(3), 70);
     let t = run(g, [hush(), say(), hush(), legRest()]).t;
-    g.skip(t);
+    g.skip();
     t = run(g, [legRest()], t).t;
-    g.skip(t);
+    g.skip();
     const end = run(g, [legRest()], t);
     expect(end.events).toContainEqual({ type: "finish" });
     expect(g.done).toBe(true);
@@ -155,6 +198,23 @@ describe("Route run: the bunny runs on the child's voice, the cloud friend chase
     expect(g.call.state.phase).toBe("turn");
     run(g, [say(500), hush(), legRest()], b.t);
     expect(g.gap).toBeGreaterThan(GAP_MIN + 0.4);
+  });
+
+  it("a clipped (too loud) or too quiet voice never moves the bunny or sends the cloud back; the next usable word runs the leg", () => {
+    const g = new RouteRun(items(3), 70);
+    const a = run(g, [hush()]);
+    const gap0 = g.gap;
+    const b = run(g, [{ ms: 900, speech: true, level: "loud" }], a.t);
+    expect(g.dashing).toBe(false);
+    expect(g.pos).toBe(0);
+    expect(g.gap).toBeLessThanOrEqual(gap0); // shouting never chases the cloud away
+    const c = run(g, [hush(), { ms: 900, speech: true, level: "quiet" }, hush(600)], b.t);
+    expect(g.pos).toBe(0);
+    expect(g.reached).toBe(0);
+    expect(g.attempts).toHaveLength(0);
+    const d = run(g, [say(), hush(), legRest()], c.t);
+    expect(d.events).toContainEqual({ type: "arrive", at: 1 });
+    expect(g.stars).toBe(1);
   });
 
   it("the example word moves neither the bunny nor the cloud", () => {

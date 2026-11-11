@@ -25,10 +25,20 @@ const VIEW_W = 6.4;
 const VIEW_H = 6.2;
 /** How far ahead of the engine the camera looks (so the next stop is in view). */
 const LOOK_AHEAD = 1.5;
-/** Reduced motion: one still view of the whole line (the camera never moves). */
-const STILL_W = 7.4;
-const STILL_H = 17.5;
 const DIR = new THREE.Vector3(0.5, 0.82, 1).normalize();
+/**
+ * Reduced motion: a still camera per leg — lower and closer than the whole-line view it replaces (where the train read
+ * at ~20 px on a phone): the stop the train stands at, the train and its cargo, the next stop and the line running on
+ * towards the receiver. It never moves while the train rolls; it changes only between legs, as an instant cut while the
+ * train stands at a stop (no pan, no zoom, no turn).
+ */
+const STILL_W = 5.4;
+const STILL_H = 4.6;
+/** Where along the current leg the still camera aims (0 = the stop the train left, 1 = the next stop). */
+const STILL_AIM = 0.35;
+const STILL_LOOK_Y = 0.45;
+const STILL_ELEVATION = THREE.MathUtils.degToRad(20);
+const STILL_DIR = new THREE.Vector3(0.34 * Math.cos(STILL_ELEVATION), Math.sin(STILL_ELEVATION), 0.94 * Math.cos(STILL_ELEVATION)).normalize();
 const FLAG_COLORS = ["#ff9cbc", "#ffd877", "#a8e3c8"];
 
 function decor(low: boolean) {
@@ -91,7 +101,8 @@ export function TrainWorld({ gameRef, cargo: cargoId, outfit, species, reduced, 
       tree: kit.geo("train-bigtree", bigTreeGeo),
       smallTree: kit.geo("tree", S.tree),
       flower: kit.geo("flower-pink", () => S.flower(C.pink)),
-      ground: kit.geo("train-ground", () => new THREE.PlaneGeometry(26, 34)),
+      // the meadow runs on past every view (the low still camera of reduced motion looks far): no edge of the world in sight
+      ground: kit.geo("train-meadow", () => new THREE.PlaneGeometry(140, 140)),
       cargo: kit.geo(`train-cargo-${cargo.id}`, () => cargoGeo(cargo.id, kit.seg)),
     }),
     [kit, cargo.id],
@@ -251,7 +262,7 @@ export function TrainWorld({ gameRef, cargo: cargoId, outfit, species, reduced, 
       dl.scale.setScalar(v.delivered && !reduced ? 0.4 + 0.6 * easeOutBack(s.deliverT) : 1);
     }
 
-    // ---- camera: no turning, no zoom; it glides along with the train (reduced motion: one still view of the line) ----
+    // ---- camera: no turning, no zoom; it glides along with the train (reduced motion: a still view per leg, cut between legs) ----
     const cam = state.camera as THREE.PerspectiveCamera;
     const aspect = state.size.width / Math.max(1, state.size.height);
     const tn = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
@@ -260,8 +271,10 @@ export function TrainWorld({ gameRef, cargo: cargoId, outfit, species, reduced, 
     let w: number;
     let h: number;
     if (reduced) {
-      tx = 0;
-      tz = -6.6;
+      const a = stopSpot(cargo.id, v.leg);
+      const b = stopSpot(cargo.id, v.leg + 1);
+      tx = lerp(a.x, b.x, STILL_AIM);
+      tz = lerp(a.z, b.z, STILL_AIM);
       w = STILL_W;
       h = STILL_H;
       s.camX = tx;
@@ -287,8 +300,10 @@ export function TrainWorld({ gameRef, cargo: cargoId, outfit, species, reduced, 
       cam.updateProjectionMatrix();
     }
     const cx = s.camX ?? tx;
-    cam.position.set(cx + DIR.x * d, DIR.y * d, s.camZ + DIR.z * d);
-    cam.lookAt(cx, 0, s.camZ);
+    const dir = reduced ? STILL_DIR : DIR;
+    const ly = reduced ? STILL_LOOK_Y : 0;
+    cam.position.set(cx + dir.x * d, ly + dir.y * d, s.camZ + dir.z * d);
+    cam.lookAt(cx, ly, s.camZ);
   });
 
   return (

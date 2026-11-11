@@ -275,3 +275,19 @@
 [data-motion="reduce"] .kick2d__goalie {
   transition-duration: 0.2s;
 }
+
+/* end card: the trophy from the pitch (a still of the same model); the 2D trophy if it cannot load */
+.kick-done__pic {
+  justify-self: center;
+  display: block;
+  width: 120px;
+  height: 120px;
+}
+
+.kick-done__pic img,
+.kick-done__pic svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

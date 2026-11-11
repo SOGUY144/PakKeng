@@ -11,6 +11,7 @@ import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
 import { outfitOf, rewardsOf } from "../data/rewards";
 import { DOORS, LOCK_BEADS, doorById, type Door, type DoorId } from "../data/doors";
 import { fmtPct } from "../data/format";
+import { runNoteLine } from "../data/resultCards";
 import { finishRound, getPendingRunner, summarizeGate, type PendingRunner } from "../data/rounds";
 import type { Child } from "../data/schema";
 import { useActiveChild, useDB } from "../data/store";
@@ -20,6 +21,7 @@ import { exampleKind, playExample, stopExample, subscribeVoices, type ExampleKin
 import { showToast } from "../lib/toast";
 import { totals } from "../logic/common";
 import { GATE_OPEN_MS, GATE_SKIP_AFTER, GateGame, type GateState } from "../logic/gate";
+import { ROUTE_LEGS } from "../logic/route";
 import { useConnection, signalKind } from "../signal/mock";
 import type { SignalFrame } from "../signal/SignalProcessor";
 import { signalProblem, type MeterStatus } from "../signal/status";
@@ -123,7 +125,8 @@ function DoorPicker({ opened, fromRun, onPick, onBack }: { opened: DoorId[]; fro
                 >
                   <span className="door-card__pic">
                     <RenderImg
-                      name={`door-${d.id}`}
+                      key={done ? "open" : "shut"}
+                      name={done ? `door-${d.id}-open` : `door-${d.id}`}
                       fallback={
                         <span className="door-card__flat">
                           <DoorArt door={d} open={done} />
@@ -193,7 +196,7 @@ function DoorDone({ door, onAgain, onResult }: { door: Door; onAgain: () => void
     <div className="overlay overlay--soft gate-done" role="dialog" aria-modal="true" aria-labelledby="gate-done-title">
       <div className="overlay__card overlay__card--done">
         <div className="gate-done__pic" aria-hidden="true">
-          <DoorArt door={door} open />
+          <RenderImg name={`door-${door.id}-open`} fallback={<DoorArt door={door} open />} />
         </div>
         <h2 id="gate-done-title">ประตูเปิดแล้ว!</h2>
         <p className="overlay__text">เสียงของหนูพามาถึง{door.behind.name}</p>
@@ -469,9 +472,7 @@ function DoorRound({ door, onOpened, onAgain }: { door: Door; onOpened: (id: Doo
                     <Bunny size={40} />
                   </span>
                   <span className="side-item__name">วิ่งหนี</span>
-                  <span className="side-item__state">
-                    {pending.completed ? "วิ่งครบแล้ว" : "วิ่งมาแล้ว"} ได้ดาว {pending.stars} ดวง
-                  </span>
+                  <span className="side-item__state">{runNoteLine(pending.stars, ROUTE_LEGS, pending.completed)}</span>
                 </div>
               </li>
             ) : null}

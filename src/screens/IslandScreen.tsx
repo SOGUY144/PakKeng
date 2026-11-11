@@ -3,6 +3,7 @@ import { Icon } from "../components/Icon";
 import { StageNote } from "../components/StageNote";
 import { Disclaimer } from "../components/Chrome";
 import { EggArt, PetArt, PlantArt, SpeciesArt, WearArt } from "../components/IslandArt";
+import { RenderImg } from "../components/RenderImg";
 import {
   adoptStarter,
   attemptsOnDay,
@@ -113,7 +114,7 @@ function MePanel({ child, source, onFx }: { child: Child; source: SignalKind; on
                 chooseSpecies(child.id, s.id);
                 onFx({ type: "cheer" });
               }}>
-              <SpeciesArt id={s.id} size={64} />
+              <RenderImg className="island-pic island-pic--64" name={`avatar-${s.id}`} fallback={<SpeciesArt id={s.id} size={64} />} />
               <span className="island-tile__name">{s.name}</span>
             </button>
           </li>
@@ -134,7 +135,7 @@ function MePanel({ child, source, onFx }: { child: Child; source: SignalKind; on
                 onFx({ type: "cheer" });
               }}
             >
-              <WearArt id={w.id} size={48} />
+              <RenderImg key={`${w.id}-${r.species}`} className="island-pic island-pic--wear" name={`wear-${w.id}-${r.species}`} fallback={<WearArt id={w.id} size={48} />} />
               <span className="island-tile__name">{w.name}</span>
               <span className="island-tile__state">
                 {w.unlocked ? (worn.has(w.id) ? "ใส่อยู่" : "แตะเพื่อใส่") : `อีก ${w.left} ${w.unit}`}
@@ -181,7 +182,7 @@ function PetsPanel({ child, source, l, onFx }: { child: Child; source: SignalKin
                     focusEgg();
                   }}
                 >
-                  <PetArt kind={p} size={72} />
+                  <RenderImg className="island-pic island-pic--72" name={`pet-${p}`} fallback={<PetArt kind={p} size={72} />} />
                   <span className="island-tile__name">{PET_NAME[p]}</span>
                 </button>
               </li>
@@ -195,7 +196,7 @@ function PetsPanel({ child, source, l, onFx }: { child: Child; source: SignalKin
       </h2>
       {egg ? (
         <div className="island-egg">
-          <EggArt kind={egg.kind} crack={egg.crack} size={96} />
+          <RenderImg key={`${egg.kind}-${egg.crack}`} className="island-pic island-pic--96" name={`egg-${egg.kind}-${egg.crack}`} fallback={<EggArt kind={egg.kind} crack={egg.crack} size={96} />} />
           <div className="island-egg__text">
             <p className="island-egg__line">
               {egg.ready ? "ไข่พร้อมฟักแล้ว!" : `ลองพูดอีก ${egg.need - egg.tries} ครั้ง ${PET_NAME[egg.pet]}จะออกมา`}
@@ -226,7 +227,7 @@ function PetsPanel({ child, source, l, onFx }: { child: Child; source: SignalKin
                     focusEgg();
                   }}
                 >
-                  <EggArt kind={e.id} size={64} />
+                  <RenderImg className="island-pic island-pic--64" name={`egg-${e.id}-0`} fallback={<EggArt kind={e.id} size={64} />} />
                   <span className="island-tile__name">{e.name}</span>
                   <span className="island-tile__state">มี{PET_NAME[e.pet]}อยู่ข้างใน</span>
                 </button>
@@ -246,7 +247,7 @@ function PetsPanel({ child, source, l, onFx }: { child: Child; source: SignalKin
             {l.pets.map((p) => (
               <li key={p}>
                 <button type="button" className="island-tile" aria-pressed={l.buddy === p} onClick={() => setBuddy(child.id, source, l.buddy === p ? null : p)}>
-                  <PetArt kind={p} size={64} />
+                  <RenderImg className="island-pic island-pic--64" name={`pet-${p}`} fallback={<PetArt kind={p} size={64} />} />
                   <span className="island-tile__name">{PET_NAME[p]}</span>
                   <span className="island-tile__state">{l.buddy === p ? "พาไปด้วย" : "อยู่บนเกาะ"}</span>
                 </button>
@@ -290,7 +291,12 @@ function GardenPanel({ child, source, l, onFx }: { child: Child; source: SignalK
       <ul className="island-beds">
         {beds.map((b) => (
           <li key={b.index} className="island-bed">
-            <PlantArt kind={b.kind} stage={b.stage} size={92} />
+            <RenderImg
+              key={`${b.kind ?? "empty"}-${b.stage}`}
+              className="island-pic island-pic--92"
+              name={b.kind ? `plant-${b.kind}-${Math.max(0, Math.min(3, b.stage))}` : "plant-empty"}
+              fallback={<PlantArt kind={b.kind} stage={b.stage} size={92} />}
+            />
             {b.kind ? (
               <>
                 <p className="island-bed__name">

@@ -437,3 +437,20 @@
 [data-motion="reduce"] .pick-trip {
   transition: none;
 }
+
+/* the trip picker and end card show the destination as a still from the 3D scene (same models); 2D picture as fallback */
+.pick-trip__pic img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.trip-done__pic img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}

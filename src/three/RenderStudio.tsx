@@ -15,8 +15,12 @@ const ROUTE_IDS = ["flower", "mushroom"] as const;
 const DOOR_IDS = ["flower", "star", "shell"] as const;
 const PETS = ["puppy", "kitten", "chick", "dino", "dragon", "unicorn"] as const;
 const EGGS = ["sun", "leaf", "sky", "star"] as const;
+const TRIP_IDS = ["treehouse", "lighthouse", "cloud-castle"] as const;
+const WEAR_IDS = ["cap", "shoes", "scarf", "crown", "jersey", "cape", "hoodie", "dress"] as const;
+const PLANT_KINDS = ["carrot", "sunflower", "strawberry", "starfruit"] as const;
 
-const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
+/** `frames`: how long to let the scene settle before the capture (a door swinging open, a plant popping in). */
+const ALL_SHOTS: { name: StudioSubject; w: number; h: number; frames?: number }[] = [
   { name: "thumb-runner", w: 360, h: 252 },
   { name: "thumb-balloon", w: 360, h: 252 },
   { name: "thumb-frog", w: 360, h: 252 },
@@ -43,6 +47,14 @@ const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
   // delivery train: the game card, and each cargo with its receiver and the child's character in the cab
   { name: "thumb-train", w: 360, h: 252 },
   ...(["melon", "flowers"] as const).flatMap((c) => SPECIES.map((s) => ({ name: `train-${c}-${s}` as const, w: 720, h: 540 }))),
+  // balloon trip picker and end card · the opened doors (end card) · the football trophy (end card)
+  ...TRIP_IDS.flatMap((t) => SPECIES.map((s) => ({ name: `trip-${t}-${s}` as const, w: 480, h: 360 }))),
+  ...DOOR_IDS.map((d) => ({ name: `door-${d}-open` as const, w: 540, h: 720, frames: 150 })),
+  { name: "trophy", w: 240, h: 240 },
+  // the island's wardrobe (each item on the child's character) and garden beds (each plant at each stage)
+  ...WEAR_IDS.flatMap((w) => SPECIES.map((s) => ({ name: `wear-${w}-${s}` as const, w: 160, h: 160 }))),
+  ...PLANT_KINDS.flatMap((p) => ([0, 1, 2, 3] as const).map((st) => ({ name: `plant-${p}-${st}` as const, w: 200, h: 200, frames: 90 }))),
+  { name: "plant-empty", w: 200, h: 200 },
   { name: "chest-closed", w: 200, h: 200 },
   { name: "chest-open", w: 200, h: 200 },
   // Home's island card: the buddy pet, or the egg at its crack stage
@@ -54,11 +66,11 @@ const ALL_SHOTS: { name: StudioSubject; w: number; h: number }[] = [
 const only = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("only") : null;
 const SHOTS = only ? ALL_SHOTS.filter((s) => only.split(",").some((p) => s.name.startsWith(p))) : ALL_SHOTS;
 
-function Capture({ onShot }: { onShot: (dataUrl: string) => void }) {
+function Capture({ onShot, after = 15 }: { onShot: (dataUrl: string) => void; after?: number }) {
   const frames = useRef(0);
   useFrame(({ gl }) => {
     frames.current += 1;
-    if (frames.current === 15) onShot(gl.domElement.toDataURL("image/webp", 0.9));
+    if (frames.current === after) onShot(gl.domElement.toDataURL("image/webp", 0.9));
   });
   return null;
 }
@@ -88,7 +100,7 @@ export function RenderStudio() {
           <Canvas key={shot.name} dpr={2} flat shadows="percentage" gl={{ preserveDrawingBuffer: true, alpha: true, antialias: true }} camera={{ fov: 34 }}>
             <KitProvider tier="high">
               <StudioScene subject={shot.name} />
-              <Capture onShot={(u) => void save(u)} />
+              <Capture onShot={(u) => void save(u)} after={shot.frames} />
             </KitProvider>
           </Canvas>
         </div>

@@ -5,12 +5,14 @@ import { PauseOverlay } from "../components/GameParts";
 import { Icon, type IconName } from "../components/Icon";
 import { Meter } from "../components/Meter";
 import { StageNote } from "../components/StageNote";
+import { RenderImg } from "../components/RenderImg";
 import { TripBalloon, TripLandmark, TripPicture, TripPin } from "../components/TripArt";
 import { CareDrawer, DemoTag, useCareDrawer } from "../components/WorldParts";
 import { fmtSec1 } from "../data/format";
 import { promptFor } from "../data/plan";
 import { outfitOf, rewardsOf } from "../data/rewards";
 import { finishRound } from "../data/rounds";
+import type { AvatarSpecies } from "../data/schema";
 import { useActiveChild, useDB } from "../data/store";
 import { TRIPS, tripById, type Trip, type TripId } from "../data/trips";
 import { useReducedMotion } from "../lib/hooks";
@@ -90,6 +92,9 @@ function meterStatus(g: BalloonGame, frame: SignalFrame): MeterStatus {
 
 /** "วันนี้จะส่งบอลลูนไปที่ไหน?" — the pick changes the destination, its pin and the balloons' colours (not the plan). */
 function TripPicker({ onPick }: { onPick: (id: TripId) => void }) {
+  const child = useActiveChild();
+  const db = useDB();
+  const species = rewardsOf(db, child.id).species;
   return (
     <div className="kid-screen kid-screen--pick kid-screen--balloon">
       <div className="pick pick--sky">
@@ -114,7 +119,8 @@ function TripPicker({ onPick }: { onPick: (id: TripId) => void }) {
                 aria-label={`ส่งบอลลูนไป${t.name}`}
               >
                 <span className="pick-trip__pic">
-                  <TripPicture trip={t} />
+                  {/* the destination as it is in the 3D scene (still from the same models); the 2D picture if it cannot load */}
+                  <RenderImg name={`trip-${t.id}-${species}`} fallback={<TripPicture trip={t} />} />
                 </span>
                 <span className="pick-trip__name" lang="th">
                   {t.name}
@@ -519,14 +525,14 @@ function TripRound({ trip, onPickAgain }: { trip: Trip; onPickAgain: () => void 
         <PauseOverlay reason={rt.paused} onResume={rt.resume} onRestart={restart} onFinish={finishEarly} onHome={() => navigate("home")} />
       ) : null}
       {rt.ended && rt.paused === null ? (
-        <TripDone trip={trip} delivered={s.completed} total={N} onResult={() => save(false, "result")} onAgain={() => save(false, "again")} />
+        <TripDone trip={trip} species={look.species} delivered={s.completed} total={N} onResult={() => save(false, "result")} onAgain={() => save(false, "again")} />
       ) : null}
     </div>
   );
 }
 
 /** End of the round: the balloons delivered at the destination, then see the summary or pick a new place. */
-function TripDone({ trip, delivered, total, onResult, onAgain }: { trip: Trip; delivered: number; total: number; onResult: () => void; onAgain: () => void }) {
+function TripDone({ trip, species, delivered, total, onResult, onAgain }: { trip: Trip; species: AvatarSpecies; delivered: number; total: number; onResult: () => void; onAgain: () => void }) {
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     ref.current?.focus();
@@ -537,7 +543,7 @@ function TripDone({ trip, delivered, total, onResult, onAgain }: { trip: Trip; d
         <h2 id="done-title">{delivered === 0 ? "จบรอบแล้ว" : delivered === total ? "ส่งครบแล้ว!" : `ส่งถึง${trip.name}แล้ว!`}</h2>
         {delivered > 0 ? (
           <div className="trip-done__pic">
-            <TripPicture trip={trip} balloons={delivered} label={`บอลลูน ${delivered} ลูกที่${trip.name}`} />
+            <RenderImg name={`trip-${trip.id}-${species}`} fallback={<TripPicture trip={trip} balloons={delivered} />} />
           </div>
         ) : null}
         <p className="overlay__text">{delivered > 0 ? `บอลลูนถึง${trip.name} ${delivered} จาก ${total} ลูก` : "ไว้รอบหน้ามาพาบอลลูนไปส่งกันใหม่นะ"}</p>

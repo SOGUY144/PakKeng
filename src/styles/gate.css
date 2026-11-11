@@ -472,3 +472,10 @@
 [data-motion="reduce"] .gate2d__bunny > svg {
   animation: none;
 }
+
+.gate-done__pic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

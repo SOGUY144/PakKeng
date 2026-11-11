@@ -3,6 +3,7 @@ import { MOCK_DEFAULTS, mockReading, type VoiceLevel } from "../signal/MockSigna
 import { SignalProcessor } from "../signal/SignalProcessor";
 import type { DeviceReading } from "../signal/types";
 import type { CallItem } from "./call";
+import { MAX_FRAME_DT_MS } from "./common";
 import { CHEER_MS, FLIGHT_MS, KICK_SHOTS, KickMatch, RUNUP_MAX, SHOT_STYLES, type KickEvent } from "./kick";
 
 const words = ["ปา", "ตา", "กา"];
@@ -39,6 +40,32 @@ const hush = (ms = 400): Phase => ({ ms, speech: false });
 const ballRest = (): Phase => hush(FLIGHT_MS + CHEER_MS + 150);
 
 describe("Penalty kicks (ยิงจุดโทษ): one usable word = one kick = one goal", () => {
+  it("pause mid-flight or mid-celebration for 10 s: the ball and the cheer wait where they were (no warp on resume)", () => {
+    const g = new KickMatch(items(KICK_SHOTS), 70);
+    const a = run(g, [hush(), say(), hush(300)]);
+    expect(g.phase).toBe("flight");
+    const k0 = g.flightK;
+    expect(k0).toBeLessThan(0.5);
+    g.interrupt();
+    const idle = new SignalProcessor().step(null, "connected", a.t + 10_000);
+    g.update(idle, a.t + 10_000, 0);
+    expect(g.flightK).toBeCloseTo(k0, 6);
+    expect(g.phase).toBe("flight");
+    expect(g.goals).toBe(0);
+    g.update(idle, a.t + 10_016, 10_000);
+    expect(g.flightK).toBeLessThanOrEqual(k0 + MAX_FRAME_DT_MS / FLIGHT_MS + 1e-9);
+    expect(g.phase).toBe("flight");
+    const b = run(g, [hush(FLIGHT_MS)], a.t + 10_016);
+    expect(b.events).toContainEqual({ type: "goal", shot: 0 });
+    expect(g.phase).toBe("cheer");
+    const c0 = g.cheerK;
+    g.interrupt();
+    g.update(idle, b.t + 20_000, 0);
+    expect(g.cheerK).toBeCloseTo(c0, 6);
+    expect(g.phase).toBe("cheer");
+    expect(g.shot).toBe(0);
+  });
+
   it("a usable word kicks, the ball goes in, and after the celebration the next ball is ready", () => {
     const g = new KickMatch(items(KICK_SHOTS), 70);
     const a = run(g, [hush(), say(), hush(200)]);
@@ -180,6 +207,17 @@ describe("Penalty kicks (ยิงจุดโทษ): one usable word = one kic
     const c = run(g, [say(), hush(300)], b.t);
     expect(c.events.filter((e) => e.type === "kick")).toHaveLength(1);
     expect(g.attempts).toHaveLength(1);
+  });
+
+  it("a clipped (too loud) or too quiet voice never runs the kicker up (no ground gained on a voice the game cannot use)", () => {
+    const g = new KickMatch(items(KICK_SHOTS), 70);
+    const a = run(g, [hush(), { ms: 900, speech: true, level: "loud" }]);
+    expect(g.charging).toBe(false);
+    expect(g.runup).toBe(0);
+    run(g, [hush(), { ms: 900, speech: true, level: "quiet" }, hush(600)], a.t);
+    expect(g.charging).toBe(false);
+    expect(g.runup).toBe(0);
+    expect(g.kickSeq).toBe(0);
   });
 
   it("pausing drops an open attempt but keeps the run-up", () => {
