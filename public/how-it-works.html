@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f1faf7">
+<meta name="theme-color" content="#fbfaff">
 <meta name="description" content="ปากเก่งวัดอะไร เด็กปากแหว่งเพดานโหว่รักษาและฝึกพูดกันยังไง ปากเก่งช่วยตรงไหน มีหลักฐานแค่ไหน และจะทำอะไรต่อ">
 <title>ปากเก่งทำงานยังไง</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -161,7 +161,7 @@ h4{font-size:1rem}
 .k-mouth{fill:#7a3530}
 .plate{fill:#d6cfc3;stroke:#a39b8e;stroke-width:1.5}
 .stem{fill:#8c8579}
-.mic{fill:#35524c}
+.mic{fill:#3a3555}
 .port--n{fill:var(--nasal)}
 .port--o{fill:var(--oral)}
 .glow{fill:none;stroke-width:3}
@@ -363,6 +363,117 @@ h4{font-size:1rem}
   95%{left:calc(90% - var(--b) / 2);bottom:166px;opacity:1}
   100%{left:calc(90% - var(--b) / 2);bottom:166px;opacity:0}
 }
+
+/* ---------- หน้าตาเดียวกับแอป (หน้าเด็ก) ----------
+   พื้นพาสเทลมีก้อนสีจาง ๆ · กล่องขาวนูนแบบการ์ดในแอป · ตัวละครจากเกมในส่วนหัว
+   สีของเกมวนตามหัวข้อ (มิ้นต์ ชมพู เหลือง ม่วงอ่อน เขียวมะนาว) ไม่ใช้ม่วงเข้มเป็นสีหลัก · เขียวมิ้นต์ = ตัวปากเก่งและลิงก์
+   น้ำเงิน = ค่าด้านปาก ส้ม = ค่าด้านจมูก คงเดิม */
+:root{
+  --paper:#fbfaff; --paper-deep:rgba(255,255,255,.6); --surface:#ffffff; --sunken:#f1eef9; --line:#ebe7f6; --line-strong:#d8d2ec;
+  --ink:#221f3b; --ink-2:#4d4968; --ink-3:#66627f;
+  --accent:#2a9d6f; --accent-deep:#1c7a54; --accent-text:#17734f; --accent-soft:#dcf6e5;
+  --focus:#17734f;
+  --mint:#8fe3b0; --mint-soft:#dcf6e5; --mint-ink:#145c3a;
+  --pink:#ffb3d1; --pink-soft:#ffe6f0; --pink-ink:#8a1f4f;
+  --lemon:#ffe066; --lemon-soft:#fff6c9; --lemon-ink:#6b5200;
+  --lilac:#c7b5ff; --lilac-soft:#eee8ff; --lilac-ink:#4b2fa8;
+  --lime:#c9ec7e; --lime-soft:#f0fadb; --lime-ink:#355408;
+  --clay:inset 0 -4px 0 rgba(34,31,59,.06),0 12px 26px -12px rgba(76,58,153,.22);
+  --press:0 3px 0 var(--line-strong),0 8px 18px -10px rgba(76,58,153,.3);
+  --radius:24px;
+}
+body{background:
+  radial-gradient(42rem 30rem at -8% 0,#ece6ff 0%,transparent 62%),
+  radial-gradient(36rem 28rem at 108% 2%,#ffe3ef 0%,transparent 60%),
+  radial-gradient(44rem 30rem at 50% 100%,#daf5e6 0%,transparent 62%),
+  var(--paper)}
+
+/* แถบบน: ขาวโปร่ง ปุ่มภาพเคลื่อนไหวเป็นปุ่มขาวนูนแบบแอป */
+.top{background:rgba(255,255,255,.88);border-bottom:none;box-shadow:0 1px 0 var(--line)}
+@supports (backdrop-filter:blur(8px)){.top{background:rgba(255,255,255,.72)}}
+.brand{color:var(--ink);font-size:1.2rem}
+.motion,[data-motion="on"] .motion{border:none;background:var(--surface);color:var(--ink);box-shadow:var(--press)}
+.motion:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line-strong)}
+.motion-note__btn{color:var(--ink);border:none;box-shadow:var(--press)}
+
+/* หัวหน้า: ข้อความซ้าย ฉากตัวละครขวา แล้วสามการ์ดสีเกมเต็มแถว */
+.hero{padding:40px 0 48px}
+.hero__grid{align-items:center}
+h1{font-size:clamp(2.4rem,1.4rem + 3.4vw,3.6rem)}
+.stance{border-left:none;border-radius:20px;box-shadow:var(--clay),inset 6px 0 0 var(--mint)}
+.cast{position:relative;margin:0;min-height:340px;aspect-ratio:5/4;overflow:hidden;border-radius:32px;background:linear-gradient(#f1edff 0%,#fdf0f6 58%,#fff 100%);box-shadow:var(--clay)}
+.cast__hill{position:absolute;left:-12%;right:30%;bottom:-34%;height:62%;border-radius:50%;background:#a8de8f}
+.cast__hill--back{left:28%;right:-14%;bottom:-30%;height:58%;background:#8fd07a}
+.cast img{position:absolute;display:block;height:auto;max-width:none}
+.cast__bunny{left:50%;bottom:4%;width:30%;transform:translateX(-50%)}
+.cast__friend--crab{left:7%;bottom:12%;width:21%}
+.cast__friend--turtle{right:8%;bottom:9%;width:21%}
+.cast__friend--bird{right:13%;top:10%;width:18%}
+.cast__friend--fish{left:13%;top:12%;width:17%}
+[data-motion="on"] .cast__friend{animation:castFloat 4.2s ease-in-out infinite}
+[data-motion="on"] .cast__friend--turtle{animation-delay:-1s}
+[data-motion="on"] .cast__friend--bird{animation-delay:-2s}
+[data-motion="on"] .cast__friend--fish{animation-delay:-3s}
+@keyframes castFloat{0%,100%{translate:0 0}50%{translate:0 -8px}}
+.gist{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:32px}
+.gist li{border:none;border-radius:24px;padding:18px 20px;box-shadow:var(--clay)}
+.gist li:nth-child(1){background:var(--mint-soft)}
+.gist li:nth-child(2){background:var(--pink-soft)}
+.gist li:nth-child(3){background:var(--lemon-soft)}
+.gist b{font-family:var(--font-display);font-weight:600;font-size:1.15rem;margin-bottom:4px}
+.gist li:nth-child(1) b,.gist li:nth-child(1) a{color:var(--mint-ink)}
+.gist li:nth-child(2) b,.gist li:nth-child(2) a{color:var(--pink-ink)}
+.gist li:nth-child(3) b,.gist li:nth-child(3) a{color:var(--lemon-ink)}
+@media (max-width:860px){.gist{grid-template-columns:1fr}.cast{min-height:0}}
+
+/* สารบัญ: ปุ่มขาวนูน เลขเป็นวงสีของเกม */
+.toc a{border:none;box-shadow:var(--press);font-weight:600}
+.toc a:hover{border:none;transform:translateY(-1px)}
+.toc span{font-family:var(--font-display);font-weight:600}
+.toc a:nth-child(7n+1) span{background:var(--mint);color:var(--mint-ink)}
+.toc a:nth-child(7n+2) span{background:var(--pink);color:var(--pink-ink)}
+.toc a:nth-child(7n+3) span{background:var(--lemon);color:var(--lemon-ink)}
+.toc a:nth-child(7n+4) span{background:var(--lilac);color:var(--lilac-ink)}
+.toc a:nth-child(7n+5) span{background:var(--lime);color:var(--lime-ink)}
+.toc a:nth-child(7n+6) span{background:var(--pink);color:var(--pink-ink)}
+.toc a:nth-child(7n+7) span{background:var(--mint);color:var(--mint-ink)}
+
+/* หัวข้อ: ไม่มีเส้นคั่น แถบสลับเป็นขาวโปร่ง เลขหัวข้อเป็นวงสีของเกมแบบนูน */
+.sec{border-top:none}
+.sec--alt{background:rgba(255,255,255,.55)}
+h2{font-size:clamp(1.6rem,1.2rem + 1.4vw,2.2rem)}
+.sec__num{width:46px;height:46px;font-size:1.2rem;background:var(--c,var(--mint));color:var(--ci,var(--mint-ink));box-shadow:0 4px 0 rgba(34,31,59,.14)}
+#device{--c:var(--mint);--ci:var(--mint-ink)}
+#why{--c:var(--pink);--ci:var(--pink-ink)}
+#care{--c:var(--lemon);--ci:var(--lemon-ink)}
+#therapy{--c:var(--lilac);--ci:var(--lilac-ink)}
+#pakkeng{--c:var(--lime);--ci:var(--lime-ink)}
+#evidence{--c:var(--pink);--ci:var(--pink-ink)}
+#next{--c:var(--mint);--ci:var(--mint-ink)}
+
+/* กล่องทั้งหน้า: ขาวนูนแบบการ์ดในแอป ไม่มีเส้นขอบบาง */
+.card{border:none;box-shadow:var(--clay)}
+.loop li{border:none;box-shadow:var(--clay)}
+.loop li::before{background:var(--c,var(--mint));color:var(--ci,var(--mint-ink));font-family:var(--font-display)}
+.ladder__steps li{border:none;box-shadow:var(--clay)}
+
+/* ปุ่มเลือกคำ: ขาวนูน ตัวที่เลือกเป็นสีของหัวข้อนั้น */
+.say button{border:none;background:var(--surface);box-shadow:var(--press)}
+.say button:hover{border:none;transform:translateY(-1px)}
+.say button[aria-pressed="true"]{background:var(--c,var(--mint));color:var(--ci,var(--mint-ink));box-shadow:0 3px 0 rgba(34,31,59,.18)}
+
+/* การ์ดเกม: แบบเดียวกับการ์ดเกมหน้าแรก (สีของเกม หน้าต่างรูป ชื่อเกมตัวโต) */
+.games{gap:18px}
+.game{padding:10px;border-radius:28px;background:var(--gc,var(--mint))}
+.game:nth-child(1){--gc:var(--mint);--gi:var(--mint-ink)}
+.game:nth-child(2){--gc:var(--lemon);--gi:var(--lemon-ink)}
+.game:nth-child(3){--gc:var(--pink);--gi:var(--pink-ink)}
+.game:nth-child(4){--gc:var(--lilac);--gi:var(--lilac-ink)}
+.game__pic{border-radius:20px;background:radial-gradient(120% 90% at 50% 100%,rgba(255,255,255,.9),rgba(255,255,255,.4))}
+.game__body{padding:14px 8px 8px}
+.game__body h4{font-family:var(--font-display);font-weight:600;font-size:1.3rem;color:var(--gi,var(--ink))}
+.game__body p{color:var(--ink)}
+.cue{border:none;background:rgba(255,255,255,.75)}
 </style>
 </head>
 <body>
@@ -390,12 +501,21 @@ h4{font-size:1rem}
         <p>ต้นแบบนี้ยังไม่ได้ตรวจสอบเทียบกับ Nasometer ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย</p>
       </div>
     </div>
+    <figure class="cast" aria-hidden="true">
+      <span class="cast__hill cast__hill--back"></span>
+      <span class="cast__hill"></span>
+      <img class="cast__friend cast__friend--fish" src="renders/hero-fish.webp" alt="" width="360" height="360">
+      <img class="cast__friend cast__friend--bird" src="renders/hero-bird.webp" alt="" width="360" height="360">
+      <img class="cast__friend cast__friend--crab" src="renders/hero-crab.webp" alt="" width="360" height="360">
+      <img class="cast__friend cast__friend--turtle" src="renders/hero-turtle.webp" alt="" width="360" height="360">
+      <img class="cast__bunny" src="renders/hero-bunny.webp" alt="" width="440" height="580">
+    </figure>
+  </div>
     <ul class="gist">
       <li><b>วัดอะไร</b>สัดส่วนเสียงที่ออกทางจมูก (nasalance) หลักเดียวกับเครื่อง Nasometer ที่คลินิกใช้ <a href="#device">ดูภาพ</a></li>
       <li><b>รักษากันยังไง</b>ทีมเพดานโหว่ผ่าตัดซ่อม แล้วฝึกพูดกับนักแก้ไขการพูด บางคนต้องผ่าตัดแก้ไขเพิ่ม <a href="#care">ดูลำดับ</a></li>
       <li><b>ปากเก่งช่วยตรงไหน</b>ให้ฝึกที่บ้านระหว่างนัดได้บ่อยขึ้น เห็นผลทันที ครูเห็นแนวโน้ม แต่ไม่ได้รักษาเอง <a href="#pakkeng">ดูรายละเอียด</a></li>
     </ul>
-  </div>
   <nav class="toc" aria-label="หัวข้อในหน้านี้">
     <a href="#device"><span>1</span>เครื่องวัดอะไร</a>
     <a href="#why"><span>2</span>ทำไมเสียงขึ้นจมูก</a>
