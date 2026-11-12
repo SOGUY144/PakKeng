@@ -79,11 +79,29 @@ describe("plan validation", () => {
 
   it("requires at least one word and one game", () => {
     expect(validatePlan({ ...base, words: [] }).ok).toBe(false);
-    expect(validatePlan({ ...base, games: { runner: false, balloon: false, frog: false, kick: false, tower: false, train: false } }).ok).toBe(false);
+    expect(validatePlan({ ...base, games: { runner: false, balloon: false, frog: false, kick: false, tower: false, train: false, plane: false, bakery: false } }).ok).toBe(false);
   });
 
   it("requires a nasal word while the gate is enabled", () => {
     expect(validatePlan({ ...base, nasalWords: [] }).ok).toBe(false);
     expect(validatePlan({ ...base, nasalWords: [], gateEnabled: false }).ok).toBe(true);
+  });
+});
+
+describe("weekly nasal-word mean", () => {
+  it("includes the nasal words a bubble pilot said on hail (weighted by its usable attempts)", () => {
+    const d = createSeed(NOW);
+    const base = d.sessions.find((x) => x.childId === "C-014")!;
+    const flight = {
+      ...base,
+      id: "plane-1",
+      startedAt: new Date(2026, 10, 4, 8, 0, 0).toISOString(),
+      game: "plane" as const,
+      call: null,
+      gate: null,
+      plane: { hits: 2, total: 5, drifted: 1, skipped: 0, level: "adventure" as const, nasalAttempts: 2, nasalPassed: 1, nasalMean: 52 },
+    };
+    const week = weeklyBuckets([flight], NOW).at(-1)!;
+    expect(week.nasalNasal).toBe(52);
   });
 });

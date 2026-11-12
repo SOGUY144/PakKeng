@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { withViewTransition } from "./transition";
 
-export type Route = "welcome" | "home" | "calibrate" | "runner" | "gate" | "result" | "balloon" | "frog" | "kick" | "tower" | "train" | "island" | "dashboard";
+export type Route = "welcome" | "home" | "calibrate" | "runner" | "gate" | "result" | "balloon" | "frog" | "kick" | "tower" | "train" | "plane" | "bakery" | "island" | "dashboard";
 
-const ROUTES: Route[] = ["welcome", "home", "calibrate", "runner", "gate", "result", "balloon", "frog", "kick", "tower", "train", "island", "dashboard"];
+const ROUTES: Route[] = ["welcome", "home", "calibrate", "runner", "gate", "result", "balloon", "frog", "kick", "tower", "train", "plane", "bakery", "island", "dashboard"];
 
 /** The plain app link (no "#/screen") opens the welcome screen; any named screen opens directly; unknown names go Home. */
 export function parseRoute(hash: string): Route {

@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { bump, CALM, frameDt } from "../anim";
 import { useKit } from "../kitContext";
 import { Cap, Crown, Scarf, Shoe } from "../models/Accessories";
+import { Cake, Topping } from "../models/Bakery";
+import { CAKE_TOP } from "../models/bakeryLayout";
 import { Balloon } from "../models/Balloon";
 import { Bunny, type AvatarSpecies } from "../models/Bunny";
 import { BALL_R, Goal, SoccerBall, Trophy, type NetDrive } from "../models/Football";
@@ -13,6 +15,8 @@ import { cargoGeo } from "../models/trainShapes";
 import { bunnyDrive, cloudDrive, type BunnyPose } from "../models/drives";
 import { Frog, type FrogPose } from "../models/Frog";
 import { Friend, type FriendKind, type FriendPose } from "../models/Friends";
+import { Airplane } from "../models/Sky";
+import { COCKPIT } from "../models/skyDrives";
 import { C } from "../palette";
 import { BlobShadow, Burst, Field, FitCamera, Lights, type BurstFire, type Placement } from "../parts";
 import * as S from "../shapes";
@@ -62,7 +66,8 @@ function Pedestal({ radius = 1.3, pond = false }: { radius?: number; pond?: bool
  */
 export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }: CelebrateSpec) {
   const kit = useKit();
-  const bunny = useRef(bunnyDrive({ pose: game === "balloon" ? "ride" : "stand", reduced }));
+  const rides = game === "balloon" || game === "plane";
+  const bunny = useRef(bunnyDrive({ pose: rides ? "ride" : "stand", reduced }));
   const cloud = useRef(cloudDrive({ reduced }));
   const frogPose = useRef<FrogPose>({ crouch: false, airborne: false, land: 0, reduced });
   const receiverPose = useRef<FriendPose>({ listening: false, happy: 0, asking: 0, reduced });
@@ -83,9 +88,9 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
       cloud.current.wave += 1;
       receiverPose.current.happy += 1;
       if (game === "frog") frogPose.current.crouch = false;
-      fire.current = { seq: fire.current.seq + 1, x: 0, y: game === "balloon" ? 2.4 : 1.4, z: 0.3 };
+      fire.current = { seq: fire.current.seq + 1, x: 0, y: game === "balloon" ? 2.4 : game === "plane" ? 1.9 : 1.4, z: 0.3 };
     }
-    const pose: BunnyPose = game === "balloon" ? "ride" : s.t > 1.8 && s.t < 3.4 ? "wave" : "stand";
+    const pose: BunnyPose = rides ? "ride" : s.t > 1.8 && s.t < 3.4 ? "wave" : "stand";
     bunny.current.pose = pose;
     if (game === "frog" && frogRoot.current) {
       // two happy hops in place
@@ -101,6 +106,10 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
       frogRoot.current.position.y = 0.04 + y;
     }
     if (game === "balloon" && craft.current) craft.current.position.y = 0.55 + Math.sin(s.t * 1.6) * 0.08 * amp;
+    if (game === "plane" && craft.current) {
+      craft.current.position.y = 0.95 + Math.sin(s.t * 1.6) * 0.08 * amp;
+      craft.current.rotation.z = Math.sin(s.t * 1.1) * 0.04 * amp;
+    }
   }, -1);
 
   return (
@@ -108,6 +117,8 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
       <Lights tier={tier} sun={[-3, 7, 6]} box={3.5} intensity={2.5} />
       {game === "balloon" ? (
         <FitCamera target={[0, 1.35, 0]} dir={[0.1, 0.12, 1]} width={3.4} height={3.2} />
+      ) : game === "plane" ? (
+        <FitCamera target={[0, 0.95, 0]} dir={[0.05, 0.12, 1]} width={4.2} height={3.0} />
       ) : (
         <FitCamera target={[0, 0.72, 0]} dir={[0.12, 0.3, 1]} width={3.6} height={2.2} />
       )}
@@ -125,9 +136,46 @@ export function CelebrateWorld({ game, variant, outfit, species, reduced, tier }
           </group>
           <BlobShadow at={[0, 0, 0.02]} size={[0.85, 0.7]} />
         </>
-      ) : (
+      ) : game === "plane" ? null : (
         <Pedestal pond={game === "frog"} radius={game === "balloon" ? 1.0 : 1.3} />
       )}
+      {game === "plane" ? (
+        <>
+          {/* landed in a clear sky: the rainbow the clouds turned into, the plane with the pilot waving */}
+          <mesh geometry={kit.geo("tower-goal-rainbow", () => rainbowArch(kit.seg))} material={kit.clay(C.white, { vertexColors: true })} position={[0, -0.15, -1.3]} scale={2.3} />
+          <mesh geometry={kit.geo("cloud", S.cloud)} material={kit.clay(C.white, { vertexColors: true, emissive: "#ffffff", emissiveIntensity: 0.25 })} position={[-1.3, 0.3, 0.2]} scale={0.7} />
+          <mesh geometry={kit.geo("cloud", S.cloud)} material={kit.clay(C.white, { vertexColors: true, emissive: "#ffffff", emissiveIntensity: 0.25 })} position={[1.35, 0.45, 0]} scale={0.6} rotation-y={2} />
+          <group ref={craft} position={[0, 0.95, 0.2]} rotation-y={-0.3}>
+            <group scale={0.9}>
+              <Airplane>
+                <group position={COCKPIT} scale={0.42} rotation-y={0.75}>
+                  <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
+                </group>
+              </Airplane>
+            </group>
+          </group>
+        </>
+      ) : null}
+      {game === "bakery" ? (
+        <>
+          {/* the baker, a finished cake and a happy friend */}
+          <group position={[-0.7, 0, 0.05]} rotation-y={0.3}>
+            <Bunny drive={bunny} outfit={outfit} species={species as AvatarSpecies | undefined} />
+          </group>
+          <BlobShadow at={[-0.7, 0, 0.07]} size={[0.8, 0.65]} />
+          <group position={[0.1, 0, 0.45]} scale={0.6}>
+            <Cake />
+            {(["strawberry", "cream", "cherry"] as const).map((k, i) => (
+              <group key={k} position={[(i - 1) * 0.3, CAKE_TOP, 0.1]}>
+                <Topping kind={k} />
+              </group>
+            ))}
+          </group>
+          <group position={[0.85, 0.02, -0.1]} rotation-y={-0.5}>
+            <Friend kind="dog" pose={receiverPose} />
+          </group>
+        </>
+      ) : null}
       {game === "runner" ? (
         <>
           <group rotation-y={0.25}>

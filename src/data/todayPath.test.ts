@@ -125,6 +125,13 @@ describe("todayPath", () => {
     expect(p.nodes.filter((n) => n.kind === "round" && n.state === "done").map((n) => n.play)).toEqual(["gate", "balloon"]);
   });
 
+  it("a flight where the child spoke only on nasal words (hail) still passes a step", () => {
+    const plane = { hits: 1, total: 5, drifted: 0, skipped: 4, level: "adventure" as const, nasalAttempts: 2, nasalPassed: 1, nasalMean: 48 };
+    const sessions = [session(today(8), { game: "plane", attempts: 0, usableAttempts: 2, plane })];
+    const p = todayPath({ dailyMinutes: 10, sessions, calibratedToday: false, now: NOW });
+    expect(p.played).toBe(1);
+  });
+
   it("a run whose legs were all skipped is not shown as a door round", () => {
     const skipped = { attempts: 0, passed: 0, meanNasal: null, opened: false, skipped: true };
     const sessions = [
@@ -177,12 +184,12 @@ describe("practiceDaysThisWeek — days with a saved round, Monday to Sunday (no
 
 describe("freshPlays — the “ใหม่” mark on a new game's card", () => {
   it("stays until the child plays the new game once (any real or demo round), not for sample history or another child", () => {
-    expect(freshPlays([])).toEqual(["train", "tower", "kick"]);
-    expect(freshPlays([session(today(8), { game: "kick", source: "sample" })])).toEqual(["train", "tower", "kick"]);
-    expect(freshPlays([session(today(8), { game: "kick", childId: "C-022" })], "C-014")).toEqual(["train", "tower", "kick"]);
-    expect(freshPlays([session(today(8), { game: "frog" })])).toEqual(["train", "tower", "kick"]);
-    expect(freshPlays([session(today(8), { game: "kick" })])).toEqual(["train", "tower"]);
-    expect(freshPlays([session(today(8), { game: "kick", source: "device" })], "C-014")).toEqual(["train", "tower"]);
-    expect(freshPlays([session(today(8), { game: "kick" }), session(today(9), { game: "tower" })])).toEqual(["train"]);
+    expect(freshPlays([])).toEqual(["plane", "bakery", "train", "tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "kick", source: "sample" })])).toEqual(["plane", "bakery", "train", "tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "kick", childId: "C-022" })], "C-014")).toEqual(["plane", "bakery", "train", "tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "frog" })])).toEqual(["plane", "bakery", "train", "tower", "kick"]);
+    expect(freshPlays([session(today(8), { game: "kick" })])).toEqual(["plane", "bakery", "train", "tower"]);
+    expect(freshPlays([session(today(8), { game: "kick", source: "device" })], "C-014")).toEqual(["plane", "bakery", "train", "tower"]);
+    expect(freshPlays([session(today(8), { game: "kick" }), session(today(9), { game: "tower" })])).toEqual(["plane", "bakery", "train"]);
   });
 });

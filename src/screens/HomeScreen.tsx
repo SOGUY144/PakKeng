@@ -24,6 +24,8 @@ type Play = PathPlay;
 /** What each game invites the child to do — the verb is the label, the game's name comes second. */
 /** The new games come first (marked “ใหม่” until played once), then the four first games in their usual order. */
 const PLAYS: { id: Play; verb: string; name: string; open: (p: Plan) => boolean }[] = [
+  { id: "plane", verb: "บินเป่าฟองสบู่", name: "นักบินฟองสบู่", open: (p) => p.games.plane },
+  { id: "bakery", verb: "ทำขนมให้เพื่อน", name: "ร้านขนมของเพื่อน", open: (p) => p.games.bakery },
   { id: "train", verb: "ส่งของด้วยรถไฟ", name: "รถไฟส่งของ", open: (p) => p.games.train },
   { id: "tower", verb: "ปีนหอคอย", name: "หอคอยเมฆ", open: (p) => p.games.tower },
   { id: "kick", verb: "ยิงจุดโทษ", name: "ฟุตบอล", open: (p) => p.games.kick },
@@ -58,6 +60,8 @@ function GateThumb() {
 }
 
 function PlayThumb({ play }: { play: Play }) {
+  // the two newest games have no rendered picture yet: draw them directly
+  if (play === "plane" || play === "bakery") return <GameThumb game={play} />;
   return <RenderImg name={`thumb-${play}`} fallback={play === "gate" ? <GateThumb /> : <GameThumb game={play} />} />;
 }
 
@@ -485,7 +489,11 @@ export function HomeScreen() {
                           <>
                             {/* a sticker of the game played in that round (rendered from its 3D scene), with a tick */}
                             <span className="trail__sticker">
-                              <RenderImg name={`thumb-${n.play}`} fallback={<Icon name="check" size={30} />} />
+                              {n.play === "plane" || n.play === "bakery" ? (
+                                <GameThumb game={n.play} />
+                              ) : (
+                                <RenderImg name={`thumb-${n.play}`} fallback={<Icon name="check" size={30} />} />
+                              )}
                             </span>
                             <span className="trail__tick">
                               <Icon name="check" size={14} />

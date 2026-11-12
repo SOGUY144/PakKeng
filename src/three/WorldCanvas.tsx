@@ -4,11 +4,13 @@ import { lowerAutoTier, publishGfxStats, reportGfxFailure, type Tier } from "./g
 import { KitProvider } from "./KitProvider";
 import type { WorldSpec } from "./spec";
 import { CelebrateWorld } from "./worlds/Showcase";
+import { BakeryWorld } from "./worlds/BakeryWorld";
 import { BalloonWorld } from "./worlds/BalloonWorld";
 import { FrogWorld } from "./worlds/FrogWorld";
 import { GateWorld } from "./worlds/GateWorld";
 import { IslandWorld } from "./worlds/IslandWorld";
 import { KickWorld } from "./worlds/KickWorld";
+import { PlaneWorld } from "./worlds/PlaneWorld";
 import { RunnerWorld } from "./worlds/RunnerWorld";
 import { TowerWorld } from "./worlds/TowerWorld";
 import { TrainWorld } from "./worlds/TrainWorld";
@@ -64,6 +66,10 @@ function World(spec: WorldSpec) {
       return <TowerWorld {...spec} />;
     case "train":
       return <TrainWorld {...spec} />;
+    case "plane":
+      return <PlaneWorld {...spec} />;
+    case "bakery":
+      return <BakeryWorld {...spec} />;
     case "island":
       return <IslandWorld {...spec} />;
     case "celebrate":

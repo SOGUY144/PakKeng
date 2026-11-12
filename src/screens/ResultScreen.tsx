@@ -10,7 +10,7 @@ import { useReducedMotion } from "../lib/hooks";
 import { stageMode, useGfx } from "../three/gfx";
 import { World3D } from "../three/World3D";
 import { fmtClock, fmtDayMonth, fmtPct, isSameDay } from "../data/format";
-import { isDoorAlone, roundDid, roundRating, routeHeadline, towerHeadline, trainHeadline } from "../data/resultCards";
+import { bakeryHeadline, isDoorAlone, planeHeadline, roundDid, roundRating, routeHeadline, towerHeadline, trainHeadline } from "../data/resultCards";
 import { cargoById } from "../data/trainCargo";
 import { getLastResultId } from "../data/rounds";
 import type { FriendId } from "../data/callWords";
@@ -56,6 +56,8 @@ function achieved(s: Session): { title: string; sub: string } {
     const cargo = cargoById(s.train.cargo);
     return trainHeadline(s, cargo.name, cargo.receiverName);
   }
+  if (s.game === "plane" && s.plane) return planeHeadline(s);
+  if (s.game === "bakery" && s.bakery) return bakeryHeadline(s);
   if (isGateRound(s)) return { title: "ลองเปิดประตูแล้ว", sub: "ไว้รอบหน้ามาลองใหม่นะ" };
   return { title: "จบรอบแล้ว", sub: `ลองพูด ${s.attempts} ครั้ง` };
 }
@@ -136,7 +138,7 @@ export function ResultScreen() {
   const did = roundDid(session);
   // colour and icon of the game the card speaks for (a door the child never reached does not recolour a run)
   const tone = did.kind === "other" ? session.game : did.kind;
-  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : did.kind === "tower" ? "flag" : did.kind === "train" ? "next" : "mic";
+  const didIcon = did.kind === "frog" ? "ear" : did.kind === "balloon" ? "target" : did.kind === "gate" ? (session.gate?.opened ? "check" : "lock") : did.kind === "runner" ? "flag" : did.kind === "kick" ? "star" : did.kind === "tower" ? "flag" : did.kind === "train" ? "next" : did.kind === "plane" ? "star" : did.kind === "bakery" ? "check" : "mic";
   const kept = storagePersisted();
   const sourceLabel = session.source === "device" ? "อุปกรณ์จริง" : session.source === "sample" ? "ข้อมูลตัวอย่าง" : "โหมดสาธิต";
   const met = call ? call.words.filter((w) => w.heard) : [];
@@ -152,7 +154,11 @@ export function ResultScreen() {
           {mode.kind === "3d" ? (
             <World3D kind="celebrate" game={session.game} variant={session.tower?.path ?? session.train?.cargo} outfit={outfitOf(db, child, session.source === "device" ? "device" : "demo")} species={rewardsOf(db, child.id).species} tier={mode.tier} active reduced={reduced} />
           ) : (
-            <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" || session.game === "tower" || session.game === "train" ? <GameThumb game={session.game} /> : null} />
+            session.game === "plane" || session.game === "bakery" ? (
+              <GameThumb game={session.game} />
+            ) : (
+              <RenderImg name={`thumb-${session.game}`} fallback={session.game === "kick" || session.game === "tower" || session.game === "train" ? <GameThumb game={session.game} /> : null} />
+            )
           )}
         </div>
 
@@ -243,7 +249,12 @@ export function ResultScreen() {
           <CareSummary sub="ตัวเลขของรอบนี้" />
           <div className="care__body">
         <p className="result__meta">
-          {GAME_LABEL[session.game]} {session.call ? "(ด่านเรียกเพื่อน)" : `ด่านที่ ${session.level} ${LEVEL_LABEL[session.level]}`}
+          {GAME_LABEL[session.game]}{" "}
+          {session.call
+            ? "(ด่านเรียกเพื่อน)"
+            : session.bakery?.level === "phrase"
+              ? "(พูดเป็นวลี “ใส่ …”)"
+              : `ด่านที่ ${session.level} ${LEVEL_LABEL[session.level]}${session.plane ? (session.plane.level === "adventure" ? " · บินผจญภัย" : " · บินสบาย") : ""}`}
         </p>
         <div className="tiles">
           {session.game === "runner" ? (

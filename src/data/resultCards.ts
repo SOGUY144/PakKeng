@@ -3,7 +3,7 @@ import { routeById } from "./routes";
 import type { Session } from "./schema";
 
 /** Which game the round's result speaks for (a door round is the door's lilac, a run is the run's lemon). */
-export type ResultKind = "frog" | "balloon" | "runner" | "gate" | "kick" | "tower" | "train" | "other";
+export type ResultKind = "frog" | "balloon" | "runner" | "gate" | "kick" | "tower" | "train" | "plane" | "bakery" | "other";
 
 /** One stat card on the kid's result: a short label for the coloured band and the value in the card. */
 export interface ResultCard {
@@ -47,6 +47,8 @@ export function roundDid(s: Session): ResultCard {
   if (s.game === "tower" && s.tower) return { kind: "tower", label: "กระโดดด้วยเสียง", value: `${s.tower.floors}/${s.tower.total} ชั้น` };
   // legs ridden on a usable word (coasted legs rolled on by themselves and are not speech)
   if (s.game === "train" && s.train) return { kind: "train", label: "วิ่งด้วยเสียง", value: `${s.train.legs}/${s.train.total} ช่วง` };
+  if (s.game === "plane" && s.plane) return { kind: "plane", label: "เมฆที่ผ่านไป", value: `${s.plane.hits}/${s.plane.total} ก้อน` };
+  if (s.game === "bakery" && s.bakery) return { kind: "bakery", label: "เพื่อนที่อิ่ม", value: `${s.bakery.served}/${s.bakery.customers} ตัว` };
   if (doorWasPlayed(s)) return { kind: "gate", label: "ประตู", value: s.gate?.opened ? "เปิดแล้ว" : "ยังไม่เปิด" };
   if (s.game === "runner") return { kind: "runner", label: "วิ่งด้วยเสียง", value: `${voicedLegs(s)}/${ROUTE_LEGS} ช่วง` };
   return { kind: "other", label: "ครั้งที่ลองพูด", value: `${s.attempts} ครั้ง` };
@@ -65,6 +67,8 @@ export function roundRating(s: Session): { got: number; of: number } {
   if (s.game === "tower" && s.tower) return { got: s.tower.floors, of: s.tower.floors > 0 ? s.tower.total : 0 };
   // legs ridden by voice out of the legs; a delivery with no voiced leg earns no stars (and is not a failure)
   if (s.game === "train" && s.train) return { got: s.train.legs, of: s.train.legs > 0 ? s.train.total : 0 };
+  if (s.game === "plane" && s.plane) return { got: s.plane.hits, of: s.plane.hits > 0 ? s.plane.total : 0 };
+  if (s.game === "bakery" && s.bakery) return { got: s.bakery.served, of: s.bakery.served > 0 ? s.bakery.customers : 0 };
   // a door on its own: opened or not — but a door that was never tried earns no stars, like a run with no voiced leg
   if (isDoorAlone(s) && s.gate) return { got: s.gate.opened ? 1 : 0, of: s.gate.opened || s.gate.attempts > 0 ? 1 : 0 };
   if (s.game === "runner") {
@@ -92,6 +96,28 @@ export function towerHeadline(s: Session): { title: string; sub: string } {
   if (t.floors === 0) return { title: "ถึงยอดหอคอยแล้ว", sub: "ลิฟต์เมฆพาขึ้นมา · รอบหน้าลองพูดแล้วกระโดดเองนะ" };
   const how = t.floors === t.total ? `กระโดดด้วยเสียงครบ ${t.total} ชั้น` : `กระโดดด้วยเสียง ${t.floors} ชั้น`;
   return { title: "ถึงยอดหอคอยแล้ว!", sub: path ? `${how} · ${path}` : how };
+}
+
+/**
+ * The kid's headline for a bubble-pilot flight: clouds passed on a usable word (on target in adventure). "All of them"
+ * only when every cloud was passed and the flight was not ended early; skipped / drifted clouds are never blamed.
+ */
+export function planeHeadline(s: Session): { title: string; sub: string } {
+  const p = s.plane;
+  if (!p || p.hits === 0) return { title: "จบเที่ยวบินแล้ว", sub: "รอบหน้ามาบินกันใหม่นะ" };
+  const all = p.hits >= p.total && !s.endedEarly;
+  return { title: `บินผ่านเมฆ ${p.hits} ก้อน!`, sub: all ? "บินผ่านครบทุกก้อนแล้ว" : "รอบหน้ามาบินต่อกันนะ" };
+}
+
+/**
+ * The kid's headline for an animal-bakery round: friends who got their whole cake. "All of them" only when every friend
+ * was fed and the round was not ended early. Phrase level says nothing about phrases — the device cannot know the words.
+ */
+export function bakeryHeadline(s: Session): { title: string; sub: string } {
+  const b = s.bakery;
+  if (!b || b.served === 0) return { title: "ปิดร้านแล้ว", sub: "รอบหน้ามาทำขนมกันใหม่นะ" };
+  const all = b.served >= b.customers && !s.endedEarly;
+  return { title: `เพื่อนอิ่ม ${b.served} ตัว!`, sub: all ? "ทำขนมให้เพื่อนครบทุกตัวแล้ว" : "รอบหน้ามาทำขนมต่อกันนะ" };
 }
 
 /**

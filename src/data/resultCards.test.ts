@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fmtClock } from "./format";
-import { isDoorAlone, kickDoneLine, roundDid, roundRating, routeDoneLine, routeHeadline, runNoteLine } from "./resultCards";
+import { bakeryHeadline, isDoorAlone, kickDoneLine, planeHeadline, roundDid, roundRating, routeDoneLine, routeHeadline, runNoteLine } from "./resultCards";
 import type { Session } from "./schema";
 
 /** Smallest session the result cards read; each test overrides what its game records. */
@@ -207,5 +207,39 @@ describe("result copy never claims play that was skipped", () => {
   it("football: skipped balls are not called kicks", () => {
     expect(kickDoneLine(0, 5, "ทีมเต่า")).toBe("รอบหน้ามายิงประตูกันใหม่นะ");
     expect(kickDoneLine(3, 5, "ทีมเต่า")).toBe("ยิงเข้า 3 จาก 5 ลูก · เตะกับทีมเต่า");
+  });
+});
+
+describe("bubble pilot and animal bakery — the result says only what happened", () => {
+  const plane = (hits: number, endedEarly = false, level: "easy" | "adventure" = "easy") =>
+    session({
+      game: "plane",
+      endedEarly,
+      plane: { hits, total: 5, drifted: 0, skipped: 5 - hits, level, nasalAttempts: 0, nasalPassed: 0, nasalMean: null },
+    });
+  const bakery = (served: number, endedEarly = false, level: "word" | "phrase" = "word") =>
+    session({ game: "bakery", endedEarly, bakery: { served, customers: 5, toppings: served * 2, level } });
+
+  it("the 'what you did' card and the rating count clouds passed and friends fed (none = no rating to fail)", () => {
+    expect(roundDid(plane(3))).toMatchObject({ kind: "plane", label: "เมฆที่ผ่านไป", value: "3/5 ก้อน" });
+    expect(roundRating(plane(3))).toEqual({ got: 3, of: 5 });
+    expect(roundRating(plane(0))).toEqual({ got: 0, of: 0 });
+    expect(roundDid(bakery(4))).toMatchObject({ kind: "bakery", label: "เพื่อนที่อิ่ม", value: "4/5 ตัว" });
+    expect(roundRating(bakery(0))).toEqual({ got: 0, of: 0 });
+  });
+
+  it("'all of them' only when every cloud was passed / every friend fed and the round was not ended early", () => {
+    expect(planeHeadline(plane(5))).toEqual({ title: "บินผ่านเมฆ 5 ก้อน!", sub: "บินผ่านครบทุกก้อนแล้ว" });
+    expect(planeHeadline(plane(2)).sub).not.toMatch(/ครบ|ใส/);
+    expect(planeHeadline(plane(5, true)).sub).not.toMatch(/ครบ/);
+    expect(planeHeadline(plane(0)).title).toBe("จบเที่ยวบินแล้ว");
+    expect(bakeryHeadline(bakery(5))).toEqual({ title: "เพื่อนอิ่ม 5 ตัว!", sub: "ทำขนมให้เพื่อนครบทุกตัวแล้ว" });
+    expect(bakeryHeadline(bakery(1)).sub).not.toMatch(/ครบ/);
+    expect(bakeryHeadline(bakery(0)).title).toBe("ปิดร้านแล้ว");
+  });
+
+  it("never claims a skill the device cannot know (no speech recognition), at any level", () => {
+    const all = [planeHeadline(plane(5, false, "adventure")), planeHeadline(plane(3)), bakeryHeadline(bakery(5, false, "phrase")), bakeryHeadline(bakery(2, false, "phrase"))];
+    for (const h of all) expect(`${h.title} ${h.sub}`).not.toMatch(/ได้แล้ว|ถูก|ผิด|พลาด|แพ้|เก่งขึ้น/);
   });
 });

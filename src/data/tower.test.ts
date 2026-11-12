@@ -108,22 +108,22 @@ describe("cloud tower in the plan", () => {
   it("is switched on in plans saved before it existed; a therapist's own choice stays", () => {
     const d = getDB();
     const old = { ...d.children[0].plan, games: { runner: true, balloon: true, frog: false, kick: false } } as unknown as Child["plan"];
-    const off = { ...d.children[1].plan, games: { runner: true, balloon: true, frog: true, kick: true, tower: false, train: true } };
+    const off = { ...d.children[1].plan, games: { runner: true, balloon: true, frog: true, kick: true, tower: false, train: true, plane: true, bakery: true } };
     const before: DemoDB = { ...d, children: [{ ...d.children[0], plan: old }, { ...d.children[1], plan: off }] };
     const after = migrate(before);
-    expect(after.children[0].plan.games).toEqual({ runner: true, balloon: true, frog: false, kick: false, tower: true, train: true });
+    expect(after.children[0].plan.games).toEqual({ runner: true, balloon: true, frog: false, kick: false, tower: true, train: true, plane: true, bakery: true });
     expect(after.children[1].plan.games.tower).toBe(false);
     expect(after.sessions).toHaveLength(d.sessions.length);
   });
 
   it("a plan with only the tower on is valid; all games off is not; the tower is the last mission game", () => {
     const draft = planToDraft({ ...DEFAULT_PLAN, updatedAt: "" });
-    expect(validatePlan({ ...draft, games: { runner: false, balloon: false, frog: false, kick: false, tower: true, train: false } }).ok).toBe(true);
-    expect(validatePlan({ ...draft, games: { runner: false, balloon: false, frog: false, kick: false, tower: false, train: false } }).ok).toBe(false);
-    expect(missionGame({ ...DEFAULT_PLAN, updatedAt: "", games: { runner: false, balloon: false, frog: false, kick: false, tower: true, train: false } })).toBe("tower");
+    expect(validatePlan({ ...draft, games: { runner: false, balloon: false, frog: false, kick: false, tower: true, train: false, plane: false, bakery: false } }).ok).toBe(true);
+    expect(validatePlan({ ...draft, games: { runner: false, balloon: false, frog: false, kick: false, tower: false, train: false, plane: false, bakery: false } }).ok).toBe(false);
+    expect(missionGame({ ...DEFAULT_PLAN, updatedAt: "", games: { runner: false, balloon: false, frog: false, kick: false, tower: true, train: false, plane: false, bakery: false } })).toBe("tower");
   });
 
   it("is marked new on the activity cards until the child has played one round", () => {
-    expect(freshPlays([])).toEqual(["train", "tower", "kick"]);
+    expect(freshPlays([])).toEqual(["plane", "bakery", "train", "tower", "kick"]);
   });
 });

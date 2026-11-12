@@ -177,6 +177,18 @@ export class CallGame {
     this.state = { ...s, issue: null, nudged: false, armed: false, inAttempt: false };
   }
 
+  /**
+   * A game asks for another try on the same turn after a heard word (e.g. the plane's bubble floated past a target):
+   * back to the child's turn, listening from silence, so issues and nudges show again. The word keeps its stats.
+   */
+  reopen(): void {
+    const s = this.state;
+    if (s.phase === "done") return;
+    this.dropAttempt();
+    this.silentMs = 0;
+    this.state = { ...s, phase: "turn", resume: "turn", issue: null, nudged: false, armed: false, inAttempt: false };
+  }
+
   /** "ข้าม": move on without penalty; the word is marked skipped unless the friend already heard it. */
   skip(): CallEvent[] {
     if (this.state.phase === "done") return [];

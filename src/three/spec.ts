@@ -2,7 +2,9 @@ import type { RefObject } from "react";
 import type { BalloonGame } from "../logic/balloon";
 import type { CallGame } from "../logic/call";
 import type { GateGame } from "../logic/gate";
+import type { BakeryShop } from "../logic/bakery";
 import type { KickMatch } from "../logic/kick";
+import type { PlaneFlight } from "../logic/plane";
 import type { RouteRun } from "../logic/route";
 import type { TowerClimb } from "../logic/tower";
 import type { TrainTrip } from "../logic/train";
@@ -99,6 +101,22 @@ export interface TrainSpec extends GameWorld<TrainTrip> {
   species?: string;
 }
 
+/** The bubble pilot (นักบินฟองสบู่): the child's character flies the plane. */
+export interface PlaneSpec extends GameWorld<PlaneFlight> {
+  kind: "plane";
+  outfit: string;
+  species?: string;
+}
+
+/** The animal bakery (ร้านขนมของเพื่อน): the child's character bakes, the friends come to the counter. */
+export interface BakerySpec extends GameWorld<BakeryShop> {
+  kind: "bakery";
+  /** Friends in customer order as a stable string, e.g. "dog,crab,bird". */
+  customers: string;
+  outfit: string;
+  species?: string;
+}
+
 /**
  * เกาะของฉัน: ตัวละครที่เลือก (ชนิด + ชุด) สัตว์ที่พาไปด้วย ไข่ และแปลงผัก — ทุกอย่างมาจากรางวัลที่คำนวณจากรอบที่บันทึก
  * (src/data/rewards.ts) ส่งเป็นค่า primitive: เปลี่ยนเมื่อเด็กเลือก/ฟัก/ปลูก/เก็บ ไม่ใช่ทุกเฟรม
@@ -126,11 +144,11 @@ export interface IslandSpec extends WorldCommon {
 
 export interface CelebrateSpec extends WorldCommon {
   kind: "celebrate";
-  game: "runner" | "balloon" | "frog" | "kick" | "tower" | "train";
+  game: "runner" | "balloon" | "frog" | "kick" | "tower" | "train" | "plane" | "bakery";
   /** The round's own look where a game has two (cloud tower: "rainbow" | "star" path). */
   variant?: string;
   outfit: string;
   species?: string;
 }
 
-export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | TowerSpec | TrainSpec | IslandSpec | CelebrateSpec;
+export type WorldSpec = RunnerSpec | GateSpec | BalloonSpec | FrogSpec | KickSpec | TowerSpec | TrainSpec | PlaneSpec | BakerySpec | IslandSpec | CelebrateSpec;

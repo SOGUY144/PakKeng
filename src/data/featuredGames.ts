@@ -3,7 +3,7 @@
  * (seven big cards filled the screen). A featured game the teacher turned off is replaced by the next open game,
  * so there are always up to three big cards; the order of the rest follows the plan's order.
  */
-export const FEATURED_GAMES = ["tower", "frog", "kick"] as const;
+export const FEATURED_GAMES = ["tower", "plane", "bakery"] as const;
 
 const MAX_TOP = 3;
 

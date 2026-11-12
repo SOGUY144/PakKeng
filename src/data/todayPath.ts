@@ -44,7 +44,8 @@ export function roundsFor(dailyMinutes: number): number {
 
 /** The child said something the game listened to: an attempt in the round, or at the door. */
 function triedToSpeak(s: Session): boolean {
-  return s.attempts > 0 || (s.gate?.attempts ?? 0) > 0;
+  // usable attempts also cover words kept out of `attempts` (a flight's nasal words on hail)
+  return s.attempts > 0 || (s.gate?.attempts ?? 0) > 0 || (s.plane?.nasalAttempts ?? 0) > 0;
 }
 
 /** A door round played on its own shows as the door; a route (even one that went on to the door) shows as the route. */
@@ -110,7 +111,7 @@ export function practiceDaysThisWeek(sessions: Session[], now: Date, childId?: s
 }
 
 /** Games added after the first release: the activity cards mark them "ใหม่" until the child has played one round. */
-export const NEW_PLAYS: PathPlay[] = ["train", "tower", "kick"];
+export const NEW_PLAYS: PathPlay[] = ["plane", "bakery", "train", "tower", "kick"];
 
 /** The new games this child has not played yet (the seeded sample history does not count as playing). */
 export function freshPlays(sessions: Session[], childId?: string): PathPlay[] {

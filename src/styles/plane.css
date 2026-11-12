@@ -1,0 +1,536 @@
+/* นักบินฟองสบู่ — ท้องฟ้า 2D: เครื่องบินซ้าย เมฆ/ลูกเห็บขวา โลกช้าลงตอนรอเด็กพูด
+   (ฟ้าเป็นสีเขียวมิ้นต์อ่อน ไม่ใช้สีฟ้า/ส้ม เพราะสองสีนี้แทนค่าเสียงปาก/จมูกในแอป) */
+
+.stage--plane {
+  --sky-top: #cdf2df;
+  --sky-mid: #ebfaf1;
+  --sky-low: #f5eeff;
+  --bubble-rim: #b7a3f2;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 58%, var(--sky-low) 100%);
+}
+
+.sky2d {
+  overflow: hidden;
+}
+
+/* far puffs drift by all the time; the speed lines show only while flying (not while the cloud waits) */
+/* the drifting layers are one tile wider than the stage and slide by one tile (transform only: no repaint per frame) */
+.sky2d__far,
+.sky2d__near,
+.sky2d__streaks,
+.sky2d__streaks > span {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sky2d__far {
+  inset: 0 auto 0 0;
+  width: calc(100% + 520px);
+  background:
+    radial-gradient(38px 16px at 12% 22%, rgba(255, 255, 255, 0.9) 98%, transparent),
+    radial-gradient(26px 12px at 16% 19%, rgba(255, 255, 255, 0.9) 98%, transparent),
+    radial-gradient(46px 18px at 58% 34%, rgba(255, 255, 255, 0.75) 98%, transparent),
+    radial-gradient(30px 13px at 63% 30%, rgba(255, 255, 255, 0.75) 98%, transparent),
+    radial-gradient(34px 14px at 86% 14%, rgba(255, 255, 255, 0.85) 98%, transparent);
+  background-size: 520px 100%;
+  background-repeat: repeat-x;
+  animation: sky-drift 48s linear infinite;
+  will-change: transform;
+}
+
+.sky2d__near {
+  inset: auto auto 0 0;
+  width: calc(100% + 640px);
+  height: 16%;
+  background:
+    radial-gradient(70px 40px at 10% 100%, #a7e3cc 98%, transparent),
+    radial-gradient(110px 54px at 34% 100%, #b9ead6 98%, transparent),
+    radial-gradient(80px 44px at 62% 100%, #a7e3cc 98%, transparent),
+    radial-gradient(120px 50px at 88% 100%, #c4eedc 98%, transparent);
+  background-size: 640px 100%;
+  background-repeat: repeat-x;
+  animation: sky-drift-near 22s linear infinite;
+  will-change: transform;
+}
+
+.sky2d__streaks {
+  overflow: hidden;
+  mask: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  opacity: 0.7;
+  transition: opacity 0.6s ease;
+}
+
+.sky2d__streaks > span {
+  inset: 0 auto 0 0;
+  width: calc(100% + 180px);
+  background: repeating-linear-gradient(180deg, transparent 0 46px, rgba(255, 255, 255, 0.75) 46px 48px, transparent 48px 92px);
+  animation: sky-streak 0.7s linear infinite;
+  will-change: transform;
+}
+
+/* slow motion: the speed lines fade and a soft lilac ring closes in while the game waits for the child */
+.sky2d.is-slowmo .sky2d__streaks {
+  opacity: 0;
+}
+
+.sky2d::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px 10px rgba(183, 163, 242, 0.42);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.sky2d.is-slowmo::after {
+  opacity: 1;
+}
+
+/* the plane */
+.sky2d__plane {
+  position: absolute;
+  left: 8%;
+  top: 46%;
+  z-index: 2;
+  width: clamp(130px, 30%, 230px);
+  translate: 0 -50%;
+  animation: plane-bob 1.6s ease-in-out infinite alternate;
+}
+
+.sky2d__plane svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sky2d.is-slowmo .sky2d__plane {
+  animation-duration: 3.2s;
+}
+
+.sky2d__plane.is-roll {
+  animation: plane-roll 0.9s ease-in-out both;
+}
+
+.sky2d__plane.is-wobble {
+  animation: plane-wobble 0.5s ease-in-out 2;
+}
+
+/* the bubble growing at the nose while the child speaks (its size never depends on loudness) */
+.sky2d__charge {
+  --charge: 0;
+  position: absolute;
+  left: 92%;
+  top: 30%;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--bubble-rim);
+  background: radial-gradient(circle at 34% 30%, #fff 0 16%, rgba(255, 255, 255, 0.6) 38%, rgba(222, 208, 255, 0.38) 72%);
+  transform: scale(calc(0.15 + var(--charge)));
+  transform-origin: 0 50%;
+  opacity: min(1, calc(var(--charge) * 4));
+  transition: transform 0.12s linear;
+}
+
+.sky2d__plane.is-charging .sky2d__charge {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+.sky2d__track {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.sky2d__bubble {
+  left: 0;
+  top: 0;
+}
+
+.sky2d__bubble,
+.sky2d__pop {
+  position: absolute;
+  z-index: 3;
+  width: clamp(40px, 9%, 70px);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 2px solid var(--bubble-rim);
+  background: radial-gradient(circle at 34% 30%, #fff 0 16%, rgba(255, 255, 255, 0.6) 38%, rgba(222, 208, 255, 0.38) 72%);
+}
+
+/* below the target the bubble sails over the cloud and floats away (nothing is lost) */
+.sky2d__pop {
+  left: 74%;
+  top: 22%;
+  animation: bubble-away 1.1s ease-out both;
+}
+
+/* the cloud / hail: slides in slowly, then floats and waits — no timer */
+.sky2d__foe {
+  position: absolute;
+  right: 7%;
+  top: 48%;
+  z-index: 1;
+  width: clamp(130px, 32%, 250px);
+  translate: 0 -50%;
+  animation:
+    foe-in 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) both,
+    foe-float 2.8s 1.8s ease-in-out infinite alternate;
+}
+
+.sky2d__foe svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sky2d__foe--hail {
+  width: clamp(90px, 20%, 150px);
+}
+
+.sky2d__foe.is-happy {
+  animation: foe-happy 0.6s var(--ease-spring) both;
+}
+
+.sky2d__foe.is-past {
+  animation: hail-past 1.2s ease-in both;
+}
+
+.sky2d__rainbow {
+  position: absolute;
+  right: 4%;
+  top: 14%;
+  width: 40%;
+  aspect-ratio: 2;
+  border-radius: 999px 999px 0 0;
+  background: radial-gradient(
+    circle at 50% 100%,
+    transparent 0 46%,
+    #d6c8ff 46% 56%,
+    #b8f0d8 56% 66%,
+    #fff1a8 66% 76%,
+    #ffc2d6 76% 86%,
+    transparent 86%
+  );
+  animation: rainbow-in 0.8s ease-out both;
+}
+
+/* the word the cloud is waiting for, held over it */
+.sky-word {
+  position: absolute;
+  right: 8%;
+  top: 76%;
+  z-index: 4;
+  max-width: 60%;
+  padding: 6px 18px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-clay);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3.6vw, 1.9rem);
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.sky-word--hail {
+  box-shadow:
+    0 0 0 3px #e2d9ff,
+    var(--shadow-clay);
+}
+
+/* scoreboard: one small cloud (or hail) per encounter */
+.plane-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  padding: 6px 12px;
+  list-style: none;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow-1);
+}
+
+.plane-score__dot {
+  position: relative;
+  width: 22px;
+  height: 16px;
+  border-radius: 10px 10px 8px 8px;
+  border: 2px dashed var(--line-strong);
+  background: #fff;
+}
+
+.plane-score__dot--hail {
+  width: 16px;
+  border-radius: 50%;
+}
+
+.plane-score__dot.is-current {
+  width: 28px;
+  height: 20px;
+  border: 3px solid var(--listen-gold);
+  box-shadow: 0 0 0 3px var(--listen-soft);
+}
+
+.plane-score__dot--hail.is-current {
+  width: 20px;
+}
+
+.plane-score__dot.is-done {
+  border: 2px solid var(--ink);
+  background: linear-gradient(180deg, #ffc2d6 0 25%, #fff1a8 25% 50%, #b8f0d8 50% 75%, #d6c8ff 75%);
+}
+
+.plane-score__dot.is-pass {
+  border-style: solid;
+  background: var(--surface-muted);
+}
+
+/* dock and side pictures */
+.dock-pic--foe {
+  display: grid;
+  place-items: center;
+  background: #dff6e9;
+}
+
+.dock-pic--foe svg {
+  display: block;
+}
+
+.plane-side {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e2f7eb;
+}
+
+.plane-side--hail {
+  background: #efeafd;
+}
+
+/* the level picker: the plane on a mint sky pad */
+.pick-pad--plane::before {
+  background: radial-gradient(circle at 45% 40%, #f3fff8, #b3ebcf 62%, #79cfa6);
+  box-shadow: 0 10px 20px -10px rgba(20, 92, 58, 0.45);
+}
+
+.plane-pick__pic {
+  display: grid;
+  place-items: center;
+}
+
+.plane-pick__plane {
+  width: 82%;
+}
+
+.plane-pick__plane svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.plane-pick__foe {
+  position: absolute;
+  right: -4%;
+  top: 2%;
+  width: 40%;
+}
+
+.plane-pick__foe svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.plane-pick__note {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.plane-done__pic {
+  justify-self: center;
+  display: block;
+  width: 150px;
+}
+
+.plane-done__pic svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@keyframes sky-drift {
+  to {
+    transform: translateX(-520px);
+  }
+}
+
+@keyframes sky-drift-near {
+  to {
+    transform: translateX(-640px);
+  }
+}
+
+@keyframes sky-streak {
+  to {
+    transform: translateX(-180px);
+  }
+}
+
+@keyframes plane-bob {
+  from {
+    transform: translateY(-5px) rotate(-1.5deg);
+  }
+  to {
+    transform: translateY(5px) rotate(1.5deg);
+  }
+}
+
+@keyframes plane-roll {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-38%) rotate(-180deg);
+  }
+  100% {
+    transform: translateY(0) rotate(-360deg);
+  }
+}
+
+@keyframes plane-wobble {
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes foe-in {
+  from {
+    transform: translateX(70%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes foe-float {
+  to {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes foe-happy {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12, 0.92);
+  }
+  70% {
+    transform: scale(0.96, 1.06) translateY(-6px);
+  }
+  100% {
+    transform: scale(1) translateY(-4px);
+  }
+}
+
+@keyframes hail-past {
+  to {
+    transform: translate(-260%, 40%) rotate(-40deg);
+    opacity: 0;
+  }
+}
+
+@keyframes bubble-away {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(40%, -140%) scale(0.7);
+    opacity: 0;
+  }
+}
+
+@keyframes rainbow-in {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 0.95;
+  }
+}
+
+/* reduced motion: no drifting sky or speed lines; things change place without travelling */
+[data-motion="reduce"] .sky2d__far,
+[data-motion="reduce"] .sky2d__near,
+[data-motion="reduce"] .sky2d__streaks > span,
+[data-motion="reduce"] .sky2d__plane,
+[data-motion="reduce"] .sky2d__plane.is-roll,
+[data-motion="reduce"] .sky2d__plane.is-wobble,
+[data-motion="reduce"] .sky2d__foe.is-happy,
+[data-motion="reduce"] .sky2d__pop {
+  animation: none;
+}
+
+[data-motion="reduce"] .sky2d__streaks {
+  display: none;
+}
+
+[data-motion="reduce"] .sky2d__foe {
+  animation: foe-fade 0.3s ease-out both;
+}
+
+[data-motion="reduce"] .sky2d__foe.is-past {
+  animation: none;
+  opacity: 0.3;
+}
+
+[data-motion="reduce"] .sky2d__rainbow {
+  animation: none;
+  opacity: 0.95;
+}
+
+@keyframes foe-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 3D sky: the same mint behind the transparent canvas, and the same lilac edge glow while the world slows down */
+.stage.stage--3d.stage--plane {
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 58%, var(--sky-low) 100%);
+}
+
+.stage--plane.stage--3d::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px 10px rgba(183, 163, 242, 0.42);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.stage--plane.stage--3d.is-slowmo::after {
+  opacity: 1;
+}

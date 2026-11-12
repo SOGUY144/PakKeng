@@ -3,6 +3,8 @@ import type { BalloonEvent } from "./balloon";
 import type { CallEvent } from "./call";
 import type { GateEvent } from "./gate";
 import type { KickEvent } from "./kick";
+import type { PlaneEvent } from "./plane";
+import type { BakeryEvent } from "./bakery";
 import type { RouteEvent } from "./route";
 import type { TowerEvent } from "./tower";
 import type { TrainEvent } from "./train";
@@ -66,4 +68,17 @@ export function towerCue(ev: TowerEvent, round: string): Cue | null {
 export function trainCue(ev: TrainEvent, round: string): Cue | null {
   if (ev.type !== "arrive") return null;
   return ev.last ? { kind: "reward", key: `train:${round}:deliver` } : { kind: "usable", key: `train:${round}:arrive:${ev.stop}` };
+}
+
+/** นักบินฟองสบู่: one buzz per cloud popped or hail rolled past (a near miss never buzzes: it depends on the target). */
+export function planeCue(ev: PlaneEvent, round: string): Cue | null {
+  if (ev.type === "hit" || ev.type === "dodge") return { kind: "reward", key: `plane:${round}:${ev.type}:${ev.encounter}` };
+  return null;
+}
+
+/** ร้านขนม: a topping lands on a usable word (quiet tap), a customer eats the finished cake (reward). */
+export function bakeryCue(ev: BakeryEvent, round: string): Cue | null {
+  if (ev.type === "drop") return { kind: "usable", key: `bakery:${round}:drop:${ev.customer}:${ev.topping}` };
+  if (ev.type === "eat") return { kind: "reward", key: `bakery:${round}:eat:${ev.customer}` };
+  return null;
 }

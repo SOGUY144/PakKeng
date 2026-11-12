@@ -53,6 +53,16 @@
   --spark: #f3e3c2;
 }
 
+.result__scene--plane {
+  --scene-bg: #e8f9ef;
+  --spark: #b6ecd3;
+}
+
+.result__scene--bakery {
+  --scene-bg: #fff0f0;
+  --spark: #ffc6c6;
+}
+
 .result__scene > img {
   display: block;
   width: 100%;
@@ -142,6 +152,14 @@
 
 .result__head--train {
   --title: #6b4a1f;
+}
+
+.result__head--plane {
+  --title: #0f5a3c;
+}
+
+.result__head--bakery {
+  --title: #8f2b2b;
 }
 
 .result__head h1 {
@@ -244,6 +262,16 @@
   --band-ink: #6b4a1f;
 }
 
+.result-card--plane {
+  --band: #b6ecd3;
+  --band-ink: #0f5a3c;
+}
+
+.result-card--bakery {
+  --band: #ffc6c6;
+  --band-ink: #8f2b2b;
+}
+
 .result-card--time {
   --band: var(--primary);
   --band-ink: var(--primary-ink);
@@ -303,6 +331,14 @@
 
 .result-card--train .result-card__body svg {
   color: #6b4a1f;
+}
+
+.result-card--plane .result-card__body svg {
+  color: #0f5a3c;
+}
+
+.result-card--bakery .result-card__body svg {
+  color: #8f2b2b;
 }
 
 .result-card--time .result-card__body svg {

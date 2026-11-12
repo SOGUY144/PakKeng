@@ -36,7 +36,7 @@ const child: Child = {
     dailyMinutes: 10,
     balloonHoldSec: 3,
     level: 2,
-    games: { runner: true, balloon: true, frog: true, kick: true, tower: true, train: true },
+    games: { runner: true, balloon: true, frog: true, kick: true, tower: true, train: true, plane: true, bakery: true },
     gateEnabled: true,
     updatedAt: "2026-11-01T00:00:00.000Z",
   },
@@ -203,7 +203,7 @@ describe("saving and old data", () => {
     const oldPlan = { ...child.plan, games: { runner: true, balloon: false, frog: true } } as unknown as Child["plan"];
     const before: DemoDB = { ...old, children: [{ ...child, plan: oldPlan }] };
     const after = migrate(before);
-    expect(after.children[0].plan.games).toEqual({ kick: true, tower: true, train: true, runner: true, balloon: false, frog: true });
+    expect(after.children[0].plan.games).toEqual({ kick: true, tower: true, train: true, plane: true, bakery: true, runner: true, balloon: false, frog: true });
     expect(after.sessions.map((s) => s.source)).toEqual(["device", "demo"]);
     expect(after.sessions).toHaveLength(2);
   });

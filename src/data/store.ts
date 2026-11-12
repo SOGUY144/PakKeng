@@ -19,7 +19,7 @@ function isDB(x: unknown): x is DemoDB {
 }
 
 /** Games added after the first release (ยิงจุดโทษ, หอคอยเมฆ, รถไฟส่งของ): switched on in a plan saved before they existed. */
-const LATER_GAMES = ["kick", "tower", "train"] as const;
+const LATER_GAMES = ["kick", "tower", "train", "plane", "bakery"] as const;
 
 /**
  * Data saved by an older version keeps all its history: games added later start switched on in each child's plan
@@ -33,7 +33,7 @@ export function migrate(d: DemoDB): DemoDB {
       ...out,
       children: out.children.map((c) => {
         const g = c.plan.games as Partial<Plan["games"]>;
-        return { ...c, plan: { ...c.plan, games: { runner: !!g.runner, balloon: !!g.balloon, frog: !!g.frog, kick: g.kick ?? true, tower: g.tower ?? true, train: g.train ?? true } } };
+        return { ...c, plan: { ...c.plan, games: { runner: !!g.runner, balloon: !!g.balloon, frog: !!g.frog, kick: g.kick ?? true, tower: g.tower ?? true, train: g.train ?? true, plane: g.plane ?? true, bakery: g.bakery ?? true } } };
       }),
     };
   }

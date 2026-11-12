@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Haptics, type HapticsEnv } from "../lib/haptics";
 import type { CallEvent } from "./call";
-import { balloonCue, callCue, gateCue, kickCue, routeCue, towerCue, trainCue } from "./hapticCues";
+import { bakeryCue, balloonCue, callCue, gateCue, kickCue, planeCue, routeCue, towerCue, trainCue } from "./hapticCues";
 import type { KickEvent } from "./kick";
 import type { RouteEvent } from "./route";
 import type { TowerEvent } from "./tower";
@@ -100,5 +100,22 @@ describe("haptic cues: only finished, usable events buzz", () => {
       [20, 35, 35],
       [20, 35, 35],
     ]);
+  });
+});
+
+describe("haptic cues of the bubble pilot and the animal bakery", () => {
+  it("plane: a reward only when a cloud pops or the plane rolls past hail; a near miss or a drift never buzzes", () => {
+    expect(planeCue({ type: "hit", encounter: 2 }, R)).toEqual({ kind: "reward", key: "plane:r1:hit:2" });
+    expect(planeCue({ type: "dodge", encounter: 4 }, R)).toEqual({ kind: "reward", key: "plane:r1:dodge:4" });
+    expect(planeCue({ type: "near", encounter: 1, tries: 1 }, R)).toBeNull();
+    expect(planeCue({ type: "drift", encounter: 1 }, R)).toBeNull();
+    expect(planeCue({ type: "fire", encounter: 1, kind: "cloud" }, R)).toBeNull();
+  });
+
+  it("bakery: a quiet tap when a topping drops on a usable word, a reward when the friend eats; each key is unique", () => {
+    expect(bakeryCue({ type: "drop", customer: 1, topping: 0 }, R)).toEqual({ kind: "usable", key: "bakery:r1:drop:1:0" });
+    expect(bakeryCue({ type: "drop", customer: 1, topping: 1 }, R)?.key).toBe("bakery:r1:drop:1:1");
+    expect(bakeryCue({ type: "eat", customer: 3 }, R)).toEqual({ kind: "reward", key: "bakery:r1:eat:3" });
+    expect(bakeryCue({ type: "served", customer: 3 }, R)).toBeNull();
   });
 });

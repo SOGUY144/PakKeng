@@ -2,6 +2,8 @@
  * งานภาพทั้งหมดวาดขึ้นเองเป็น SVG (ไม่มีภาพภายนอก) — ตัวละคร: กระต่ายน้อยกับเพื่อนก้อนเมฆ, กบ
  * สีของตัวละครเลี่ยงน้ำเงิน/ส้ม เพื่อไม่ชนกับความหมายของค่าด้านปาก/จมูก
  */
+import type { ReactNode } from "react";
+
 const LINE = "#3a3f55";
 const EYE = "#2a2f45";
 const PINK = "#f9b8cb";
@@ -205,7 +207,179 @@ export function BaffleDiagram() {
   );
 }
 
-export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" | "tower" | "train" }) {
+/** The bubble pilot's little plane, drawn (used by the card, the game scene and the result). */
+export function PlaneArt({ size = 120 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 120 80" width={size} height={(size * 80) / 120} aria-hidden="true">
+      {/* tail and back wing */}
+      <path d="M14 30 L6 10 L22 12 L32 30 Z" fill="#ffd34d" stroke={LINE} strokeWidth="2.5" strokeLinejoin="round" />
+      {/* body */}
+      <path d="M12 38 C12 26 40 22 70 24 C92 25 104 30 106 38 C104 46 92 51 70 52 C40 54 12 50 12 38 Z" fill="#fff6dc" stroke={LINE} strokeWidth="2.5" />
+      <path d="M70 24 C92 25 104 30 106 38 C104 46 92 51 70 52 Z" fill="#ff8fb1" stroke={LINE} strokeWidth="2.5" strokeLinejoin="round" />
+      {/* the pilot's seat: a bunny peeking out */}
+      <path d="M44 25 C44 14 60 14 60 25" fill="#e8e3f5" stroke={LINE} strokeWidth="2.5" />
+      <ellipse cx="49" cy="10" rx="3.2" ry="9" fill="#fff6dc" stroke={LINE} strokeWidth="2" />
+      <ellipse cx="56" cy="10" rx="3.2" ry="9" fill="#fff6dc" stroke={LINE} strokeWidth="2" />
+      <circle cx="52" cy="21" r="6.5" fill="#fff6dc" stroke={LINE} strokeWidth="2" />
+      <circle cx="50" cy="20.5" r="1.1" fill={LINE} />
+      <circle cx="54" cy="20.5" r="1.1" fill={LINE} />
+      {/* wing */}
+      <path d="M36 40 L62 40 L54 66 L40 66 Z" fill="#ffd34d" stroke={LINE} strokeWidth="2.5" strokeLinejoin="round" />
+      {/* propeller */}
+      <circle cx="107" cy="38" r="4" fill="#9a8fae" stroke={LINE} strokeWidth="2" />
+      <ellipse cx="110" cy="38" rx="3" ry="16" fill="#e8e3f5" stroke={LINE} strokeWidth="2" opacity="0.85" />
+      <circle cx="80" cy="36" r="4" fill="#e8e3f5" stroke={LINE} strokeWidth="2" />
+    </svg>
+  );
+}
+
+/** A grumpy rain cloud (the plane's bubbles turn it into a rainbow) — drawn, with a mood. */
+export function GrumpyCloud({ size = 110, mood = "grumpy" }: { size?: number; mood?: "grumpy" | "happy" }) {
+  const happy = mood === "happy";
+  return (
+    <svg viewBox="0 0 110 76" width={size} height={(size * 76) / 110} aria-hidden="true">
+      <path
+        d="M22 62 C8 62 4 46 16 40 C12 26 30 18 40 26 C44 10 70 8 76 24 C90 18 104 30 98 44 C108 50 102 64 90 62 Z"
+        fill={happy ? "#ffffff" : "#c9c4dd"}
+        stroke={LINE}
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      {happy ? (
+        <>
+          <path d="M40 40 q4 -5 8 0" fill="none" stroke={LINE} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M62 40 q4 -5 8 0" fill="none" stroke={LINE} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M48 50 q7 7 14 0" fill="none" stroke={LINE} strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="38" cy="48" r="3.5" fill="#ffb3d1" />
+          <circle cx="72" cy="48" r="3.5" fill="#ffb3d1" />
+        </>
+      ) : (
+        <>
+          <path d="M38 36 l8 4 M72 36 l-8 4" stroke={LINE} strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="44" cy="44" r="2.5" fill={LINE} />
+          <circle cx="66" cy="44" r="2.5" fill={LINE} />
+          <path d="M48 54 q7 -6 14 0" fill="none" stroke={LINE} strokeWidth="2.5" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/** One topping on its own (the bakery's tray buttons and the topping falling onto the cake). */
+export function ToppingArt({ id, size = 40 }: { id: string; size?: number }) {
+  return (
+    <svg viewBox="-16 -20 32 32" width={size} height={size} aria-hidden="true">
+      {TOPPING_DRAW[id]?.(0) ?? null}
+    </svg>
+  );
+}
+
+/**
+ * A cake on a plate with up to five toppings (the bakery's order and the finished cake). `slots` = how many the order
+ * has: the toppings are spread over that many places, so a half-done cake does not shift when the next one lands.
+ */
+export function CakeArt({ toppings = [], size = 120, slots = 5 }: { toppings?: string[]; size?: number; slots?: number }) {
+  const TOP = TOPPING_DRAW;
+  const n = Math.min(5, Math.max(slots, toppings.length, 1));
+  const gap = n >= 5 ? 18 : 22;
+  const xs = Array.from({ length: n }, (_, i) => 60 + (i - (n - 1) / 2) * gap);
+  return (
+    <svg viewBox="0 0 120 96" width={size} height={(size * 96) / 120} aria-hidden="true">
+      <ellipse cx="60" cy="86" rx="52" ry="8" fill="#e9e4f7" stroke={LINE} strokeWidth="2" />
+      <path d="M16 46 L16 78 C16 84 104 84 104 78 L104 46 Z" fill="#f6e2b8" stroke={LINE} strokeWidth="2.5" />
+      <path d="M16 60 C30 66 90 66 104 60" fill="none" stroke="#e5c58a" strokeWidth="3" />
+      <ellipse cx="60" cy="46" rx="44" ry="10" fill="#ffe3ef" stroke={LINE} strokeWidth="2.5" />
+      <path d="M18 48 C22 58 28 52 30 56 C34 62 40 52 46 58 C52 63 60 52 66 58 C72 63 80 52 86 57 C92 61 98 52 102 49" fill="#ffe3ef" stroke={LINE} strokeWidth="2" strokeLinejoin="round" />
+      <g transform="translate(0 40)">{toppings.slice(0, 5).map((t, i) => TOP[t]?.(xs[i]) ?? null)}</g>
+    </svg>
+  );
+}
+
+const TOPPING_DRAW: Record<string, (x: number) => ReactNode> = {
+  strawberry: (x) => (
+    <g key={`s${x}`} transform={`translate(${x} 0)`}>
+      <path d="M0 8 C-10 2 -10 -10 0 -10 C10 -10 10 2 0 8 Z" fill="#ff5f7e" stroke={LINE} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M-5 -10 L-2 -14 L0 -11 L2 -14 L5 -10 Z" fill="#4caf50" stroke={LINE} strokeWidth="1.5" strokeLinejoin="round" />
+      <circle cx="-3.5" cy="-4" r="1" fill="#fff3a8" />
+      <circle cx="3.5" cy="-4" r="1" fill="#fff3a8" />
+      <circle cx="0" cy="0.5" r="1" fill="#fff3a8" />
+    </g>
+  ),
+  cherry: (x) => (
+    <g key={`c${x}`} transform={`translate(${x} 0)`}>
+      <path d="M0 -4 Q3 -14 8 -16" fill="none" stroke="#3f7d38" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="0" cy="0" r="6" fill="#e2304f" stroke={LINE} strokeWidth="2" />
+    </g>
+  ),
+  sprinkles: (x) => (
+    <g key={`p${x}`} transform={`translate(${x} 0)`} strokeWidth="3" strokeLinecap="round">
+      <path d="M-6 -2 l4 -3" stroke="#6c4bf4" />
+      <path d="M1 2 l4 -3" stroke="#2fb67c" />
+      <path d="M-2 -7 l4 -3" stroke="#ffd34d" />
+      <path d="M4 -6 l3 2" stroke="#ff5f7e" />
+    </g>
+  ),
+  cream: (x) => (
+    <g key={`m${x}`} transform={`translate(${x} 0)`}>
+      <path d="M-9 4 C-11 -1 -7 -5 -4 -5 C-7 -8 -4 -12 -1 -11 C0 -15 4 -15 3 -11 C7 -11 8 -7 5 -5 C9 -5 11 -1 9 4 Z" fill="#fffdf5" stroke={LINE} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M-6 0 C-2 2 3 2 6 0 M-3 -6 C-1 -4 2 -4 4 -6" fill="none" stroke={LINE} strokeWidth="1.3" strokeLinecap="round" />
+    </g>
+  ),
+  candy: (x) => (
+    <g key={`d${x}`} transform={`translate(${x} 0)`}>
+      <circle r="7" fill="#ffe066" stroke={LINE} strokeWidth="2" />
+      <path d="M0 0 m-1 0 a1 1 0 1 1 2 0 a2.4 2.4 0 1 1 -4.8 0 a3.8 3.8 0 1 1 7.6 0" fill="none" stroke="#ff6f9f" strokeWidth="1.8" strokeLinecap="round" />
+    </g>
+  ),
+};
+
+export function GameThumb({ game }: { game: "runner" | "balloon" | "frog" | "kick" | "tower" | "train" | "plane" | "bakery" }) {
+  if (game === "plane")
+    return (
+      <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">
+        <defs>
+          <linearGradient id="thumb-plane-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#cdf2df" />
+            <stop offset="1" stopColor="#fff8ea" />
+          </linearGradient>
+        </defs>
+        <rect width="120" height="84" fill="url(#thumb-plane-sky)" />
+        <path d="M0 70 C20 62 40 74 60 68 C80 62 100 74 120 66 V84 H0 Z" fill="#ffffff" opacity="0.9" />
+        <g transform="translate(64 10)">
+          <path d="M8 24 C0 24 -2 16 5 13 C3 6 12 2 17 6 C19 -2 33 -3 36 6 C43 3 50 9 47 16 C52 19 49 26 43 24 Z" fill="#c9c4dd" stroke={LINE} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M18 14 l4 2 M33 14 l-4 2" stroke={LINE} strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M22 20 q4 -3 8 0" fill="none" stroke={LINE} strokeWidth="1.8" strokeLinecap="round" />
+        </g>
+        <circle cx="62" cy="40" r="6" fill="#ffffff" stroke="#b9a6f2" strokeWidth="1.5" opacity="0.95" />
+        <circle cx="72" cy="34" r="4" fill="#ffffff" stroke="#b9a6f2" strokeWidth="1.5" opacity="0.95" />
+        <g transform="translate(8 34) scale(0.42)">
+          <path d="M14 30 L6 10 L22 12 L32 30 Z" fill="#ffd34d" stroke={LINE} strokeWidth="4" strokeLinejoin="round" />
+          <path d="M12 38 C12 26 40 22 70 24 C92 25 104 30 106 38 C104 46 92 51 70 52 C40 54 12 50 12 38 Z" fill="#fff6dc" stroke={LINE} strokeWidth="4" />
+          <path d="M70 24 C92 25 104 30 106 38 C104 46 92 51 70 52 Z" fill="#ff8fb1" stroke={LINE} strokeWidth="4" />
+          <ellipse cx="49" cy="12" rx="4" ry="11" fill="#fff6dc" stroke={LINE} strokeWidth="3" />
+          <ellipse cx="57" cy="12" rx="4" ry="11" fill="#fff6dc" stroke={LINE} strokeWidth="3" />
+          <circle cx="53" cy="22" r="8" fill="#fff6dc" stroke={LINE} strokeWidth="3" />
+          <path d="M36 40 L62 40 L54 66 L40 66 Z" fill="#ffd34d" stroke={LINE} strokeWidth="4" strokeLinejoin="round" />
+        </g>
+      </svg>
+    );
+  if (game === "bakery")
+    return (
+      <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">
+        <rect width="120" height="84" fill="#ffeef0" />
+        <path d="M0 0 H120 V16 C110 22 100 16 90 22 C80 16 70 22 60 16 C50 22 40 16 30 22 C20 16 10 22 0 16 Z" fill="#ff9fb4" />
+        <rect y="58" width="120" height="26" fill="#fff6ea" />
+        <rect y="55" width="120" height="5" fill="#ff9fb8" />
+        <g transform="translate(34 22) scale(0.45)">
+          <ellipse cx="60" cy="86" rx="52" ry="8" fill="#e9e4f7" stroke={LINE} strokeWidth="4" />
+          <path d="M16 46 L16 78 C16 84 104 84 104 78 L104 46 Z" fill="#f6e2b8" stroke={LINE} strokeWidth="4" />
+          <ellipse cx="60" cy="46" rx="44" ry="10" fill="#ffe3ef" stroke={LINE} strokeWidth="4" />
+          <path d="M44 56 C34 50 34 38 44 38 C54 38 54 50 44 56 Z" fill="#ff5f7e" stroke={LINE} strokeWidth="3" strokeLinejoin="round" />
+          <path d="M39 38 L42 33 L44 36 L46 33 L49 38 Z" fill="#4caf50" stroke={LINE} strokeWidth="2.5" strokeLinejoin="round" />
+          <circle cx="76" cy="44" r="7" fill="#e2304f" stroke={LINE} strokeWidth="3" />
+        </g>
+      </svg>
+    );
   if (game === "train")
     return (
       <svg viewBox="0 0 120 84" width="100%" aria-hidden="true">

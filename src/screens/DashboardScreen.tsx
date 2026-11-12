@@ -258,7 +258,7 @@ function PlanForm({ child }: { child: Child }) {
     showToast(`บันทึกแผนของ ${child.id} แล้ว · ภารกิจฝั่งเด็กเปลี่ยนตามทันที`);
   };
 
-  const gameIds: GameId[] = ["runner", "balloon", "frog", "kick", "tower", "train"];
+  const gameIds: GameId[] = ["runner", "balloon", "frog", "kick", "tower", "train", "plane", "bakery"];
   const updated = new Date(child.plan.updatedAt);
 
   return (

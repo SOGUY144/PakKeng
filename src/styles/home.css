@@ -743,6 +743,18 @@ button.trail__node:focus-visible {
   --card-ink: var(--candy-lilac-ink);
 }
 
+/* bubble pilot: a soft mint sky (blue stays for oral values) */
+.play-card--plane {
+  --card-bg: #b6ecd3;
+  --card-ink: #0f5a3c;
+}
+
+/* animal bakery: strawberry cream (no orange — it stays for nasal values) */
+.play-card--bakery {
+  --card-bg: #ffc6c6;
+  --card-ink: #8f2b2b;
+}
+
 /* a new game (until the child has played it once) */
 .play-card__new {
   position: absolute;

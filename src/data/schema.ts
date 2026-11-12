@@ -1,4 +1,4 @@
-export type GameId = "runner" | "balloon" | "frog" | "kick" | "tower" | "train";
+export type GameId = "runner" | "balloon" | "frog" | "kick" | "tower" | "train" | "plane" | "bakery";
 export type Level = 1 | 2 | 3;
 
 /** แผนการฝึกที่นักแก้ไขการพูดตั้งต่อเด็กหนึ่งคน — แหล่งเดียวของเกณฑ์ทุกค่าในเกม */
@@ -84,6 +84,30 @@ export interface TrainSummary {
   cargo: string;
 }
 
+/**
+ * One flight of the bubble pilot: clouds popped and hail rolled past on a usable word (on target in adventure), out
+ * of the encounters. Drifted (3 tries below target) and skipped ones are counted apart and never as a miss against the
+ * child. `nasal*` = attempts on nasal words (hail), kept apart from the oral-word attempts of the session.
+ */
+export interface PlaneSummary {
+  hits: number;
+  total: number;
+  drifted: number;
+  skipped: number;
+  level: "easy" | "adventure";
+  nasalAttempts: number;
+  nasalPassed: number;
+  nasalMean: number | null;
+}
+
+/** One round of the animal bakery: customers who got their whole order on usable words, out of the customers. */
+export interface BakerySummary {
+  served: number;
+  customers: number;
+  toppings: number;
+  level: "word" | "phrase";
+}
+
 /** สรุปรายคำของด่านเรียกเพื่อน — เก็บเท่าที่จำเป็น: ไม่มีเสียงดิบ มีแต่จำนวนครั้งและค่าเฉลี่ย */
 export interface CallWordSummary {
   id: string;
@@ -113,7 +137,7 @@ export interface CallSummary {
 
 /** What the child picked at the start of a round (friend order, balloon trip, route, door) — shown back on the result screen. */
 export interface RoundChoice {
-  kind: "friends" | "trip" | "route" | "door" | "team" | "path" | "cargo";
+  kind: "friends" | "trip" | "route" | "door" | "team" | "path" | "cargo" | "mode";
   /** Stable id of the choice (e.g. "crab,dog,fish", "lighthouse", "river", "flower"). */
   id: string;
   /** Short Thai name the child saw, e.g. "ประภาคาร". */
@@ -153,6 +177,10 @@ export interface Session {
   tower?: TowerSummary | null;
   /** Present on delivery-train rounds. */
   train?: TrainSummary | null;
+  /** Present on bubble-pilot rounds. */
+  plane?: PlaneSummary | null;
+  /** Present on animal-bakery rounds. */
+  bakery?: BakerySummary | null;
   /**
    * Detected speech attempts with usable signal in this round (never the example word, never silence/clipping/lost data).
    * Not a count of correct words — there is no speech recognition. The only thing rewards (eggs, garden, clothes) grow
@@ -228,6 +256,8 @@ export const GAME_LABEL: Record<GameId, string> = {
   kick: "ยิงจุดโทษ",
   tower: "หอคอยเมฆ",
   train: "รถไฟส่งของ",
+  plane: "นักบินฟองสบู่",
+  bakery: "ร้านขนมของเพื่อน",
 };
 
 export const LEVEL_LABEL: Record<Level, string> = {

@@ -111,7 +111,7 @@ describe("delivery train in the plan", () => {
   it("is switched on in plans saved before it existed; a therapist's own choice stays", () => {
     const d = getDB();
     const old = { ...d.children[0].plan, games: { runner: true, balloon: true, frog: true, kick: true, tower: true } } as unknown as Child["plan"];
-    const off = { ...d.children[1].plan, games: { runner: true, balloon: true, frog: true, kick: true, tower: true, train: false } };
+    const off = { ...d.children[1].plan, games: { runner: true, balloon: true, frog: true, kick: true, tower: true, train: false, plane: true, bakery: true } };
     const after = migrate({ ...d, children: [{ ...d.children[0], plan: old }, { ...d.children[1], plan: off }] } as DemoDB);
     expect(after.children[0].plan.games.train).toBe(true);
     expect(after.children[1].plan.games.train).toBe(false);
@@ -120,7 +120,7 @@ describe("delivery train in the plan", () => {
 
   it("a plan with only the train on is valid; the train is the last mission game; it is marked new until played", () => {
     const draft = planToDraft({ ...DEFAULT_PLAN, updatedAt: "" });
-    const only = { runner: false, balloon: false, frog: false, kick: false, tower: false, train: true };
+    const only = { runner: false, balloon: false, frog: false, kick: false, tower: false, train: true, plane: false, bakery: false };
     expect(validatePlan({ ...draft, games: only }).ok).toBe(true);
     expect(missionGame({ ...DEFAULT_PLAN, updatedAt: "", games: only })).toBe("train");
     expect(freshPlays([])).toContain("train");

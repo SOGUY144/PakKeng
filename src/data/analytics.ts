@@ -17,6 +17,8 @@ function nasalPair(s: Session): [number | null, number] {
     const g = callGroupNasal(s.call, "nasal");
     return [g.mean, g.usable];
   }
+  // a bubble-pilot flight's nasal words (hail) are kept apart from its oral words, like the call rounds
+  if (s.plane && s.plane.nasalAttempts > 0) return [s.plane.nasalMean, s.plane.nasalAttempts];
   return [s.gate?.meanNasal ?? null, s.gate?.attempts ?? 0];
 }
 
