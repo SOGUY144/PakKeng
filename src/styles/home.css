@@ -798,6 +798,103 @@ button.trail__node:focus-visible {
   line-height: 1.35;
 }
 
+/* the other games: small tiles with a square picture and the verb (the colours come from .play-card--<game>) */
+.plays-all {
+  display: grid;
+  gap: 16px;
+}
+
+.more-games {
+  display: grid;
+  gap: 8px;
+}
+
+.more-games__title {
+  margin: 0;
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.minis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mini {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 68px;
+  padding: 6px 12px 6px 6px;
+  border: 3px solid transparent;
+  border-radius: 20px;
+  /* the game's own colour from .play-card--<game> (defined earlier, so no default here to override it) */
+  background: var(--card-bg, var(--surface-muted));
+  box-shadow: var(--shadow-clay);
+  color: var(--card-ink, var(--ink));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-spring),
+    border-color var(--dur-1);
+}
+
+.mini:hover {
+  border-color: var(--surface);
+  transform: translateY(-2px);
+}
+
+.mini:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.mini__pic {
+  flex: none;
+  width: 60px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 14px;
+  background: radial-gradient(120% 90% at 50% 100%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.35));
+}
+
+.mini__pic img,
+.mini__pic svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini__verb {
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* the "new" / "play on" badges sit a little tighter on a small tile */
+.mini .play-card__new,
+.mini .play-card__again {
+  top: -9px;
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+[data-motion="reduce"] .mini {
+  transition: none;
+}
+
 /* the game sheet (phone / portrait): slides up from the bottom */
 .home-sheet {
   position: fixed;
@@ -1004,8 +1101,8 @@ button.trail__node:focus-visible {
   }
   .kid-frame.home {
     /* vertical room the screen gives to everything except the card pictures (calibrated in the browser) */
-    --home-chrome: 400px;
-    --rows: 1;
+    /* vertical room for everything except the big card pictures, the "other games" tiles included */
+    --home-chrome: 520px;
     display: grid;
     grid-template-columns: clamp(320px, 28vw, 520px) clamp(0px, 1.4vw, 32px) minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
@@ -1027,9 +1124,6 @@ button.trail__node:focus-visible {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-  }
-  .kid-frame.home:has(.plays[data-count="5"], .plays[data-count="6"], .plays[data-count="7"]) {
-    --rows: 2;
   }
   .home > .home-top {
     grid-area: top;
@@ -1111,11 +1205,16 @@ button.trail__node:focus-visible {
     width: clamp(96px, 14vh, 160px);
   }
 
-  /* the game cards: 1–4 in one row, 5–7 in two rows (7: the newest card wide + 2, then 4; 5: the newest across the
-     row, then 4; 6: three and three). Each picture takes its row's share of the height left on the screen, but never
-     gets taller than its card's width allows (renders are landscape), so wide screens keep whole scenes. */
+  /* the game choice: up to three featured cards in one row, the other games as one row of small tiles under them.
+     Each big picture takes the height left on the screen, but never gets taller than its card's width allows (renders
+     are landscape), so wide screens keep whole scenes. */
+  .home-choose .plays-all {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: clamp(12px, 1.8vh, 22px);
+  }
   .home-choose .plays {
-    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
     grid-auto-rows: auto;
     align-content: center;
     gap: clamp(12px, 1.2vw, 20px);
@@ -1128,19 +1227,10 @@ button.trail__node:focus-visible {
   .home-choose .plays[data-count="2"] {
     --cols: 2;
   }
-  .home-choose .plays[data-count="3"],
-  .home-choose .plays[data-count="6"] {
-    --cols: 3;
-  }
-  .home-choose .plays > li {
+  .home-choose .plays > li,
+  .home-choose .plays[data-count] > li:first-child {
     grid-column: auto;
     container-type: inline-size;
-  }
-  .home-choose .plays[data-count="7"] > li:first-child {
-    grid-column: span 2;
-  }
-  .home-choose .plays[data-count="5"] > li:first-child {
-    grid-column: 1 / -1;
   }
   /* three games sit in one row of equal cards (the phone's wide first card is not needed here) */
   .home-choose .plays[data-count="3"] > li:first-child .play-card {
@@ -1152,14 +1242,14 @@ button.trail__node:focus-visible {
   }
   .home-choose .play-card__pic {
     aspect-ratio: auto;
-    height: max(76px, calc((100dvh - var(--home-chrome) - (var(--rows) - 1) * 20px) / var(--rows) - 72px));
+    height: max(76px, calc(100dvh - var(--home-chrome) - 72px));
     /* 26px = the card's side padding and border; 1.3 = a little squarer than the renders' 360 × 252 */
     max-height: calc((100cqi - 26px) / 1.3);
   }
-  /* the wide card: picture beside the verb, as tall as the cards next to it */
-  .home-choose .plays[data-count="5"] > li:first-child .play-card__pic,
-  .home-choose .plays[data-count="7"] > li:first-child .play-card__pic {
-    max-height: none;
+  .home-choose .minis {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
   }
   .home-choose .play-card__pic img {
     object-position: 50% 65%;
@@ -1167,17 +1257,13 @@ button.trail__node:focus-visible {
   .home-choose .play-card__verb {
     font-size: clamp(1.1rem, 0.75rem + 0.6vw, 1.5rem);
   }
-  .home-choose .plays[data-count="5"] > li:first-child .play-card__verb,
-  .home-choose .plays[data-count="7"] > li:first-child .play-card__verb {
-    font-size: clamp(1.3rem, 0.9rem + 0.9vw, 2rem);
-  }
 }
 
 /* short wide screens (laptops, laptops at 125% zoom, iPad sideways): everything tightens so the path, the banner
    and two rows of cards still fit one screen */
 @media (min-width: 900px) and (orientation: landscape) and (max-height: 830px) {
   .kid-frame.home {
-    --home-chrome: 330px;
+    --home-chrome: 450px;
     row-gap: 6px;
     padding-block: var(--sp-3);
   }
@@ -1257,7 +1343,7 @@ button.trail__node:focus-visible {
 /* very short (1366 × 768 laptops): the path steps shrink once more */
 @media (min-width: 900px) and (orientation: landscape) and (max-height: 690px) {
   .kid-frame.home {
-    --home-chrome: 300px;
+    --home-chrome: 440px;
   }
   .trail__node {
     width: 40px;

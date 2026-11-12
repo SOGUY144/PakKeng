@@ -12,6 +12,7 @@ import { isSameDay } from "../data/format";
 import type { Plan, Session } from "../data/schema";
 import { findChild, useDB } from "../data/store";
 import { isDoorAlone } from "../data/resultCards";
+import { splitFeatured } from "../data/featuredGames";
 import { freshPlays, practiceDaysThisWeek, todayPath, type PathNode, type PathPlay } from "../data/todayPath";
 import { haptics } from "../lib/haptics";
 import { hrefFor, navigate, type Route } from "../lib/router";
@@ -138,36 +139,71 @@ function lastPlay(sessions: Session[], plan: Plan): Play | null {
 }
 
 /**
- * The game cards. With an odd number of games the first card takes a whole row (picture beside the verb, same height),
- * so no card is left alone on the last row (CSS reads data-count; desktop uses three columns).
+ * The game choice: three big cards for the featured games (tower, frog, kick — or the next open games when the plan
+ * turns one off), then the other open games as small tiles in one row. Seven big cards filled the whole screen.
+ * With three or fewer games there are only big cards. The big cards keep data-count for their layout.
  */
 function GameCards({ plays, again, fresh, listRef }: { plays: typeof PLAYS; again: Play | null; fresh: Play[]; listRef?: RefObject<HTMLUListElement | null> }) {
+  const byId = new Map(plays.map((p) => [p.id, p]));
+  const { top, more } = splitFeatured(plays.map((p) => p.id));
+  const go = (id: Play) => {
+    haptics.buzz("tap");
+    navigate(id as Route);
+  };
+  const badges = (id: Play) => (
+    <>
+      {fresh.includes(id) ? <span className="play-card__new">ใหม่</span> : null}
+      {again === id ? <span className="play-card__again">เล่นต่อ</span> : null}
+    </>
+  );
   return (
-    <ul className="plays" data-count={plays.length} ref={listRef}>
-      {plays.map((p) => (
-        <li key={p.id}>
-          <button
-            type="button"
-            className={`play-card play-card--${p.id}`}
-            onClick={() => {
-              haptics.buzz("tap");
-              navigate(p.id as Route);
-            }}
-          >
-            {fresh.includes(p.id) ? <span className="play-card__new">ใหม่</span> : null}
-            {again === p.id ? <span className="play-card__again">เล่นต่อ</span> : null}
-            <span className="play-card__pic">
-              <PlayThumb play={p.id} />
-            </span>
-            <span className="play-card__verb">{p.verb}</span>
-            <span className="sr-only">
-              {p.name}
-              {fresh.includes(p.id) ? " เกมใหม่" : ""}
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="plays-all">
+      <ul className="plays" data-count={top.length} ref={listRef}>
+        {top.map((id) => {
+          const p = byId.get(id)!;
+          return (
+            <li key={id}>
+              <button type="button" className={`play-card play-card--${id}`} onClick={() => go(id)}>
+                {badges(id)}
+                <span className="play-card__pic">
+                  <PlayThumb play={id} />
+                </span>
+                <span className="play-card__verb">{p.verb}</span>
+                <span className="sr-only">
+                  {p.name}
+                  {fresh.includes(id) ? " เกมใหม่" : ""}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {more.length > 0 ? (
+        <div className="more-games">
+          <h3 className="more-games__title">เกมอื่น</h3>
+          <ul className="minis">
+            {more.map((id) => {
+              const p = byId.get(id)!;
+              return (
+                <li key={id}>
+                  <button type="button" className={`mini play-card--${id}`} onClick={() => go(id)}>
+                    {badges(id)}
+                    <span className="mini__pic">
+                      <PlayThumb play={id} />
+                    </span>
+                    <span className="mini__verb">{p.verb}</span>
+                    <span className="sr-only">
+                      {p.name}
+                      {fresh.includes(id) ? " เกมใหม่" : ""}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
