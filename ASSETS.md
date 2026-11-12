@@ -44,6 +44,7 @@
 | @react-three/fiber 9.8 | MIT (© Poimandres) | ใช้ three ผ่าน React |
 | @types/three 0.187 | MIT | dev only |
 | @fontsource/noto-sans-thai | SIL OFL 1.1 | มีอยู่เดิม · สำเนา woff2 6 ไฟล์ (ไทย/ละติน น้ำหนัก 400/600/700) + `OFL.txt` อยู่ใน `public/how-it-works/fonts/` ให้หน้าอธิบายหลักการใช้โดยไม่โหลดจากภายนอก |
+| @fontsource/mitr | SIL OFL 1.1 | มีอยู่เดิม (ฟอนต์หัวข้อของแอป) · สำเนา woff2 2 ไฟล์ (ไทย/ละติน น้ำหนัก 600) อยู่ใน `public/how-it-works/fonts/` ให้หัวข้อของหน้าอธิบายหลักการ |
 | React, Vite, TypeScript, vitest, oxlint | MIT / Apache-2.0 | มีอยู่เดิม |
 
 ไม่ได้ใช้ `@react-three/drei` (เหตุผลใน `DECISIONS.md`)
