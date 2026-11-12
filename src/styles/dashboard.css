@@ -1,22 +1,22 @@
 /* ===================== Therapist dashboard =====================
-   Read like a clinic follow-up file, not a widget board: a tinted column listing the children, then one white page
-   for the selected child (name and status, the last 7 days as a row of numbers split by hairlines, the weekly chart
-   beside the review rules) and plain underline tabs. Containers only where they group something (the alert, the
-   rules list, tables): no floating cards, no icon bubbles, no pills for status.
-   Panels stay mounted while hidden so an unsaved plan is not lost. Orange = nasal values, blue = oral, as everywhere. */
+   One child at a time, read top to bottom: who (the child's own character, code, status) · the last 7 days as a strip of
+   days with the practice numbers, then two tinted panels for the voice values (blue = oral, orange = nasal, as
+   everywhere) · the weekly chart beside the review rules. White panels on the lavender paper, each a different shape
+   for a different job; status as small tags; the app's rounded face only for the code and the big numbers.
+   Panels stay mounted while hidden so an unsaved plan is not lost. */
 .app--teacher {
   min-height: 100dvh;
-  background: var(--surface);
+  background: var(--paper);
 }
 
 .dash {
   display: grid;
-  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   align-items: start;
   min-height: 100dvh;
 }
 
-/* the children: a tinted column down the left edge */
+/* the children: a white column down the left edge */
 .dash-side {
   position: sticky;
   top: 0;
@@ -27,10 +27,10 @@
   overflow: auto;
   padding: var(--sp-6) var(--sp-4) var(--sp-5);
   border-right: var(--bw) solid var(--line);
-  background: var(--surface-muted);
+  background: var(--surface);
 }
 
-/* app name above the demo view switch; side by side, or stacked, once the column becomes a top block (900px and less) */
+/* app name above the demo view switch; side by side, or stacked, once the column becomes a top band (900px and less) */
 .dash-side__head {
   display: grid;
   gap: var(--sp-3);
@@ -67,28 +67,55 @@
 
 .kids {
   display: grid;
-  gap: 2px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* one child per row: code and practice days on top, the review status under it */
-.kid {
-  position: relative;
+/* the child's character, as a round portrait */
+.kid-face {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "code meta"
-    "status status";
-  align-items: baseline;
-  column-gap: 10px;
-  row-gap: 2px;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--candy-mint-soft);
+}
+
+.kid-face img {
+  display: block;
   width: 100%;
-  min-height: 60px;
-  padding: 10px 12px 10px 16px;
-  border: none;
-  border-radius: 10px;
+  height: 100%;
+  object-fit: cover;
+}
+
+.kid-face--sm {
+  width: 42px;
+  height: 42px;
+}
+
+.kid-face--lg {
+  width: 76px;
+  height: 76px;
+  box-shadow: 0 0 0 4px var(--surface), 0 6px 16px -6px rgba(34, 31, 59, 0.25);
+}
+
+/* one child per row: face, code and practice days, the review status under the code */
+.kid {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "face code meta"
+    "face status status";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 0;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 2px solid transparent;
+  border-radius: 16px;
   background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
@@ -96,37 +123,24 @@
   cursor: pointer;
 }
 
+.kid .kid-face {
+  grid-area: face;
+}
+
 .kid:hover {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-muted);
 }
 
-/* the selected child: a white row with a violet bar on its left edge */
 .kid.is-selected {
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(34, 31, 59, 0.08);
-}
-
-.kid.is-selected::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 4px;
-  border-radius: 4px;
-  background: var(--primary);
-}
-
-/* the status colour lives in the words under the code */
-.kid__dot {
-  display: none;
+  border-color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .kid__code {
   grid-area: code;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .kid__meta {
@@ -174,9 +188,9 @@
 /* the selected child's page */
 .dash-main {
   display: grid;
-  gap: var(--sp-6);
+  gap: var(--sp-5);
   width: 100%;
-  max-width: 1360px;
+  max-width: 1320px;
   min-width: 0;
   /* centred in the room beside the children column, so a wide screen has even margins on both sides */
   margin-inline: auto;
@@ -190,52 +204,62 @@
     "who actions"
     "note note";
   align-items: center;
-  gap: var(--sp-2) var(--sp-4);
+  gap: var(--sp-3) var(--sp-4);
 }
 
 .dash-child__who {
   grid-area: who;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 16px;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.dash-child__name {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
 }
 
 .dash-title {
-  font-family: var(--font-sans);
-  font-size: 2.2rem;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
-/* status as coloured words with a small square, not a pill */
+/* status: a small tag tinted by meaning */
 .dash-status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1rem;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 8px;
+  font-size: var(--fs-small);
   font-weight: 600;
 }
 
 .dash-status::before {
   content: "";
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   background: currentColor;
 }
 
 .dash-status.is-clear {
+  background: var(--ok-soft);
   color: var(--ok-text);
 }
 
 .dash-status.is-review {
+  background: var(--warn-soft);
   color: var(--warn-text);
 }
 
 .dash-status.is-insufficient {
-  color: var(--ink-3);
+  background: var(--surface-sunken);
+  color: var(--ink-2);
 }
 
 .dash-child__actions {
@@ -248,7 +272,7 @@
 
 .dash-note {
   grid-area: note;
-  max-width: 72ch;
+  max-width: 80ch;
   color: var(--ink-2);
   font-size: var(--fs-small);
 }
@@ -260,8 +284,8 @@
   gap: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
   border: var(--bw) solid #f1d48a;
-  border-left: 5px solid var(--warn);
-  border-radius: 10px;
+  border-left: 6px solid var(--warn);
+  border-radius: 16px;
   background: var(--warn-soft);
 }
 
@@ -297,14 +321,14 @@
   /* sideways scroll on a narrow screen only (overflow-x alone would also give a 1 px vertical scrollbar) */
   overflow-x: auto;
   overflow-y: hidden;
-  box-shadow: inset 0 -1px 0 var(--line);
+  box-shadow: inset 0 -1px 0 var(--line-strong);
 }
 
 .dash-tab {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-height: 48px;
   padding: 0 2px;
   border: none;
@@ -315,10 +339,6 @@
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-}
-
-.dash-tab svg {
-  display: none;
 }
 
 .dash-tab:hover:not([aria-selected="true"]) {
@@ -342,96 +362,224 @@
 
 .dash-panel {
   display: grid;
-  gap: var(--sp-8);
+  gap: var(--sp-5);
 }
 
 .dash-panel[hidden] {
   display: none;
 }
 
-.dash-h2,
 .dash-card__title {
   font-family: var(--font-sans);
   font-size: 1.15rem;
   font-weight: 700;
 }
 
-/* the last 7 days: four numbers in a row, split by hairlines */
+/* the week: a wide practice panel, then the two voice panels tinted by meaning */
 .week {
   display: grid;
-  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-4);
 }
 
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 0;
-  border-top: var(--bw) solid var(--line);
-  border-bottom: var(--bw) solid var(--line);
-}
-
-.kpi {
+.panel {
   display: grid;
   align-content: start;
-  gap: 2px;
-  padding: var(--sp-4) var(--sp-5);
+  gap: 6px;
+  min-width: 0;
+  padding: var(--sp-5);
+  border: var(--bw) solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
 }
 
-.kpi + .kpi {
-  border-left: var(--bw) solid var(--line);
-}
-
-.kpi:first-child {
-  padding-left: 0;
-}
-
-.kpi dd {
-  margin: 0;
-}
-
-.kpi__label {
+.panel__title {
   color: var(--ink-2);
+  font-family: var(--font-sans);
   font-size: var(--fs-small);
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: 700;
 }
 
-.kpi__value {
-  font-family: var(--font-sans);
-  font-size: 2.4rem;
-  font-weight: 700;
-  line-height: 1.15;
+.panel__value {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
-.kpi__value small {
-  margin-left: 4px;
-  color: var(--ink-3);
-  font-size: var(--fs-body);
+.panel__empty {
+  padding: 10px 0 6px;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
   font-weight: 600;
 }
 
-.kpi--oral .kpi__value {
+.panel__sub {
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+}
+
+.panel--oral {
+  border-color: var(--oral-tint);
+  background: var(--oral-soft);
+}
+
+.panel--oral .panel__title,
+.panel--oral .panel__value {
   color: var(--oral-text);
 }
 
-.kpi--nasal .kpi__value {
+.panel--nasal {
+  border-color: var(--nasal-tint);
+  background: var(--nasal-soft);
+}
+
+.panel--nasal .panel__title,
+.panel--nasal .panel__value {
   color: var(--nasal-text);
 }
 
-.kpi__sub {
-  color: var(--ink-3);
-  font-size: var(--fs-xs);
-  line-height: 1.5;
+/* a voice panel ends in a short bar of its value (nasal: with the plan's ceiling as a tick) */
+.panel--oral,
+.panel--nasal {
+  display: flex;
+  flex-direction: column;
 }
 
-.dash-today {
-  max-width: 80ch;
+.meter {
+  position: relative;
+  height: 10px;
+  margin-top: auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.panel__sub + .meter {
+  margin-top: max(var(--sp-3), auto);
+}
+
+.meter__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--oral);
+}
+
+.panel--nasal .meter__fill {
+  background: var(--nasal);
+}
+
+.meter__tick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.meter__legend {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+}
+
+/* seven day squares: mint with a tick on a day with practice, an outline on a day without; today is marked */
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.day__mark {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 56px;
+  aspect-ratio: 1;
+  border: 2px dashed var(--line-strong);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.day.is-done .day__mark {
+  border: none;
+  background: var(--candy-mint);
+  color: var(--candy-mint-ink);
+}
+
+.day.is-today .day__mark {
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary);
+}
+
+.day__label {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.day.is-today .day__label {
+  color: var(--primary-text);
+}
+
+.panel__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 6px 0 0;
+  padding-top: var(--sp-3);
+  border-top: var(--bw) solid var(--line);
+}
+
+.panel__stats dt {
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.panel__stats dd {
+  margin: 0;
   color: var(--ink-2);
   font-size: var(--fs-small);
 }
 
-.dash-today strong {
+.panel__stats b {
+  margin-right: 2px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel__stats small {
+  display: block;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+
+.dash-today {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+}
+
+.dash-today b {
   color: var(--ink);
 }
 
@@ -439,26 +587,24 @@
   display: block;
   margin-top: 2px;
   color: var(--ink-3);
-  font-size: var(--fs-xs);
 }
 
-/* overview: the chart beside the review rules, split by a hairline */
+/* overview: the chart beside the review rules */
 .dash-over {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
   align-items: start;
-  gap: var(--sp-8);
+  gap: var(--sp-4);
 }
 
 .dash-card {
   display: grid;
   gap: var(--sp-2);
   min-width: 0;
-}
-
-.dash-rules {
-  padding-left: var(--sp-8);
-  border-left: var(--bw) solid var(--line);
+  padding: var(--sp-5) var(--sp-6);
+  border: var(--bw) solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
 }
 
 .dash-card__sub {
@@ -486,7 +632,7 @@
   font-size: var(--fs-xs);
 }
 
-/* chart word group: two words with an underline, matching the tabs (not a pill switch) */
+/* chart word group: two words with an underline, matching the tabs */
 .dash-chart .seg {
   gap: var(--sp-4);
   padding: 0;
@@ -547,12 +693,11 @@
   text-align: left;
 }
 
-/* review rules: a plain list split by hairlines; a flagged rule gets the amber bar */
+/* review rules: rows split by hairlines; a flagged rule gets the amber bar */
 .rules {
   display: grid;
   margin: var(--sp-2) 0 0;
   padding: 0;
-  border-top: var(--bw) solid var(--line);
   list-style: none;
 }
 
@@ -561,13 +706,14 @@
   align-content: start;
   gap: 4px;
   padding: var(--sp-3) 0;
-  border-bottom: var(--bw) solid var(--line);
+  border-top: var(--bw) solid var(--line);
   font-size: var(--fs-small);
 }
 
 .rule--flag {
   margin-inline: calc(-1 * var(--sp-3));
   padding-inline: var(--sp-3);
+  border-radius: 12px;
   background: var(--warn-soft);
   box-shadow: inset 4px 0 0 var(--warn);
 }
@@ -575,7 +721,7 @@
 .rule__top {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: var(--sp-2);
 }
 
@@ -583,14 +729,23 @@
   font-weight: 700;
 }
 
-/* rule state as coloured words (the shared badge colours, without the pill) */
+/* rule state: a small square tag like the child's status */
 .rule__top .badge {
-  padding: 0;
+  padding: 2px 8px;
   border: none;
-  background: none;
+  border-radius: 8px;
+  background: var(--surface-sunken);
   font-size: var(--fs-xs);
   font-weight: 600;
   white-space: nowrap;
+}
+
+.rule__top .badge--ok {
+  background: var(--ok-soft);
+}
+
+.rule__top .badge--warn {
+  background: #ffe3a3;
 }
 
 .rule__detail {
@@ -818,25 +973,20 @@ fieldset.field legend {
   gap: var(--sp-2);
 }
 
-@media (max-width: 1180px) {
-  /* two by two: the third number starts a row, so it loses the left hairline and gains a top one */
-  .kpis {
+/* below ~1360px the three panels would be too narrow side by side: the practice panel takes the whole row and the
+   two voice panels share the next */
+@media (max-width: 1360px) {
+  .week {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .kpi:nth-child(3) {
-    border-left: none;
-    padding-left: 0;
+  .panel--practice {
+    grid-column: 1 / -1;
   }
-  .kpi:nth-child(n + 3) {
-    border-top: var(--bw) solid var(--line);
-  }
+}
+
+@media (max-width: 1180px) {
   .dash-over {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .dash-rules {
-    padding: var(--sp-6) 0 0;
-    border-left: none;
-    border-top: var(--bw) solid var(--line);
   }
 }
 
@@ -853,8 +1003,7 @@ fieldset.field legend {
     border-right: none;
     border-bottom: var(--bw) solid var(--line);
   }
-  /* app name and view switch share one row while both fit (tablet); on a phone the switch wraps below the name
-     instead of squeezing it */
+  /* app name and view switch share one row while both fit (tablet); on a phone the switch wraps below the name */
   .dash-side__head {
     display: flex;
     flex-wrap: wrap;
@@ -869,7 +1018,7 @@ fieldset.field legend {
   }
   .kids {
     grid-auto-flow: column;
-    grid-auto-columns: minmax(170px, 1fr);
+    grid-auto-columns: minmax(200px, 1fr);
     gap: var(--sp-2);
     overflow-x: auto;
     /* room for the focus ring, which the scroller would otherwise clip (also when a focused card scrolls into view) */
@@ -877,16 +1026,11 @@ fieldset.field legend {
     margin: -6px;
     scroll-padding-inline: 6px;
   }
-  /* in a sideways row each child is a small white tile; the selected one is outlined in violet */
   .kid {
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    border-color: var(--line);
   }
   .kid.is-selected {
-    box-shadow: inset 0 0 0 2px var(--primary);
-  }
-  .kid.is-selected::before {
-    display: none;
+    border-color: var(--primary);
   }
   .dash-privacy {
     margin-top: 0;
@@ -909,8 +1053,12 @@ fieldset.field legend {
 }
 
 @media (max-width: 600px) {
+  .kid-face--lg {
+    width: 60px;
+    height: 60px;
+  }
   .dash-title {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
   /* the two buttons go under the name, side by side */
   .dash-child {
@@ -926,34 +1074,46 @@ fieldset.field legend {
   .dash-child__actions .btn {
     flex: 1 1 auto;
   }
-  .kpi {
-    padding: var(--sp-3) var(--sp-3);
+  .week {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .kpi:nth-child(odd) {
-    padding-left: 0;
+  .panel,
+  .dash-card {
+    padding: var(--sp-4);
   }
-  .kpi__value {
-    font-size: 1.8rem;
+  .panel__value {
+    font-size: 2.4rem;
   }
-  /* four short tab words fit a phone in one row */
+  .days {
+    gap: 4px;
+  }
+  /* four short tab words fit a phone in one row (no icons) */
   .dash-tabs {
     justify-content: space-between;
     gap: var(--sp-2);
+  }
+  .dash-tab svg {
+    display: none;
   }
   /* "ต้นแบบเดโม มุมมอง" on its own line, the two view links together under it */
   .dash-side .viewswitch__label {
     flex-basis: 100%;
   }
-  /* two whole child tiles on a 390 phone with the next one peeking, and the second tile's code still whole at 320 */
+  /* about two child tiles on a 390 phone with the next one peeking */
   .kids {
-    grid-auto-columns: minmax(140px, calc((100% - 16px) / 2.25));
+    grid-auto-columns: minmax(150px, calc((100% - 16px) / 2.2));
   }
   .kid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 36px minmax(0, 1fr);
     grid-template-areas:
-      "code"
-      "status"
-      "meta";
+      "face code"
+      "face status"
+      "meta meta";
+    column-gap: 8px;
+  }
+  .kid .kid-face {
+    width: 36px;
+    height: 36px;
   }
   .dash-alert {
     padding: var(--sp-4);
@@ -978,14 +1138,8 @@ fieldset.field legend {
   max-width: 100%;
 }
 
-/* the "this device" tab: its two groups split by a hairline */
-.data-tools + .data-tools {
-  padding-top: var(--sp-8);
-  border-top: var(--bw) solid var(--line);
-}
 
-/* headings on the clinician side read as plain text, not the children's rounded display face (the app name keeps it) */
-.dash h1,
+/* section headings on the clinician side read as plain text; the child's code and the big numbers keep the rounded face */
 .dash h2,
 .dash h3 {
   font-family: var(--font-sans);

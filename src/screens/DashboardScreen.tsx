@@ -12,7 +12,9 @@ import { PLAN_LIMITS, planToDraft, validatePlan, wordError, type PlanDraft, type
 import { GAME_LABEL, LEVEL_LABEL, type Child, type GameId, type Level } from "../data/schema";
 import { clearDemoPlays, clearSampleData, findChild, resetAllDemoData, savePlan, setActiveChild, useDB } from "../data/store";
 import { navigate } from "../lib/router";
-import { attemptsOnDay, dayKey } from "../data/rewards";
+import { attemptsOnDay, dayKey, rewardsOf } from "../data/rewards";
+import { RenderImg } from "../components/RenderImg";
+import { DAY_MS, startOfDay } from "../data/format";
 
 const STATE_BADGE: Record<RuleState | "review", { cls: string; text: string }> = {
   review: { cls: "badge--warn", text: "ควรทบทวน" },
@@ -430,6 +432,28 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 
 type ChartKind = "oral" | "nasal";
 
+const WEEKDAY = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+/** The last 7 days ending today (same window as the 7-day numbers): which days had any saved round. */
+function lastSevenDays(sessions: { startedAt: string }[], now: Date): { key: number; label: string; practiced: boolean; today: boolean }[] {
+  const today = startOfDay(now).getTime();
+  const days = new Set(sessions.map((s) => startOfDay(new Date(s.startedAt)).getTime()));
+  return Array.from({ length: 7 }, (_, i) => {
+    const key = today - (6 - i) * DAY_MS;
+    return { key, label: WEEKDAY[new Date(key).getDay()], practiced: days.has(key), today: i === 6 };
+  });
+}
+
+/** The character the child picked in the game: a small round portrait (falls back to the bunny). */
+function KidFace({ childId, db, size }: { childId: string; db: ReturnType<typeof useDB>; size: "sm" | "lg" }) {
+  const species = rewardsOf(db, childId).species;
+  return (
+    <span className={`kid-face kid-face--${size}`} aria-hidden="true">
+      <RenderImg name={`avatar-${species}`} fallback={<RenderImg name="avatar-bunny" fallback={null} />} />
+    </span>
+  );
+}
+
 /** Status dot + short label for a child: one place for what used to be a dropdown, a sidebar and a banner. */
 function statusOf(r: ReviewStatus): { cls: string; text: string } {
   return r.overall === "review" ? { cls: "is-review", text: "ควรทบทวน" } : r.overall === "insufficient" ? { cls: "is-insufficient", text: "ข้อมูลยังไม่พอ" } : { cls: "is-clear", text: "ไม่มีแจ้งเตือน" };
@@ -463,6 +487,7 @@ export function DashboardScreen() {
   const today = dayKey(now.getTime());
   const deviceToday = attemptsOnDay(db, child.id, "device", today);
   const demoToday = attemptsOnDay(db, child.id, "demo", today);
+  const week = lastSevenDays(childSessions(db, child.id), now);
 
   const openKidView = () => {
     setActiveChild(child.id);
@@ -508,7 +533,7 @@ export function DashboardScreen() {
                   // on a phone the children are a sideways row: bring a half-hidden card (and its focus ring) fully into view
                   onFocus={(e) => e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" })}
                 >
-                  <span className={`kid__dot ${s.cls}`} aria-hidden="true" />
+                  <KidFace childId={x.child.id} db={db} size="sm" />
                   <span className="kid__code">{x.child.id}</span>
                   <span className={`kid__status ${s.cls}`}>{s.text}</span>
                   <span className="kid__meta">ฝึก {last.practiceDays}/7 วัน</span>
@@ -525,11 +550,14 @@ export function DashboardScreen() {
       <main className="dash-main">
         <header className="dash-child">
           <div className="dash-child__who">
-            <h1 className="dash-title">
-              <span className="sr-only">ผลการฝึกที่บ้านของ </span>
-              {child.id}
-            </h1>
-            <p className={`dash-status ${status.cls}`}>{status.text}</p>
+            <KidFace childId={child.id} db={db} size="lg" />
+            <div className="dash-child__name">
+              <h1 className="dash-title">
+                <span className="sr-only">ผลการฝึกที่บ้านของ </span>
+                {child.id}
+              </h1>
+              <p className={`dash-status ${status.cls}`}>{status.text}</p>
+            </div>
           </div>
           <div className="dash-child__actions">
             <button type="button" className="btn btn--secondary" onClick={openKidView}>
@@ -589,45 +617,64 @@ export function DashboardScreen() {
         {/* panels stay mounted (hidden) so an unsaved plan is not lost when switching tabs */}
         <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="dash-panel" hidden={tab !== "overview"}>
           <section className="week" aria-labelledby="week-title">
-            <h2 id="week-title" className="dash-h2">
+            <h2 id="week-title" className="sr-only">
               7 วันล่าสุด
             </h2>
-            <dl className="kpis">
-              <div className="kpi">
-                <dt className="kpi__label">วันที่ฝึก</dt>
-                <dd className="kpi__value">
-                  {wk.practiceDays}
-                  <small>/7 วัน</small>
-                </dd>
-                <dd className="kpi__sub">สัปดาห์ก่อน {prev.practiceDays} วัน</dd>
+            <div className="panel panel--practice">
+              <h3 className="panel__title">การฝึก 7 วันล่าสุด</h3>
+              <ol className="days" aria-label={`ฝึก ${wk.practiceDays} จาก 7 วัน`}>
+                {week.map((d) => (
+                  <li key={d.key} className={`day${d.practiced ? " is-done" : ""}${d.today ? " is-today" : ""}`}>
+                    <span className="day__mark" aria-hidden="true">
+                      {d.practiced ? <Icon name="check" size={16} /> : null}
+                    </span>
+                    <span className="day__label">{d.today ? "วันนี้" : d.label}</span>
+                    <span className="sr-only">{d.practiced ? "ฝึกแล้ว" : "ไม่ได้ฝึก"}</span>
+                  </li>
+                ))}
+              </ol>
+              <dl className="panel__stats">
+                <div>
+                  <dt>วันที่ฝึก</dt>
+                  <dd>
+                    <b>{wk.practiceDays}</b> จาก 7 วัน <small>สัปดาห์ก่อน {prev.practiceDays} วัน</small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>ลองพูดคำด้านปาก</dt>
+                  <dd>
+                    <b>{wk.attempts}</b> ครั้ง <small>นับ 1 ครั้งต่อ 1 ช่วงเสียง</small>
+                  </dd>
+                </div>
+              </dl>
+              <p className="dash-today">
+                วันนี้ลองพูดที่สัญญาณใช้ได้ <b>{deviceToday + demoToday}</b> ครั้ง (อุปกรณ์จริง {deviceToday}, โหมดสาธิต {demoToday})
+                <small>นับช่วงเสียงที่ใช้ได้ ไม่ใช่จำนวนคำที่พูดถูก เพราะเครื่องไม่รู้จำคำ ของรางวัลในเกาะของเด็กโตตามตัวเลขนี้ แยกตามแหล่ง</small>
+              </p>
+            </div>
+            <div className="panel panel--oral">
+              <h3 className="panel__title">ผ่านเกณฑ์ด้านปาก (เดโม)</h3>
+              {passRate === null ? <p className="panel__empty">ยังไม่มีรอบที่ใช้เกณฑ์ในสัปดาห์นี้</p> : <p className="panel__value">{fmtPct(passRate)}</p>}
+              <p className="panel__sub">ออกปากถึงเกณฑ์ของแต่ละรอบ (เกณฑ์ตอนนี้ ออกปากอย่างน้อย {plan.oralThreshold}%)</p>
+              <div className="meter" aria-hidden="true">
+                <span className="meter__fill" style={{ width: `${Math.min(100, passRate ?? 0)}%` }} />
               </div>
-              <div className="kpi">
-                <dt className="kpi__label">ลองพูดคำด้านปาก</dt>
-                <dd className="kpi__value">
-                  {wk.attempts}
-                  <small>ครั้ง</small>
-                </dd>
-                <dd className="kpi__sub">นับ 1 ครั้งต่อ 1 ช่วงเสียง</dd>
+            </div>
+            <div className="panel panel--nasal">
+              <h3 className="panel__title">เสียงออกจมูกเฉลี่ย (คำด้านปาก)</h3>
+              {wk.nasalOral === null ? <p className="panel__empty">ยังไม่มีค่าในสัปดาห์นี้</p> : <p className="panel__value">{fmtPct(wk.nasalOral)}</p>}
+              <p className="panel__sub">
+                {delta === null ? "ยังเทียบสัปดาห์ก่อนไม่ได้" : `${delta <= 0 ? "ลดลง" : "เพิ่มขึ้น"} ${Math.abs(delta).toFixed(1)} จุดจากสัปดาห์ก่อน`}
+                <br />
+                คำนาสิก {fmtPct(wk.nasalNasal)}
+              </p>
+              {/* 0–60% like the chart; the tick is the plan's ceiling for oral words */}
+              <div className="meter" aria-hidden="true">
+                <span className="meter__fill" style={{ width: `${Math.min(100, ((wk.nasalOral ?? 0) / 60) * 100)}%` }} />
+                <span className="meter__tick" style={{ left: `${Math.min(100, (oralTarget / 60) * 100)}%` }} />
               </div>
-              <div className="kpi kpi--oral">
-                <dt className="kpi__label">ผ่านเกณฑ์ด้านปาก (เดโม)</dt>
-                <dd className="kpi__value">{fmtPct(passRate)}</dd>
-                <dd className="kpi__sub">ออกปากถึงเกณฑ์ของแต่ละรอบ</dd>
-              </div>
-              <div className="kpi kpi--nasal">
-                <dt className="kpi__label">เสียงออกจมูกเฉลี่ย (คำด้านปาก)</dt>
-                <dd className="kpi__value">{fmtPct(wk.nasalOral)}</dd>
-                <dd className="kpi__sub">
-                  {delta === null ? "ยังเทียบสัปดาห์ก่อนไม่ได้" : `${delta <= 0 ? "ลดลง" : "เพิ่มขึ้น"} ${Math.abs(delta).toFixed(1)} จุดจากสัปดาห์ก่อน`}
-                  <br />
-                  คำนาสิก {fmtPct(wk.nasalNasal)}
-                </dd>
-              </div>
-            </dl>
-            <p className="dash-today">
-              <strong>วันนี้ลองพูดที่สัญญาณใช้ได้ {deviceToday + demoToday} ครั้ง</strong> (อุปกรณ์จริง {deviceToday} ครั้ง, โหมดสาธิต {demoToday} ครั้ง)
-              <small>นับช่วงเสียงที่ใช้ได้ ไม่ใช่จำนวนคำที่พูดถูก เพราะเครื่องไม่รู้จำคำ ของรางวัลในเกาะของเด็กโตตามตัวเลขนี้ แยกตามแหล่ง</small>
-            </p>
+              <p className="meter__legend">ขีดคือแผน ไม่เกิน {oralTarget}%</p>
+            </div>
           </section>
 
           <div className="dash-over">
