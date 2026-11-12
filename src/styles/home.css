@@ -993,26 +993,48 @@ button.trail__node:focus-visible {
   }
 }
 
-/* wide landscape: path on the left, greeting / today / game cards on the right — no sheet needed */
+/* wide landscape (computer, iPad sideways): the home fills the whole screen, with no frame around it.
+   Left: greeting, today's banner and the path down the full height. Right: the teacher bar, the game cards in at
+   most two rows (an odd count makes the newest game a wide card), collectibles beside "my island". The adult footer
+   runs along the bottom. The card pictures take the height that is left, so common desktop screens need no scroll;
+   a long path (5–6 rounds) on a short screen lets the page grow instead of squeezing the steps. */
 @media (min-width: 900px) and (orientation: landscape) {
+  .kid-screen:has(> .home) {
+    padding: 0;
+  }
   .kid-frame.home {
+    /* vertical room the screen gives to everything except the card pictures (calibrated in the browser) */
+    --home-chrome: 400px;
+    --rows: 1;
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.15fr);
+    grid-template-columns: clamp(320px, 28vw, 520px) clamp(0px, 1.4vw, 32px) minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
-      "top top"
-      "path head"
-      "path today"
-      "path choose"
-      "path collect"
-      "foot foot";
-    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
-    align-items: start;
-    column-gap: var(--sp-10);
-    row-gap: var(--sp-4);
-    max-width: 1280px;
+      "head  . top     top"
+      "today . choose  choose"
+      "path  . choose  choose"
+      "path  . collect island"
+      "foot  foot foot foot";
+    /* 1fr (not minmax(0, 1fr)): content that needs more room grows the page instead of overlapping */
+    grid-template-rows: auto auto 1fr auto auto;
+    column-gap: var(--sp-4);
+    row-gap: clamp(10px, 1.6vh, var(--sp-5));
+    width: 100%;
+    max-width: none;
+    min-height: 100dvh;
+    padding: clamp(14px, 2.4vh, var(--sp-8)) clamp(var(--sp-5), 2.6vw, 48px);
+    /* no frame: the page itself is the sheet */
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .kid-frame.home:has(.plays[data-count="5"], .plays[data-count="6"], .plays[data-count="7"]) {
+    --rows: 2;
   }
   .home > .home-top {
     grid-area: top;
+    align-self: center;
+    align-items: center;
   }
   .home > .home-head {
     grid-area: head;
@@ -1024,70 +1046,103 @@ button.trail__node:focus-visible {
   .home > .home-path {
     grid-area: path;
     align-self: stretch;
-    padding: var(--sp-4) 0;
+    align-content: center;
+    padding: var(--sp-2) var(--sp-3);
     border-radius: var(--r-xl);
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.55);
   }
   .home > .home-choose {
     grid-area: choose;
     display: grid;
+    grid-template-rows: auto 1fr;
     gap: var(--sp-3);
   }
   .home > .collect-strip {
     grid-area: collect;
   }
+  .home > .home-island {
+    grid-area: island;
+  }
   .home > .home-foot {
     grid-area: foot;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--sp-8);
+    margin-top: 0;
+    padding-top: var(--sp-3);
+  }
+  .home-foot > .disclaimer {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    text-align: end;
+  }
+
+  .home-head__name {
+    font-size: clamp(1.6rem, 1.1rem + 1vw, 2.2rem);
+  }
+  .home-choose__title {
+    font-size: clamp(1.5rem, 1.1rem + 0.9vw, 2.1rem);
+  }
+
+  /* the path spreads down the left side; the steps grow with the screen height */
+  .home-path .trail {
+    gap: clamp(4px, 1vh, 16px);
   }
   .trail__step {
-    --step: 56px;
-  }
-  .trail__buddy {
-    width: 124px;
-  }
-  /* shorter pictures so the cards, the banner and the collectibles fit one desktop screen */
-  .home-choose .play-card__pic {
-    aspect-ratio: 120 / 68;
-  }
-  /* the path sits in the middle of its panel, at the tablet's larger stop size */
-  .home > .home-path {
-    align-content: center;
+    --step: clamp(40px, 3.2vw, 64px);
   }
   .trail__node {
-    width: 76px;
-    height: 76px;
-  }
-  .trail__node.is-current {
-    width: 100px;
-    height: 100px;
+    width: clamp(52px, 6.6vh, 80px);
+    height: clamp(52px, 6.6vh, 80px);
   }
   .trail__node--mic {
-    width: 64px;
-    height: 64px;
+    width: clamp(46px, 5.6vh, 68px);
+    height: clamp(46px, 5.6vh, 68px);
   }
   .trail__node--chest {
-    width: 88px;
-    height: 88px;
+    width: clamp(58px, 7.4vh, 92px);
+    height: clamp(58px, 7.4vh, 92px);
   }
-  /* three columns (a 6-track grid): 7 → a full-width first card + 6; 5 → a wide first card + 4; 4 or 2 → two per row; 3 → one row */
+  .trail__node.is-current {
+    width: clamp(70px, 9vh, 108px);
+    height: clamp(70px, 9vh, 108px);
+  }
+  .trail__buddy {
+    width: clamp(96px, 14vh, 160px);
+  }
+
+  /* the game cards: 1–4 in one row, 5–7 in two rows (7: the newest card wide + 2, then 4; 5: the newest across the
+     row, then 4; 6: three and three). Each picture takes its row's share of the height left on the screen, but never
+     gets taller than its card's width allows (renders are landscape), so wide screens keep whole scenes. */
   .home-choose .plays {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    grid-auto-rows: auto;
+    align-content: center;
+    gap: clamp(12px, 1.2vw, 20px);
   }
-  .home-choose .plays > li,
-  .home-choose .plays[data-count="3"] > li:first-child {
+  .home-choose .plays[data-count="1"] {
+    --cols: 1;
+    grid-template-columns: minmax(0, 420px);
+    justify-content: center;
+  }
+  .home-choose .plays[data-count="2"] {
+    --cols: 2;
+  }
+  .home-choose .plays[data-count="3"],
+  .home-choose .plays[data-count="6"] {
+    --cols: 3;
+  }
+  .home-choose .plays > li {
+    grid-column: auto;
+    container-type: inline-size;
+  }
+  .home-choose .plays[data-count="7"] > li:first-child {
     grid-column: span 2;
   }
   .home-choose .plays[data-count="5"] > li:first-child {
-    grid-column: span 4;
-  }
-  /* 7 games → the newest one wide across the row, then two rows of three */
-  .home-choose .plays[data-count="7"] > li:first-child {
     grid-column: 1 / -1;
   }
-  .home-choose .plays[data-count="4"] > li,
-  .home-choose .plays[data-count="2"] > li {
-    grid-column: span 3;
-  }
+  /* three games sit in one row of equal cards (the phone's wide first card is not needed here) */
   .home-choose .plays[data-count="3"] > li:first-child .play-card {
     grid-template-columns: none;
     grid-template-rows: auto auto;
@@ -1095,8 +1150,140 @@ button.trail__node:focus-visible {
     gap: 8px;
     padding: 10px 10px 16px;
   }
-  .home-choose .plays[data-count="3"] > li:first-child .play-card__verb {
-    font-size: clamp(1.1rem, 4.6vw, 1.4rem);
+  .home-choose .play-card__pic {
+    aspect-ratio: auto;
+    height: max(76px, calc((100dvh - var(--home-chrome) - (var(--rows) - 1) * 20px) / var(--rows) - 72px));
+    /* 26px = the card's side padding and border; 1.3 = a little squarer than the renders' 360 × 252 */
+    max-height: calc((100cqi - 26px) / 1.3);
+  }
+  /* the wide card: picture beside the verb, as tall as the cards next to it */
+  .home-choose .plays[data-count="5"] > li:first-child .play-card__pic,
+  .home-choose .plays[data-count="7"] > li:first-child .play-card__pic {
+    max-height: none;
+  }
+  .home-choose .play-card__pic img {
+    object-position: 50% 65%;
+  }
+  .home-choose .play-card__verb {
+    font-size: clamp(1.1rem, 0.75rem + 0.6vw, 1.5rem);
+  }
+  .home-choose .plays[data-count="5"] > li:first-child .play-card__verb,
+  .home-choose .plays[data-count="7"] > li:first-child .play-card__verb {
+    font-size: clamp(1.3rem, 0.9rem + 0.9vw, 2rem);
+  }
+}
+
+/* short wide screens (laptops, laptops at 125% zoom, iPad sideways): everything tightens so the path, the banner
+   and two rows of cards still fit one screen */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 830px) {
+  .kid-frame.home {
+    --home-chrome: 330px;
+    row-gap: 6px;
+    padding-block: var(--sp-3);
+  }
+  .avatar {
+    width: 56px;
+    height: 56px;
+  }
+  /* greeting and counters on one line */
+  .home-head {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas: "avatar who stats";
+    column-gap: var(--sp-3);
+  }
+  .home-head__name {
+    font-size: 1.45rem;
+  }
+  .home-today {
+    gap: 6px;
+    padding-block: 10px;
+  }
+  .home-today__minutes {
+    margin-top: 0;
+  }
+  .home > .home-path {
+    padding-block: 4px;
+  }
+  .home-path .trail {
+    gap: 2px;
+  }
+  .trail__step {
+    gap: 2px;
+  }
+  .trail__label {
+    font-size: var(--fs-xs);
+  }
+  .trail__bubble {
+    padding: 2px 10px;
+    font-size: 0.9rem;
+  }
+  .trail__node {
+    width: 46px;
+    height: 46px;
+  }
+  .trail__node--mic {
+    width: 40px;
+    height: 40px;
+  }
+  .trail__node--chest {
+    width: 52px;
+    height: 52px;
+  }
+  .trail__node.is-current {
+    width: 62px;
+    height: 62px;
+  }
+  .trail__buddy {
+    width: 84px;
+  }
+  .home > .collect-strip,
+  .home > .home-island {
+    min-height: 0;
+    padding-block: 8px;
+  }
+  .collect-strip__item {
+    width: 40px;
+    height: 40px;
+  }
+  .home-island__pic {
+    width: 46px;
+    height: 46px;
+  }
+  .home > .home-foot {
+    padding-top: var(--sp-2);
+  }
+}
+
+/* very short (1366 × 768 laptops): the path steps shrink once more */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 690px) {
+  .kid-frame.home {
+    --home-chrome: 300px;
+  }
+  .trail__node {
+    width: 40px;
+    height: 40px;
+  }
+  .trail__node--mic {
+    width: 36px;
+    height: 36px;
+  }
+  .trail__node--chest {
+    width: 46px;
+    height: 46px;
+  }
+  .trail__node.is-current {
+    width: 54px;
+    height: 54px;
+  }
+  .trail__buddy {
+    width: 70px;
+  }
+  .trail__label {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+  .home-today__minutes {
+    font-size: var(--fs-xs);
   }
 }
 
