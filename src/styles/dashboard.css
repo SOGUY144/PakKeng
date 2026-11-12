@@ -1144,3 +1144,11 @@ fieldset.field legend {
 .dash h3 {
   font-family: var(--font-sans);
 }
+
+/* history table: the PDF report of a round (opens in a new tab) */
+.report-link {
+  min-height: 34px;
+  padding: 0 12px;
+  white-space: nowrap;
+  text-decoration: none;
+}

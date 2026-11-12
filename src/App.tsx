@@ -18,6 +18,7 @@ import { TowerScreen } from "./screens/TowerScreen";
 import { TrainScreen } from "./screens/TrainScreen";
 import { PlaneScreen } from "./screens/PlaneScreen";
 import { BakeryScreen } from "./screens/BakeryScreen";
+import { ReportScreen } from "./screens/ReportScreen";
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 
 const TITLES: Record<Route, string> = {
@@ -36,6 +37,7 @@ const TITLES: Record<Route, string> = {
   bakery: "ร้านขนมของเพื่อน",
   island: "เกาะของฉัน",
   dashboard: "แดชบอร์ดนักแก้ไขการพูด",
+  report: "รายงานรอบฝึก",
 };
 
 /** A game the teacher has not enabled for this child cannot be opened by URL either. */
@@ -100,6 +102,8 @@ function Screen({ route }: { route: Route }) {
       return <IslandScreen />;
     case "dashboard":
       return <DashboardScreen />;
+    case "report":
+      return <ReportScreen />;
   }
 }
 
@@ -107,12 +111,13 @@ export function App() {
   const route = useRoute();
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = `${TITLES[route]} · ${GAME_NAME}`;
+    // the report page sets its own title: it becomes the saved PDF's file name
+    if (route !== "report") document.title = `${TITLES[route]} · ${GAME_NAME}`;
   }, [route]);
 
   return (
     <>
-      <div className={`app ${route === "dashboard" ? "app--teacher" : "app--kid"}`}>
+      <div className={`app ${route === "dashboard" ? "app--teacher" : route === "report" ? "app--report" : "app--kid"}`}>
         <Screen key={route} route={route} />
       </div>
       <ToastRegion />

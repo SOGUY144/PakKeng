@@ -11,7 +11,7 @@ import { fmtDayMonth, fmtDuration, fmtPct, fmtRange, fmtTime } from "../data/for
 import { PLAN_LIMITS, planToDraft, validatePlan, wordError, type PlanDraft, type PlanErrors } from "../data/plan";
 import { GAME_LABEL, LEVEL_LABEL, type Child, type GameId, type Level } from "../data/schema";
 import { clearDemoPlays, clearSampleData, findChild, resetAllDemoData, savePlan, setActiveChild, useDB } from "../data/store";
-import { navigate } from "../lib/router";
+import { navigate, reportHref } from "../lib/router";
 import { attemptsOnDay, dayKey, rewardsOf } from "../data/rewards";
 import { RenderImg } from "../components/RenderImg";
 import { DAY_MS, startOfDay } from "../data/format";
@@ -772,12 +772,13 @@ export function DashboardScreen() {
                       ออกจมูก · คำนาสิก
                     </th>
                     <th scope="col">ที่มา</th>
+                    <th scope="col">รายงาน</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="table__empty">
+                      <td colSpan={10} className="table__empty">
                         ยังไม่มีประวัติการฝึก
                       </td>
                     </tr>
@@ -821,6 +822,18 @@ export function DashboardScreen() {
                           <td>
                             <span className={`badge ${s.source === "sample" ? "badge--sample" : "badge--demo"}`}>{s.source === "sample" ? "ตัวอย่าง" : s.source === "device" ? "อุปกรณ์จริง" : "โหมดสาธิต"}</span>
                             {s.endedEarly ? <span className="badge">จบก่อนครบ</span> : null}
+                          </td>
+                          <td>
+                            {/* opens the round's A4 report in a new tab, which brings up the print / save-as-PDF dialog */}
+                            <a
+                              className="btn btn--secondary btn--sm report-link"
+                              href={reportHref(s.id, true)}
+                              target="_blank"
+                              rel="noopener"
+                              aria-label={`รายงาน PDF ของรอบ ${fmtDayMonth(d)} ${fmtTime(d)} (เปิดแท็บใหม่)`}
+                            >
+                              <Icon name="save" size={16} /> PDF
+                            </a>
                           </td>
                         </tr>
                       );
