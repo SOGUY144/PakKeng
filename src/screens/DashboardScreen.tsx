@@ -459,6 +459,10 @@ export function DashboardScreen() {
   const cal = db.calibrations[child.id];
   const delta = wk.nasalOral !== null && prev.nasalOral !== null ? wk.nasalOral - prev.nasalOral : null;
   const passRate = wk.attempts > 0 ? (wk.passed / wk.attempts) * 100 : null;
+  // today's usable tries, kept apart by source (the child's island rewards grow from these)
+  const today = dayKey(now.getTime());
+  const deviceToday = attemptsOnDay(db, child.id, "device", today);
+  const demoToday = attemptsOnDay(db, child.id, "demo", today);
 
   const openKidView = () => {
     setActiveChild(child.id);
@@ -521,13 +525,11 @@ export function DashboardScreen() {
       <main className="dash-main">
         <header className="dash-child">
           <div className="dash-child__who">
-            <p className="dash-crumb">แดชบอร์ดติดตามการฝึกที่บ้าน</p>
             <h1 className="dash-title">
-              {child.id} <span className={`dash-status ${status.cls}`}>{status.text}</span>
+              <span className="sr-only">ผลการฝึกที่บ้านของ </span>
+              {child.id}
             </h1>
-            <p className="dash-note">
-              <span className="badge badge--sample">ข้อมูลตัวอย่าง + รอบที่เล่น (โหมดสาธิตและอุปกรณ์รวมกัน)</span> ใช้ดูแนวโน้มจากการฝึกเท่านั้น ไม่ใช้วินิจฉัย
-            </p>
+            <p className={`dash-status ${status.cls}`}>{status.text}</p>
           </div>
           <div className="dash-child__actions">
             <button type="button" className="btn btn--secondary" onClick={openKidView}>
@@ -544,6 +546,7 @@ export function DashboardScreen() {
               <Icon name="target" size={18} /> แก้แผน
             </button>
           </div>
+          <p className="dash-note">ตัวเลขรวมข้อมูลตัวอย่างกับรอบที่เล่นในเดโม (โหมดสาธิตและอุปกรณ์) ใช้ดูแนวโน้มการฝึกเท่านั้น ไม่ใช้วินิจฉัย</p>
         </header>
 
         {flagRule ? (
@@ -553,7 +556,7 @@ export function DashboardScreen() {
             </span>
             <div className="dash-alert__body">
               <h2 id="alert-title" className="dash-alert__title">
-                ควรทบทวนแผน · {flagRule.title}
+                ควรทบทวนแผน: {flagRule.title}
               </h2>
               <p>{flagRule.detail}</p>
               <p className="dash-alert__fine">มาจากกฎตัวอย่างของเดโม (ดู {flagRule.used.length} สัปดาห์ล่าสุด) ใช้เลือกว่าควรดูข้อมูลใครก่อน ไม่ใช่การวินิจฉัย</p>
@@ -585,56 +588,47 @@ export function DashboardScreen() {
 
         {/* panels stay mounted (hidden) so an unsaved plan is not lost when switching tabs */}
         <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="dash-panel" hidden={tab !== "overview"}>
-          <p className="dash-today" aria-label="วันนี้">
-            <Icon name="mic" size={18} />
-            <span>
-              <strong>วันนี้ตรวจพบการลองพูดที่สัญญาณใช้ได้</strong> · อุปกรณ์จริง {attemptsOnDay(db, child.id, "device", dayKey(Date.now()))} ครั้ง ·
-              โหมดสาธิต {attemptsOnDay(db, child.id, "demo", dayKey(Date.now()))} ครั้ง
-              <small>นับช่วงเสียงที่ใช้ได้ ไม่ใช่จำนวนคำที่พูดถูก (ไม่มีระบบรู้จำคำ) · ของรางวัลในเกาะของเด็กโตจากตัวเลขนี้ แยกตามแหล่ง</small>
-            </span>
-          </p>
-          <div className="kpis" role="group" aria-label={`สรุป 7 วันล่าสุดของ ${child.id}`}>
-            <div className="kpi kpi--days">
-              <span className="kpi__icon" aria-hidden="true">
-                <Icon name="flag" size={20} />
-              </span>
-              <span className="kpi__label">วันที่ฝึก · 7 วัน</span>
-              <span className="kpi__value">
-                {wk.practiceDays}
-                <small>/7 วัน</small>
-              </span>
-              <span className="kpi__sub">สัปดาห์ก่อน {prev.practiceDays} วัน</span>
-            </div>
-            <div className="kpi kpi--attempts">
-              <span className="kpi__icon" aria-hidden="true">
-                <Icon name="mic" size={20} />
-              </span>
-              <span className="kpi__label">ครั้งที่ลองพูด · คำด้านปาก</span>
-              <span className="kpi__value">
-                {wk.attempts}
-                <small>ครั้ง</small>
-              </span>
-              <span className="kpi__sub">1 ครั้ง = 1 ช่วงเสียง</span>
-            </div>
-            <div className="kpi kpi--oral">
-              <span className="kpi__icon" aria-hidden="true">
-                <Icon name="mouth" size={20} />
-              </span>
-              <span className="kpi__label">ผ่านเกณฑ์ด้านปาก (เดโม)</span>
-              <span className="kpi__value">{fmtPct(passRate)}</span>
-              <span className="kpi__sub">ออกปากถึงเกณฑ์ที่ใช้ในแต่ละรอบ</span>
-            </div>
-            <div className="kpi kpi--nasal">
-              <span className="kpi__icon" aria-hidden="true">
-                <Icon name="nose" size={20} />
-              </span>
-              <span className="kpi__label">ออกจมูกเฉลี่ย · คำด้านปาก</span>
-              <span className="kpi__value">{fmtPct(wk.nasalOral)}</span>
-              <span className="kpi__sub">
-                {delta === null ? "ยังเทียบสัปดาห์ก่อนไม่ได้" : `${delta <= 0 ? "ลดลง" : "เพิ่มขึ้น"} ${Math.abs(delta).toFixed(1)} จุด`} · คำนาสิก {fmtPct(wk.nasalNasal)}
-              </span>
-            </div>
-          </div>
+          <section className="week" aria-labelledby="week-title">
+            <h2 id="week-title" className="dash-h2">
+              7 วันล่าสุด
+            </h2>
+            <dl className="kpis">
+              <div className="kpi">
+                <dt className="kpi__label">วันที่ฝึก</dt>
+                <dd className="kpi__value">
+                  {wk.practiceDays}
+                  <small>/7 วัน</small>
+                </dd>
+                <dd className="kpi__sub">สัปดาห์ก่อน {prev.practiceDays} วัน</dd>
+              </div>
+              <div className="kpi">
+                <dt className="kpi__label">ลองพูดคำด้านปาก</dt>
+                <dd className="kpi__value">
+                  {wk.attempts}
+                  <small>ครั้ง</small>
+                </dd>
+                <dd className="kpi__sub">นับ 1 ครั้งต่อ 1 ช่วงเสียง</dd>
+              </div>
+              <div className="kpi kpi--oral">
+                <dt className="kpi__label">ผ่านเกณฑ์ด้านปาก (เดโม)</dt>
+                <dd className="kpi__value">{fmtPct(passRate)}</dd>
+                <dd className="kpi__sub">ออกปากถึงเกณฑ์ของแต่ละรอบ</dd>
+              </div>
+              <div className="kpi kpi--nasal">
+                <dt className="kpi__label">เสียงออกจมูกเฉลี่ย (คำด้านปาก)</dt>
+                <dd className="kpi__value">{fmtPct(wk.nasalOral)}</dd>
+                <dd className="kpi__sub">
+                  {delta === null ? "ยังเทียบสัปดาห์ก่อนไม่ได้" : `${delta <= 0 ? "ลดลง" : "เพิ่มขึ้น"} ${Math.abs(delta).toFixed(1)} จุดจากสัปดาห์ก่อน`}
+                  <br />
+                  คำนาสิก {fmtPct(wk.nasalNasal)}
+                </dd>
+              </div>
+            </dl>
+            <p className="dash-today">
+              <strong>วันนี้ลองพูดที่สัญญาณใช้ได้ {deviceToday + demoToday} ครั้ง</strong> (อุปกรณ์จริง {deviceToday} ครั้ง, โหมดสาธิต {demoToday} ครั้ง)
+              <small>นับช่วงเสียงที่ใช้ได้ ไม่ใช่จำนวนคำที่พูดถูก เพราะเครื่องไม่รู้จำคำ ของรางวัลในเกาะของเด็กโตตามตัวเลขนี้ แยกตามแหล่ง</small>
+            </p>
+          </section>
 
           <div className="dash-over">
             <section className="dash-card dash-chart" aria-labelledby="chart-title">
@@ -651,10 +645,10 @@ export function DashboardScreen() {
                   </button>
                 </div>
               </div>
-              <p className="dash-card__sub">
-                {chartOral
-                  ? `คำเช่น ${plan.words.join(" ")} · แผน: ไม่เกิน ${oralTarget}% · ส.${wk.index} = 7 วันล่าสุด`
-                  : `คำเช่น ${plan.nasalWords.join(" ") || "—"} · ควรมีเสียงออกจมูก · แผน: ตั้งแต่ ${plan.gateThreshold}% ขึ้นไป`}
+              <p className="dash-card__sub chart-legend">
+                <span>คำเช่น {(chartOral ? plan.words : plan.nasalWords).join(" ") || "—"}</span>
+                <span>{chartOral ? `เส้นประคือแผน ไม่เกิน ${oralTarget}%` : `ควรมีเสียงออกจมูก เส้นประคือแผน ตั้งแต่ ${plan.gateThreshold}%`}</span>
+                <span>ส.{wk.index} คือ 7 วันล่าสุด</span>
               </p>
               <BarChart
                 key={chart}
@@ -694,7 +688,7 @@ export function DashboardScreen() {
                   </li>
                 ))}
               </ul>
-              <p className="dash-card__fine">นับเฉพาะสัปดาห์ที่ฝึกอย่างน้อย {REVIEW_RULES.minDaysPerWeek} วัน · กฎตัวอย่าง ควรปรับร่วมกับนักแก้ไขการพูด</p>
+              <p className="dash-card__fine">นับเฉพาะสัปดาห์ที่ฝึกอย่างน้อย {REVIEW_RULES.minDaysPerWeek} วัน เป็นกฎตัวอย่างที่ควรปรับร่วมกับนักแก้ไขการพูด</p>
             </section>
           </div>
         </section>

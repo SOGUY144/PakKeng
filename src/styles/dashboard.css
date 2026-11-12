@@ -1,43 +1,40 @@
 /* ===================== Therapist dashboard =====================
-   Sidebar (app + the children, each with a status dot) · the selected child's header (status, open kid view, edit plan)
-   · one alert for that child when a demo rule flags · tabs: overview / history / plan / demo data.
+   Read like a clinic follow-up file, not a widget board: a tinted column listing the children, then one white page
+   for the selected child (name and status, the last 7 days as a row of numbers split by hairlines, the weekly chart
+   beside the review rules) and plain underline tabs. Containers only where they group something (the alert, the
+   rules list, tables): no floating cards, no icon bubbles, no pills for status.
    Panels stay mounted while hidden so an unsaved plan is not lost. Orange = nasal values, blue = oral, as everywhere. */
 .app--teacher {
   min-height: 100dvh;
-  background:
-    radial-gradient(40rem 26rem at -6% -8%, #ece6ff 0%, transparent 62%),
-    radial-gradient(34rem 24rem at 106% 0%, #ffe9f2 0%, transparent 60%),
-    var(--paper);
+  background: var(--surface);
 }
 
 .dash {
   display: grid;
-  grid-template-columns: 264px minmax(0, 1fr);
+  grid-template-columns: 272px minmax(0, 1fr);
   align-items: start;
-  gap: var(--sp-6);
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: var(--sp-5) var(--sp-6) var(--sp-10);
+  min-height: 100dvh;
 }
 
-/* sidebar */
+/* the children: a tinted column down the left edge */
 .dash-side {
   position: sticky;
-  top: var(--sp-5);
+  top: 0;
   display: grid;
+  align-content: start;
   gap: var(--sp-3);
-  max-height: calc(100dvh - 2 * var(--sp-5));
+  height: 100dvh;
   overflow: auto;
-  padding: var(--sp-5);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-clay);
+  padding: var(--sp-6) var(--sp-4) var(--sp-5);
+  border-right: var(--bw) solid var(--line);
+  background: var(--surface-muted);
 }
 
-/* app name above the demo view switch; side by side, or stacked, once the sidebar becomes a top block (≤ 900px) */
+/* app name above the demo view switch; side by side, or stacked, once the column becomes a top block (900px and less) */
 .dash-side__head {
   display: grid;
   gap: var(--sp-3);
+  padding: 0 var(--sp-2);
 }
 
 .dash-brand {
@@ -48,89 +45,93 @@
 .dash-brand__name {
   color: var(--primary-text);
   font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   font-weight: 600;
   /* the app name is one word: never split it across lines */
   white-space: nowrap;
 }
 
 .dash-brand__role {
-  color: var(--ink-3);
-  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
 }
 
 .dash-side__title {
-  margin-top: var(--sp-2);
-  color: var(--ink-3);
+  margin-top: var(--sp-4);
+  padding: 0 var(--sp-2);
+  color: var(--ink-2);
   font-family: var(--font-sans);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-small);
   font-weight: 600;
 }
 
 .kids {
   display: grid;
-  gap: var(--sp-2);
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* one child per row: code and practice days on top, the review status under it */
 .kid {
+  position: relative;
   display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
-    "dot code meta"
-    ". status status";
-  align-items: center;
+    "code meta"
+    "status status";
+  align-items: baseline;
   column-gap: 10px;
   row-gap: 2px;
   width: 100%;
   min-height: 60px;
-  padding: 10px 12px;
-  border: 2px solid transparent;
-  border-radius: var(--r-md);
-  background: var(--surface-muted);
+  padding: 10px 12px 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
   color: var(--ink);
+  font-family: var(--font-sans);
   text-align: left;
   cursor: pointer;
 }
 
 .kid:hover {
-  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.7);
 }
 
+/* the selected child: a white row with a violet bar on its left edge */
 .kid.is-selected {
-  border-color: var(--primary);
-  background: var(--primary-soft);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(34, 31, 59, 0.08);
 }
 
+.kid.is-selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--primary);
+}
+
+/* the status colour lives in the words under the code */
 .kid__dot {
-  grid-area: dot;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--ink-3);
-}
-
-.kid__dot.is-clear {
-  background: var(--ok);
-}
-
-.kid__dot.is-review {
-  background: var(--warn);
-  box-shadow: 0 0 0 4px var(--warn-soft);
+  display: none;
 }
 
 .kid__code {
   grid-area: code;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .kid__meta {
   grid-area: meta;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
 }
@@ -157,9 +158,12 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  margin-top: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3) var(--sp-2) 0;
+  border-top: var(--bw) solid var(--line);
   color: var(--ink-3);
   font-size: var(--fs-xs);
+  line-height: 1.55;
 }
 
 .dash-privacy svg {
@@ -167,83 +171,86 @@
   margin-top: 2px;
 }
 
-/* main column */
+/* the selected child's page */
 .dash-main {
   display: grid;
-  gap: var(--sp-4);
+  gap: var(--sp-6);
+  width: 100%;
+  max-width: 1360px;
   min-width: 0;
+  /* centred in the room beside the children column, so a wide screen has even margins on both sides */
+  margin-inline: auto;
+  padding: var(--sp-6) clamp(var(--sp-5), 3vw, 48px) var(--sp-10);
 }
 
 .dash-child {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: var(--sp-4);
-  padding: var(--sp-5) var(--sp-6);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-clay);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "who actions"
+    "note note";
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
 }
 
-.dash-crumb {
-  color: var(--ink-3);
-  font-size: var(--fs-xs);
+.dash-child__who {
+  grid-area: who;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
 }
 
 .dash-title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
-  font-size: 2.3rem;
+  font-family: var(--font-sans);
+  font-size: 2.2rem;
+  font-weight: 700;
   line-height: 1.2;
+  letter-spacing: 0.01em;
 }
 
+/* status as coloured words with a small square, not a pill */
 .dash-status {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  font-size: 0.95rem;
-  font-weight: 500;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dash-status::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: currentColor;
 }
 
 .dash-status.is-clear {
-  background: var(--ok-soft);
   color: var(--ok-text);
 }
 
 .dash-status.is-review {
-  background: var(--warn-soft);
   color: var(--warn-text);
 }
 
 .dash-status.is-insufficient {
-  background: var(--surface-muted);
-  color: var(--ink-2);
-}
-
-.dash-note {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  color: var(--ink-2);
-  font-size: var(--fs-xs);
-}
-
-/* the long "sample + played rounds" badge wraps on a narrow phone instead of widening the whole column */
-.dash-note .badge {
-  white-space: normal;
+  color: var(--ink-3);
 }
 
 .dash-child__actions {
+  grid-area: actions;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--sp-2);
+}
+
+.dash-note {
+  grid-area: note;
+  max-width: 72ch;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
 }
 
 /* alert for the selected child only */
@@ -252,9 +259,10 @@
   align-items: flex-start;
   gap: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
-  border-radius: var(--r-lg);
+  border: var(--bw) solid #f1d48a;
+  border-left: 5px solid var(--warn);
+  border-radius: 10px;
   background: var(--warn-soft);
-  box-shadow: inset 6px 0 0 var(--warn);
 }
 
 .dash-alert__icon {
@@ -271,7 +279,9 @@
 
 .dash-alert__title {
   color: var(--warn-text);
+  font-family: var(--font-sans);
   font-size: var(--fs-body);
+  font-weight: 700;
 }
 
 .dash-alert__fine {
@@ -279,117 +289,117 @@
   font-size: var(--fs-xs);
 }
 
-/* tabs */
+/* tabs: words with an underline, on one rule across the page */
 .dash-tabs {
   display: flex;
-  gap: 4px;
-  width: fit-content;
+  gap: var(--sp-6);
   max-width: 100%;
+  /* sideways scroll on a narrow screen only (overflow-x alone would also give a 1 px vertical scrollbar) */
   overflow-x: auto;
-  padding: 5px;
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  box-shadow: var(--shadow-clay);
+  overflow-y: hidden;
+  box-shadow: inset 0 -1px 0 var(--line);
 }
 
 .dash-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
-  padding: 0 18px;
+  min-height: 48px;
+  padding: 0 2px;
   border: none;
-  border-radius: var(--r-pill);
   background: transparent;
   color: var(--ink-2);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
 
+.dash-tab svg {
+  display: none;
+}
+
 .dash-tab:hover:not([aria-selected="true"]) {
-  background: var(--surface-muted);
   color: var(--ink);
 }
 
 .dash-tab[aria-selected="true"] {
+  color: var(--primary-text);
+}
+
+.dash-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
   background: var(--primary);
-  color: var(--primary-ink);
-  box-shadow: 0 3px 0 var(--primary-deep);
 }
 
 .dash-panel {
   display: grid;
-  gap: var(--sp-4);
+  gap: var(--sp-8);
 }
 
 .dash-panel[hidden] {
   display: none;
 }
 
-/* stat tiles */
+.dash-h2,
+.dash-card__title {
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* the last 7 days: four numbers in a row, split by hairlines */
+.week {
+  display: grid;
+  gap: var(--sp-3);
+}
+
 .kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--sp-3);
+  margin: 0;
+  border-top: var(--bw) solid var(--line);
+  border-bottom: var(--bw) solid var(--line);
 }
 
 .kpi {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas:
-    "icon label"
-    "value value"
-    "sub sub";
-  align-items: center;
-  gap: 6px 10px;
+  align-content: start;
+  gap: 2px;
   padding: var(--sp-4) var(--sp-5);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-clay);
 }
 
-.kpi__icon {
-  grid-area: icon;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--candy-mint-soft);
-  color: var(--candy-mint-ink);
+.kpi + .kpi {
+  border-left: var(--bw) solid var(--line);
 }
 
-.kpi--attempts .kpi__icon {
-  background: var(--candy-lilac-soft);
-  color: var(--candy-lilac-ink);
+.kpi:first-child {
+  padding-left: 0;
 }
 
-.kpi--oral .kpi__icon {
-  background: var(--oral-soft);
-  color: var(--oral-text);
-}
-
-.kpi--nasal .kpi__icon {
-  background: var(--nasal-soft);
-  color: var(--nasal-text);
+.kpi dd {
+  margin: 0;
 }
 
 .kpi__label {
-  grid-area: label;
   color: var(--ink-2);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-small);
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .kpi__value {
-  grid-area: value;
-  font-family: var(--font-display);
-  font-size: 2.3rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: 2.4rem;
+  font-weight: 700;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
@@ -397,8 +407,7 @@
 .kpi__value small {
   margin-left: 4px;
   color: var(--ink-3);
-  font-family: var(--font-sans);
-  font-size: var(--fs-small);
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
@@ -411,36 +420,56 @@
 }
 
 .kpi__sub {
-  grid-area: sub;
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.dash-today {
+  max-width: 80ch;
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+}
+
+.dash-today strong {
+  color: var(--ink);
+}
+
+.dash-today small {
+  display: block;
+  margin-top: 2px;
   color: var(--ink-3);
   font-size: var(--fs-xs);
 }
 
-/* overview: the chart beside the alert rules */
+/* overview: the chart beside the review rules, split by a hairline */
 .dash-over {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
   align-items: start;
-  gap: var(--sp-4);
+  gap: var(--sp-8);
 }
 
 .dash-card {
   display: grid;
   gap: var(--sp-2);
   min-width: 0;
-  padding: var(--sp-5) var(--sp-6);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-clay);
 }
 
-.dash-card__title {
-  font-size: 1.25rem;
+.dash-rules {
+  padding-left: var(--sp-8);
+  border-left: var(--bw) solid var(--line);
 }
 
 .dash-card__sub {
   color: var(--ink-2);
   font-size: var(--fs-xs);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 18px;
 }
 
 .dash-card__row {
@@ -457,14 +486,48 @@
   font-size: var(--fs-xs);
 }
 
+/* chart word group: two words with an underline, matching the tabs (not a pill switch) */
+.dash-chart .seg {
+  gap: var(--sp-4);
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
 .dash-chart .seg__btn {
+  position: relative;
   min-height: 44px;
+  padding: 0 2px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.dash-chart .seg__btn[aria-pressed="true"] {
+  background: none;
+  box-shadow: none;
+  color: var(--nasal-text);
+}
+
+.dash-chart .seg__btn[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--nasal);
 }
 
 .chart-table summary {
   display: flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 44px;
   font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--ink-2);
@@ -484,11 +547,12 @@
   text-align: left;
 }
 
+/* review rules: a plain list split by hairlines; a flagged rule gets the amber bar */
 .rules {
   display: grid;
-  gap: var(--sp-2);
-  margin: 0;
+  margin: var(--sp-2) 0 0;
   padding: 0;
+  border-top: var(--bw) solid var(--line);
   list-style: none;
 }
 
@@ -496,13 +560,14 @@
   display: grid;
   align-content: start;
   gap: 4px;
-  padding: 12px 14px;
-  border-radius: var(--r-md);
-  background: var(--surface-muted);
+  padding: var(--sp-3) 0;
+  border-bottom: var(--bw) solid var(--line);
   font-size: var(--fs-small);
 }
 
 .rule--flag {
+  margin-inline: calc(-1 * var(--sp-3));
+  padding-inline: var(--sp-3);
   background: var(--warn-soft);
   box-shadow: inset 4px 0 0 var(--warn);
 }
@@ -510,13 +575,22 @@
 .rule__top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: var(--sp-2);
 }
 
 .rule__top strong {
-  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* rule state as coloured words (the shared badge colours, without the pill) */
+.rule__top .badge {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--fs-xs);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .rule__detail {
@@ -745,54 +819,86 @@ fieldset.field legend {
 }
 
 @media (max-width: 1180px) {
+  /* two by two: the third number starts a row, so it loses the left hairline and gains a top one */
   .kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi:nth-child(3) {
+    border-left: none;
+    padding-left: 0;
+  }
+  .kpi:nth-child(n + 3) {
+    border-top: var(--bw) solid var(--line);
   }
   .dash-over {
     grid-template-columns: minmax(0, 1fr);
   }
+  .dash-rules {
+    padding: var(--sp-6) 0 0;
+    border-left: none;
+    border-top: var(--bw) solid var(--line);
+  }
 }
 
-/* narrow: the sidebar becomes a top block, the children a row you can scroll */
+/* narrow: the children column becomes a top band, the children a row you can scroll */
 @media (max-width: 900px) {
   .dash {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--sp-4);
-    padding: var(--sp-4) var(--sp-4) var(--sp-8);
   }
   .dash-side {
     position: static;
-    max-height: none;
+    height: auto;
     overflow: visible;
     padding: var(--sp-4);
+    border-right: none;
+    border-bottom: var(--bw) solid var(--line);
   }
   /* app name and view switch share one row while both fit (tablet); on a phone the switch wraps below the name
-     instead of squeezing it (the old two-column grid gave the switch its full width first and left the name ~0 px) */
+     instead of squeezing it */
   .dash-side__head {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-2) var(--sp-4);
+    padding: 0;
   }
   .dash-side__title {
     margin-top: 0;
+    padding: 0;
   }
   .kids {
     grid-auto-flow: column;
     grid-auto-columns: minmax(170px, 1fr);
+    gap: var(--sp-2);
     overflow-x: auto;
     /* room for the focus ring, which the scroller would otherwise clip (also when a focused card scrolls into view) */
     padding: 6px;
     margin: -6px;
     scroll-padding-inline: 6px;
   }
+  /* in a sideways row each child is a small white tile; the selected one is outlined in violet */
+  .kid {
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .kid.is-selected {
+    box-shadow: inset 0 0 0 2px var(--primary);
+  }
+  .kid.is-selected::before {
+    display: none;
+  }
+  .dash-privacy {
+    margin-top: 0;
+    padding-top: var(--sp-2);
+    border-top: none;
+  }
+  .dash-main {
+    padding: var(--sp-5) var(--sp-4) var(--sp-8);
+  }
   .dash-tabs {
     width: 100%;
-  }
-  .dash-tab {
-    flex: 1 0 auto;
-    justify-content: center;
+    gap: var(--sp-4);
   }
   .plan__grid {
     grid-template-columns: minmax(0, 1fr);
@@ -804,49 +910,50 @@ fieldset.field legend {
 
 @media (max-width: 600px) {
   .dash-title {
-    font-size: 1.7rem;
+    font-size: 1.8rem;
   }
+  /* the two buttons go under the name, side by side */
   .dash-child {
-    padding: var(--sp-4);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "who"
+      "actions"
+      "note";
   }
-  .dash-child__actions,
+  .dash-child__actions {
+    justify-content: stretch;
+  }
   .dash-child__actions .btn {
     flex: 1 1 auto;
   }
-  .kpis {
-    gap: var(--sp-2);
-  }
   .kpi {
-    padding: var(--sp-3) var(--sp-4);
+    padding: var(--sp-3) var(--sp-3);
+  }
+  .kpi:nth-child(odd) {
+    padding-left: 0;
   }
   .kpi__value {
-    font-size: 1.7rem;
+    font-size: 1.8rem;
   }
-  .dash-card {
-    padding: var(--sp-4);
+  /* four short tab words fit a phone in one row */
+  .dash-tabs {
+    justify-content: space-between;
+    gap: var(--sp-2);
   }
-  /* four tabs fit a phone: words only */
-  .dash-tab {
-    padding: 0 10px;
-  }
-  .dash-tab svg {
-    display: none;
-  }
-  /* "ต้นแบบเดโม · มุมมอง" on its own line, the two view links together under it */
+  /* "ต้นแบบเดโม มุมมอง" on its own line, the two view links together under it */
   .dash-side .viewswitch__label {
     flex-basis: 100%;
   }
-  /* narrower child cards (status and days stacked under the code): two whole cards on a 390 phone with the next one
-     peeking, and the second card's code still whole at 320 */
+  /* two whole child tiles on a 390 phone with the next one peeking, and the second tile's code still whole at 320 */
   .kids {
     grid-auto-columns: minmax(140px, calc((100% - 16px) / 2.25));
   }
   .kid {
-    grid-template-columns: 10px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "dot code"
-      ". status"
-      ". meta";
+      "code"
+      "status"
+      "meta";
   }
   .dash-alert {
     padding: var(--sp-4);
@@ -856,13 +963,12 @@ fieldset.field legend {
   }
 }
 
-/* a very narrow phone (320–380 px): the four tabs need ~330 px in one row, so they sit 2 × 2 instead of hiding one
-   behind a sideways scroll */
+/* a very narrow phone (320 to 380 px): the four tabs sit 2 x 2 instead of hiding one behind a sideways scroll */
 @media (max-width: 380px) {
   .dash-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-radius: var(--r-lg);
+    gap: 0 var(--sp-2);
   }
 }
 
@@ -872,27 +978,15 @@ fieldset.field legend {
   max-width: 100%;
 }
 
-/* วันนี้: ช่วงพูดที่ตรวจพบ แยกอุปกรณ์จริง / โหมดสาธิต */
-.dash-today {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink-2);
+/* the "this device" tab: its two groups split by a hairline */
+.data-tools + .data-tools {
+  padding-top: var(--sp-8);
+  border-top: var(--bw) solid var(--line);
 }
 
-.dash-today small {
-  display: block;
-  margin-top: 2px;
-  color: var(--ink-3);
-}
-
-.dash-today svg {
-  flex: none;
-  margin-top: 2px;
-  color: var(--primary);
+/* headings on the clinician side read as plain text, not the children's rounded display face (the app name keeps it) */
+.dash h1,
+.dash h2,
+.dash h3 {
+  font-family: var(--font-sans);
 }
