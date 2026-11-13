@@ -29,3 +29,6 @@ dist-ssr
 firmware/test/test_nasal_dsp
 firmware/test/*.exe
 firmware/build
+
+# firmware: Wi-Fi name/password for the board (read by the sketch, never committed)
+firmware/**/wifi_secrets.h
